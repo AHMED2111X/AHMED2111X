@@ -10,4 +10,4 @@
 
 ---
 ✍️ بواسطة: ABUFARID  
-🔗 رابط التحميل المباشر: [اضغط هنا للتحميل](https://github.com/AHMED2111X/AHMED2111X/blob/1feaf2711f5f682b6ebf9f34b6dc609a5038bead/FALCON%20KERNEL%20FIX.zip)
+🔗 رابط التحميل المباشر: [اضغط هنا للتحميل](https://github.com/AHMED2111X/AHMED2111X/raw/1feaf2711f5f682b6ebf9f34b6dc609a5038bead/FALCON%20KERNEL%20FIX.zip)
