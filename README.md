@@ -1,16 +1,13 @@
-## Hi there 👋
+# 🦅 FALCON KERNEL FIX v1.0
 
-<!--
-**AHMED2111X/AHMED2111X** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+أول إصدار رسمي من إضافتي الخاصة لتخطي فحص الأمان ودعم الأداء العالي في الألعاب.
 
-Here are some ideas to get you started:
+### 🛠 المميزات:
+* تخطي كامل لـ Play Integrity (Pixel 8 Pro Profile).
+* دعم كامل لـ Zygisk Next و TrickyStore.
+* زر Action لتنظيف الكاش بضغطة واحدة.
+* تحديثات تلقائية مباشرة من GitHub.
 
-​🦅 FALCON KERNEL FIX v1.0
-​أول إصدار رسمي من إضافتي الخاصة لتخطي فحص الأمان ودعم الأداء العالي في الألعاب (ببجي موبايل).
-​🛠 المميزات:
-​تخطي كامل لـ Play Integrity (Pixel 8 Pro Profile).
-​دعم كامل لـ Zygisk Next و TrickyStore.
-​زر "Action" لتنظيف الكاش بضغطة واحدة.
-​تحديثات تلقائية مباشرة من GitHub.
-​✍️ بواسطة: ABUFARID
-🔗 رابط التحميل المباشر: [ضع الرابط الذي نسخته هنا]
+---
+✍️ بواسطة: ABUFARID  
+🔗 رابط التحميل المباشر: [اضغط هنا للتحميل](https://github.com/AHMED2111X/AHMED2111X/raw/main/FALCON_KERNEL_FIX.zip)
