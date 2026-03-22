@@ -1,0 +1,15 @@
+{
+  "PRODUCT": "husker",
+  "DEVICE": "husker",
+  "MANUFACTURER": "Google",
+  "BRAND": "google",
+  "MODEL": "Pixel 8 Pro",
+  "FINGERPRINT": "google/husker/husker:14/AP1A.240305.019/11445489:user/release-keys",
+  "SECURITY_PATCH": "2024-03-05",
+  "ID": "AP1A.240305.019",
+  "TYPE": "user",
+  "TAGS": "release-keys",
+  "INCREMENTAL": "11445489",
+  "RELEASE": "14",
+  "API_LEVEL": "34"
+}
