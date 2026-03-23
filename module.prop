@@ -1,8 +1,0 @@
-id=falcon_kernel_fix
-name=FALCON_KERNEL_FIX_V2.1
-version=v2.1
-versionCode=3
-author=ABUFARID
-description=🦅 أقوى إضافة لتخطي فحص الأمان ودعم الأداء العالي. مخصصة لمحترفي الألعاب. متوافقة تماماً مع Zygisk Next و TrickyStore.
-updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
-zygisk=true
