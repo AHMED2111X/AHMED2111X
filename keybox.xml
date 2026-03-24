@@ -1,16 +1,16 @@
 <?xml version="1.0"?>
 <AndroidAttestation>
 <NumberOfKeyboxes>1</NumberOfKeyboxes>
-<Keybox DeviceID="@MRootSu">
+<Keybox DeviceID="@FALCON_KERNEL">
 <Key algorithm="ecdsa">
 <PrivateKey format="pem">
-<!--https://t.me/MRootSu-->
+<!--https://t.me/falcon_kernel-->
 -----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIO4kvOJqLinGtfwpunZKoGEQ317pOqNoR6eZAnux4oMcoAoGCCqGSM49
 AwEHoUQDQgAE0MqKdbXc3IlxiWlsrMjvpl500RAG3fsCFP3rGlruMzXI/aKqvvee
 dBremBlilPqkCcCGfhKzDt2jNrFhB8iUew==
 -----END EC PRIVATE KEY-----
-<!--https://t.me/MRootSu-->
+<!--https://t.me/falcon_kernel-->
 </PrivateKey>
 <CertificateChain>
 <NumberOfCertificates>3</NumberOfCertificates>
