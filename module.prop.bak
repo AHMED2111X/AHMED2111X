@@ -1,8 +1,0 @@
-id=my_custom_pif
-name=FALCONINTEGITY_FIX_V2.1
-version=v1.0
-versionCode=1
-author=ABUFARID
-description=إضافة لتخطي فحص الأمان وجعل الجهاز يبدو كـ Pixel 8 Pro.
-Zygisk Next و TrickyStore.
-zygisk=true
