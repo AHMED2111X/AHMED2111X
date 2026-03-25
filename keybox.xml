@@ -1,20 +1,19 @@
 <?xml version="1.0"?>
 <AndroidAttestation>
-<NumberOfKeyboxes>1</NumberOfKeyboxes>
-<Keybox DeviceID="@FALCON_KERNEL">
-<Key algorithm="ecdsa">
-<PrivateKey format="pem">
-<!--https://t.me/falcon_kernel-->
+    <NumberOfKeyboxes>1</NumberOfKeyboxes>
+    <Keybox DeviceID="@root3rb">
+        <Key algorithm="ecdsa">
+            <PrivateKey format="pem">
+			<!--https://t.me/falcon_kernel-->
 -----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIO4kvOJqLinGtfwpunZKoGEQ317pOqNoR6eZAnux4oMcoAoGCCqGSM49
 AwEHoUQDQgAE0MqKdbXc3IlxiWlsrMjvpl500RAG3fsCFP3rGlruMzXI/aKqvvee
 dBremBlilPqkCcCGfhKzDt2jNrFhB8iUew==
 -----END EC PRIVATE KEY-----
-<!--https://t.me/falcon_kernel-->
 </PrivateKey>
-<CertificateChain>
-<NumberOfCertificates>3</NumberOfCertificates>
-<Certificate format="pem">
+            <CertificateChain>
+                <NumberOfCertificates>3</NumberOfCertificates>
+                <Certificate format="pem">
 -----BEGIN CERTIFICATE-----
 MIIB8jCCAXmgAwIBAgIQH7v+o2W6bJu0JVFT0Z8LjTAKBggqhkjOPQQDAjA5MQww
 CgYDVQQMDANURUUxKTAnBgNVBAUTIGI1ZmEyMTVkMjY5ZWQ1ZDk2ZTRmYTUzMDU2
@@ -29,7 +28,7 @@ Crnbk7D7zygmTdW7ZquEwePSGEYCMGjS8jcrJUiRSQR8d/MweRrfiMIC8c2X/M/M
 Pza1k7aPRbVY66e60wcwKw0VoaqmNA==
 -----END CERTIFICATE-----
 </Certificate>
-<Certificate format="pem">
+                <Certificate format="pem">
 -----BEGIN CERTIFICATE-----
 MIIDkzCCAXugAwIBAgIQS2Lw1jXh2CqWmcac2htOGTANBgkqhkiG9w0BAQsFADAb
 MRkwFwYDVQQFExBmOTIwMDllODUzYjZiMDQ1MB4XDTIwMDEwNzIwNTA1MFoXDTMw
@@ -53,7 +52,7 @@ Vj3//K3lO0XpXkSXeJEe4HC1c+KDZMqkgHv78c9wVdfPC++ERNBMhMxO0a0gCgLr
 HUOdeTeYfw==
 -----END CERTIFICATE-----
 </Certificate>
-<Certificate format="pem">
+                <Certificate format="pem">
 -----BEGIN CERTIFICATE-----
 MIIFHDCCAwSgAwIBAgIJANUP8luj8tazMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV
 BAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMTkxMTIyMjAzNzU4WhcNMzQxMTE4MjAz
@@ -85,11 +84,11 @@ ZutL8VuFkERQGt6vQ2OCw0sV47VMkuYbacK/xyZFiRcrPJPb41zgbQj9XAEyLKCH
 ex0SdDrx+tWUDqG8At2JHA==
 -----END CERTIFICATE-----
 </Certificate>
-</CertificateChain>
-</Key><Key algorithm="rsa">
-<PrivateKey format="pem">
+            </CertificateChain>
+        </Key>
+        <Key algorithm="rsa">
+            <PrivateKey format="pem">
 -----BEGIN RSA PRIVATE KEY-----
-<!--https://t.me/MRootSu-->
 MIIG4gIBAAKCAYEA0k/ztF/ZH8NITEwUXV2+F4yWdp0f04kWCSH08cZt7hKzL7J8
 Zd+WzfwLvMlNzCdIbk7I0UmnOosVYL+kluT0apBkY2D7mP9YzZygLK0n6E+k7KYH
 NlhT7LHVn28q6h7lZpmSw7Bc9prmqlkC81mJQANBEKgbRen2HLlEW+dwt3KE6ARi
@@ -127,14 +126,12 @@ iDu+DsARj5ccvEScXMQHzGDOIZOBzckai6i2qBsYSurWGbrX2Lj7/NHsw6H4Hv0j
 j3LwZjO+YhdZGXLgK4waDZptwK95R7TNRY/BfUBacM3xBan/68UjRIoKgKYBKanz
 SWEcWyWWQhonkeETkTIoIq5dQiY3Lq4OLFIB8BIP/RpJgXZvmE6NaTJDdmgqbng7
 7WS+O0lm+FCETSrps+OwMz17WMstGtvjY+fxdYQ/08VaSHeWcro=
-4p2k77iPINin2YTZhdmE2YEg2K7Yp9i1INio2YXYs9iq2LEg2LHZiNiqINmB2YLYtyDwn46JDQoNCuKaoSBUZWxlZ3JhbSA6IEBNUm9vdFN1IPCfjKTvuI8NCg0K8J+SqyBLaW5nIE9mIFRoZSBSb290IDIgR3JlZW4g8J+Smg0KDQrwn5STIGh0dHBzOi8vdC5tZS9NUm9vdFN1IPCfkq8=
 -----END RSA PRIVATE KEY-----
 </PrivateKey>
-<CertificateChain>
-<NumberOfCertificates>3</NumberOfCertificates>
-<Certificate format="pem">
+            <CertificateChain>
+                <NumberOfCertificates>3</NumberOfCertificates>
+                <Certificate format="pem">
 -----BEGIN CERTIFICATE-----
-<!--https://t.me/MRootSu-->
 MIIE4DCCAsigAwIBAgIRAJwxf+Sa/t8jG3aP9EHxoEYwDQYJKoZIhvcNAQELBQAw
 OTEMMAoGA1UEDAwDVEVFMSkwJwYDVQQFEyBiNWZhMjE1ZDI2OWVkNWQ5NmU0ZmE1
 MzA1NjUxYzgwMzAeFw0yMDAxMDcyMDUxMzZaFw0zMDAxMDQyMDUxMzZaMDkxDDAK
@@ -164,7 +161,7 @@ WBK4WCTY9N/XFiNd5OcFUMpryRU7bT559raV+M1ksIw7M88ycKSL/+Y01TsMn2gA
 t/wLrw==
 -----END CERTIFICATE-----
 </Certificate>
-<Certificate format="pem">
+                <Certificate format="pem">
 -----BEGIN CERTIFICATE-----
 MIIFQTCCAymgAwIBAgIQEkyhUCi+9DHdB+ZUdI6c3DANBgkqhkiG9w0BAQsFADAb
 MRkwFwYDVQQFExBmOTIwMDllODUzYjZiMDQ1MB4XDTIwMDEwNzIwNTAzM1oXDTMw
@@ -197,9 +194,8 @@ QKDtYVddHjUSMinicFY8FgOuA+20Ke0snErgOa29QZTaHZBqJ4wYs/SglpWmii+Z
 Ipj+i9A=
 -----END CERTIFICATE-----
 </Certificate>
-<Certificate format="pem">
+                <Certificate format="pem">
 -----BEGIN CERTIFICATE-----
-<!--https://t.me/MRootSu-->
 MIIFHDCCAwSgAwIBAgIJANUP8luj8tazMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV
 BAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMTkxMTIyMjAzNzU4WhcNMzQxMTE4MjAz
 NzU4WjAbMRkwFwYDVQQFExBmOTIwMDllODUzYjZiMDQ1MIICIjANBgkqhkiG9w0B
@@ -230,8 +226,7 @@ ZutL8VuFkERQGt6vQ2OCw0sV47VMkuYbacK/xyZFiRcrPJPb41zgbQj9XAEyLKCH
 ex0SdDrx+tWUDqG8At2JHA==
 -----END CERTIFICATE-----
 </Certificate>
-</CertificateChain>
-</Key>
-</Keybox>
+            </CertificateChain>
+        </Key>
+    </Keybox>
 </AndroidAttestation>
-⚡ Telegram : MRootSu 🌤️
