@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # 🦅 FALCON KERNEL FIX - Auto Keybox Updater
-# المطور: ABUFARID (راوش أم شعر منكوش)
+# المطور: ABUFARID 
 
 # 1. إعداد المسارات والروابط
 KEYBOX_URL="https://github.com/AHMED2111X/AHMED2111X/raw/main/keybox.xml"

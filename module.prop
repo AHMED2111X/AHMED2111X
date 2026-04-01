@@ -1,7 +1,7 @@
 id=falcon_kernel_fix
-name=FALCONINTEGITY_FIX_V2.2
-version=v2.2
-versionCode=4
+name=FALCONINTEGITY_FIX_V2.3
+version=v2.3
+versionCode=5
 author=ABUFARID
 description=🦅 أقوى إضافة لتخطي فحص الأمان ودعم الأداء العالي. مخصصة لمحترفي الألعاب. متوافقة تماماً مع Zygisk Next و TrickyStore.
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
