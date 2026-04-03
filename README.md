@@ -6,7 +6,7 @@
 ✅ تنظيف الكاش الذكي: ميزة Action Button لتفريغ الذاكرة بضغطة واحدة.
 ✅ تحديثات ذكية: الإضافة مربوطة بـ GitHub لتلقي التحديثات فور صدورها.
 ✍️ المطور: ABUFARID
-🔗 رابط التحميل المباشر (الدائم):https://github.com/AHMED2111X/AHMED2111X/raw/main/FALCON%20KERNEL%20FIX.zip](https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/FALCON%20KERNEL%20FIX_V2.1.zip 
+🔗 رابط التحميل المباشر (الدائم):https://github.com/AHMED2111X/AHMED2111X/raw/main/FALCON%20KERNEL%20FIX.zip](https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/FALCON%20KERNEL%20FIX_V2.4.zip 
 💡 تعليمات هامة للمستخدمين:
 تأكد من تفعيل Zygisk من إعدادات الـ Magisk.
 بعد تثبيت الإضافة، قم بعمل إعادة تشغيل للجهاز (Restart).
