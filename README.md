@@ -8,7 +8,7 @@ Android Developer | Content Creator | Competitive Gamer
 
 #### 🛡️ Play Integrity & SafetyNet Status:
 > [!IMPORTANT]
-> لضمان عمل الوحدة وتخطي فحص الحماية بنجاح، يرجى استخدام إضافة Play Integrity Fix وتحديث ملف الـ pif.json باستمرار لتجنب اكتشاف الروت.
+> لضمان عمل الوحدة وتخطي فحص الحماية بنجاح، يرجى تحديث ملف الـ pif.json باستمرار.
 
 | Status | Compatibility | Game Focus |
 | :--- | :--- | :--- |
@@ -16,12 +16,13 @@ Android Developer | Content Creator | Competitive Gamer
 
 ---
 
-### 📥 روابط التحميل الدائمة (Stable Links)
-* 🚀 [تحميل أحدث إصدار من Falcon Integrity Fix](https://github.com/AHMED2111X/AHMED2111X/releases/latest) *(هذا الرابط سيعطيك دائماً آخر نسخة قمتُ برفعها لتجاوز تحديثات جوجل)*
+### 📥 رابط التحميل الدائم (Latest Version)
+* 🚀 [تحميل أحدث إصدار من Falcon Integrity Fix](https://github.com/AHMED2111X/AHMED2111X/releases/latest)
+*(هذا الرابط سيوجهك دائماً إلى الإصدار الأخير الذي أرفعه تلقائياً)*
 
 ---
 
-### 💻 My Technical Projects
+### 💻 Technical Projects
 * 🛠️ Shotgun Pro: تحسين ميكانيكا الأسلحة وتقليل الـ Delay.
 * ⚡ Kernel Tweaks: تخصيص أداء المعالج للألعاب.
 
@@ -29,6 +30,6 @@ Android Developer | Content Creator | Competitive Gamer
 
 ### 🎮 Connect with Me
 * Live Streams: انتظروني في بث مباشر على Kick و TikTok لتحديات الـ 1v1 والكونكر.
-* Support: إذا واجهت مشكلة في تخطي الحماية، تواصل معي عبر الديسكورد.
+* Support: إذا واجهت مشكلة في تخطي الحماية، تواصل معي عبر التليجرام أو الديسكورد.
 
 ---
