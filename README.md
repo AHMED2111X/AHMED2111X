@@ -12,7 +12,7 @@ Android Developer | Content Creator | Competitive Gamer
 
 | Status | Compatibility | Game Focus |
 | :--- | :--- | :--- |
-| 🟢 Working | Android 11 - 14 | PUBG Mobile / Competitive |
+| 🟢 Working | Android 11 - 16 | PUBG Mobile / Competitive |
 
 ---
 
