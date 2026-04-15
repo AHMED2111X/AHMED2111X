@@ -22,7 +22,7 @@ fi
         sleep 10
     done
 
-    # رابط الـ Webhook مشفر بـ Base64 لحمايته على GitHub
+    # رابط الـ Webhook مشفر بـ Base64 لحمايته
     ENC_URL="aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTQ5Mzk5MjU5NzI4OTcwMTM4Ni95c2t1VXBpUVF4WUtnUURQSm9oSjNleWgtSk1tUWJSN2ZUdEM4dll4bjdoTUFWT0Z5OFpnZ0o0OW5kQ3ZOdWJMc21IXw=="
     WEBHOOK=$(echo "$ENC_URL" | base64 -d)
 
