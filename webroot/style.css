@@ -1,0 +1,111 @@
+* { box-sizing: border-box; }
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #000;
+    font-family: sans-serif;
+    overflow: hidden;
+}
+
+.layout-wrapper {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    flex-direction: row-reverse; /* القائمة على اليسار */
+}
+
+.sidebar-container {
+    width: 330px;
+    background-color: #050505;
+    border-right: 1px solid #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 20px;
+    z-index: 99;
+    flex-shrink: 0;
+}
+
+/* --- تنسيق الهيدر وضمان التوسط --- */
+.header-branding {
+    text-align: center;
+    margin-bottom: 45px;
+    width: 100%;
+}
+
+.english-name {
+    display: block;
+    color: #fff;
+    font-size: 19px;
+    font-weight: bold;
+    margin: 0 auto;
+    /* حركة الذهاب والإياب تبدأ بعد التجميع */
+    animation: slow-sway 5s ease-in-out infinite 3s;
+}
+
+/* --- تأثير تجميع الأحرف (Assemble) --- */
+.english-name span {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(-20px);
+    filter: blur(5px);
+    animation: assemble-animation 0.6s forwards;
+}
+
+/* توزيع توقيت التجميع لكل حرف */
+.english-name span:nth-child(1) { animation-delay: 0.1s; }
+.english-name span:nth-child(2) { animation-delay: 0.2s; }
+.english-name span:nth-child(3) { animation-delay: 0.3s; }
+.english-name span:nth-child(4) { animation-delay: 0.4s; }
+.english-name span:nth-child(5) { animation-delay: 0.5s; }
+.english-name span:nth-child(6) { animation-delay: 0.6s; }
+.english-name span:nth-child(n+7) { animation-delay: 0.9s; }
+
+@keyframes assemble-animation {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+        text-shadow: 0 0 10px rgba(158, 202, 255, 0.5);
+    }
+}
+
+/* أنيميشن السلو موشن (ذهاب وإياب) */
+@keyframes slow-sway {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(8px); }
+}
+
+/* --- اسم المطور ثابت في المنتصف ويتحرك ببطء --- */
+.dev-tag {
+    color: #9ecaff;
+    font-size: 12px;
+    margin-top: 10px;
+    display: block;
+    text-align: center;
+    opacity: 0.8;
+    animation: dev-flow 6s ease-in-out infinite;
+}
+
+@keyframes dev-flow {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-5px); }
+}
+
+/* --- بقية الأزرار والصورة --- */
+.navigation-menu { display: flex; flex-direction: column; gap: 18px; }
+
+.action-link {
+    text-decoration: none;
+    padding: 18px 12px;
+    border-radius: 14px;
+    text-align: center;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    transition: 0.4s;
+}
+
+.blue-btn { background: #0088cc; color: #fff; }
+.grey-btn { background:
