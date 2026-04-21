@@ -1,7 +1,7 @@
 id=falcon_kernel_fix
 name=FALCON INTEGITY FIX
-version=v2.13
-versionCode=15
+version=v2.14
+versionCode=16
 author=ABUFARID
 description=🦅 أقوى إضافة لتخطي فحص الأمان ودعم الأداء العالي.
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
