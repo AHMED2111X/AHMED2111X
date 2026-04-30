@@ -1,34 +1,62 @@
-{\rtf1}# --- إعدادات التثبيت لإضافة FALCON ---
+# --- واجهة Falcon Terminal v2.1.15 مع التنظيف العميق لملفات الـ BAK ---
+cat << 'EOF' > $MODPATH/system/bin/falcon
+#!/system/bin/sh
+MODDIR="/data/adb/modules/falcon_kernel_fix"
+TS_PATH="/data/adb/tricky_store"
 
-# طباعة شعار الإضافة عند التثبيت
-ui_print " "
-ui_print "  ######################################"
-ui_print "  #                                    #"
-ui_print "  #      🦅 FALCON INTEGRITY FIX 🦅    #"
-ui_print "  #          Version: v2.14            #"
-ui_print "  #         Developer: ABUFARID        #"
-ui_print "  #                                    #"
-ui_print "  ######################################"
-ui_print " "
+echo " "
+echo "  ######################################"
+echo "  #      🦅 FALCON CONTROL PANEL 🦅    #"
+echo "  #          Developer: ABUFARID       #"
+echo "  ######################################"
+echo " "
+echo "1) 🚀 وضع الوحش + حذف ملفات الـ BAK"
+echo "2) 🔋 وضع التوفير (60 FPS)"
+echo "3) 🔍 فحص وتنظيف المسار"
+echo "4) ❌ خروج"
+echo " "
+read -p "اختر رقم العملية: " choice
 
-# التأكد من وجود ملفات الحماية المطلوبة في مجلد الإضافة
-if [ -f "$MODPATH/pif.json" ]; then
-    ui_print "- جاري تجهيز ملفات بصمة الأمان (PIF)..."
-else
-    ui_print "! تحذير: ملف pif.json غير موجود في حزمة التثبيت."
-fi
+case $choice in
+    1)
+        # تفعيل الأداء
+        settings put signature min_refresh_rate 165.0
+        settings put signature peak_refresh_rate 165.0
+        setprop windowsmgr.max_events_per_sec 300
+        
+        # --- حذف ملف keybox.xml.bak وتنظيف المسار ---
+        if [ -d "$TS_PATH" ]; then
+            # حذف الملف الاحتياطي تحديداً إن وجد
+            [ -f "$TS_PATH/keybox.xml.bak" ] && rm -f "$TS_PATH/keybox.xml.bak" && echo "🗑️ تم حذف keybox.xml.bak بنجاح."
+            
+            # حذف الكيبوكس القديم والملفات المؤقتة الأخرى
+            rm -f $TS_PATH/keybox.xml
+            rm -f $TS_PATH/*.tmp
+        fi
+        
+        # نسخ الكيبوكس الجديد من الإضافة
+        if [ -f "$MODDIR/keybox.xml" ]; then
+            mkdir -p $TS_PATH
+            cp $MODDIR/keybox.xml $TS_PATH/keybox.xml
+            chown root:root $TS_PATH/keybox.xml
+            chmod 644 $TS_PATH/keybox.xml
+            echo "✅ تم تحديث الكيبوكس وتنظيف المسار تماماً."
+        fi
+        echo "✅ وضع الـ 165 فريم نشط الآن!"
+        ;;
+    2)
+        settings put signature min_refresh_rate 60.0
+        settings put signature peak_refresh_rate 60.0
+        echo "✅ تم العودة لوضع 60 فريم."
+        ;;
+    3)
+        echo "🔍 فحص ملفات TrickyStore..."
+        # حذف ملف الباك فوراً عند الفحص أيضاً لزيادة التأكيد
+        rm -f $TS_PATH/keybox.xml.bak
+        ls -l $TS_PATH
+        ;;
+esac
+EOF
 
-# إعداد صلاحيات التنفيذ لسكربت الخدمة
-ui_print "- ضبط صلاحيات سكربتات النظام..."
-set_perm $MODPATH/service.sh 0 0 0755
-
-# فحص وجود أداة curl الضرورية لنظام التتبع الخاص بك
-if [ -f /system/bin/curl ] || [ -f /apex/com.android.runtime/bin/curl ]; then
-    ui_print "- تم التحقق من وجود أداة التتبع (Curl)."
-else
-    ui_print "! تنبيه: أداة curl مفقودة، قد لا يعمل نظام التتبع بشكل صحيح."
-fi
-
-ui_print " "
-ui_print "✅ تم التثبيت بنجاح! استمتع بحماية الصقر."
-ui_print "📢 يرجى إعادة تشغيل الجهاز لتفعيل التعديلات."
+# ضبط صلاحيات الملف ليعمل كأمر نظام
+set_perm $MODPATH/system/bin/falcon 0 0 0755
