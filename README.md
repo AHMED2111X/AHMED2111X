@@ -33,8 +33,6 @@ Wide Compatibility: Fully supports Android 8.0 (Oreo) through Android 16.
 
 Developer: ABUFARID
 Status: Stable & Active
-
-ملاحظة تقنية: تأكد من أن ملف module.prop الخاص بك يحتوي على السطر التالي ليعكس التوافق الواسع:
 description=🦅 v2.1.15 | 165 FPS | Red Magic 11 Pro Spoof | Supports Android 8-16
 
 ارفع التحديث الآن، وأنا بانتظار سماع نتائج تجربتك في ساحة المعركة! 🦅🔥
