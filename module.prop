@@ -1,8 +1,8 @@
 id=falcon_kernel_fix
-name=FALCON INTEGITY FIX
-version=v2.14
-versionCode=16
+name=FALCON INTEGRITY FIX
+version=v2.15
+versionCode=17
 author=ABUFARID
-description=🦅 أقوى إضافة لتخطي فحص الأمان ودعم الأداء العالي.
+description=🦅 وضع الـ 165 فريم نشط | بصمة Red Magic 11 Pro | أقوى تخطي لفحص الأمان.
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
 zygisk=true

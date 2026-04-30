@@ -1,26 +1,34 @@
-#!/system/bin/sh
+{\rtf1}# --- إعدادات التثبيت لإضافة FALCON ---
 
-# 1. استخراج ملفات الواجهة (الصور والأيقونات)
-ui_print "- Extracting WebUI resources..."
-unzip -o "$ZIPFILE" "webroot/*" -d "$MODPATH" >&2
+# طباعة شعار الإضافة عند التثبيت
+ui_print " "
+ui_print "  ######################################"
+ui_print "  #                                    #"
+ui_print "  #      🦅 FALCON INTEGRITY FIX 🦅    #"
+ui_print "  #          Version: v2.14            #"
+ui_print "  #         Developer: ABUFARID        #"
+ui_print "  #                                    #"
+ui_print "  ######################################"
+ui_print " "
 
-# 2. استخراج صورة الـ splash لعرضها أثناء التفليش
-unzip -o "$ZIPFILE" "splash" -d "$MODPATH" >&2
-
-if [ -f "$MODPATH/splash" ]; then
-    set_perm $MODPATH/splash 0 0 0644
-    ui_print " "
-    ui_print_image "$MODPATH/splash"
-    ui_print " "
+# التأكد من وجود ملفات الحماية المطلوبة في مجلد الإضافة
+if [ -f "$MODPATH/pif.json" ]; then
+    ui_print "- جاري تجهيز ملفات بصمة الأمان (PIF)..."
+else
+    ui_print "! تحذير: ملف pif.json غير موجود في حزمة التثبيت."
 fi
 
-# 3. تثبيت ملفات الخدمة والصلاحيات
-ui_print "- Installing FALCON INTEGRITY FIX..."
+# إعداد صلاحيات التنفيذ لسكربت الخدمة
+ui_print "- ضبط صلاحيات سكربتات النظام..."
 set_perm $MODPATH/service.sh 0 0 0755
 
-# 4. حقوق المطور ABUFARID
-ui_print "--------------------------------------"
-ui_print "- Developer: ABUFARID"
-ui_print "- WebUI: Enabled"
-ui_print "--------------------------------------"
-ui_print "- Success! Please reboot."
+# فحص وجود أداة curl الضرورية لنظام التتبع الخاص بك
+if [ -f /system/bin/curl ] || [ -f /apex/com.android.runtime/bin/curl ]; then
+    ui_print "- تم التحقق من وجود أداة التتبع (Curl)."
+else
+    ui_print "! تنبيه: أداة curl مفقودة، قد لا يعمل نظام التتبع بشكل صحيح."
+fi
+
+ui_print " "
+ui_print "✅ تم التثبيت بنجاح! استمتع بحماية الصقر."
+ui_print "📢 يرجى إعادة تشغيل الجهاز لتفعيل التعديلات."
