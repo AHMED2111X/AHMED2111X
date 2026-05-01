@@ -53,5 +53,4 @@
 > **الوصف التقني للملف:**  
 > `description=🦅 v2.18 | 165 FPS Unlocked | Red Magic 11 Pro Spoof | Bootloader Masking | Optimized for Android 8-16`
 
----
-ارفع التحديث الآن بهذا التنسيق، وسيكون واجهة مشرفة لمشروعك الكبير! 🦅🔥
+---! 🦅🔥
