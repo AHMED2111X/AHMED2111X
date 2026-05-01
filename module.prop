@@ -1,8 +1,8 @@
 id=falcon_integrity_fix
 name=FALCON INTEGRITY FIX
-version=v2.17
-versionCode=19
+version=v2.18
+versionCode=20
 author=ABUFARID
-description=🦅 وضع الـ 165 فريم نشط | بصمة Red Magic 11 Pro | أقوى تخطي لفحص الأمان.
+description=🦅 وضع الـ 165 فريم نشط | بصمة Red Magic 11 Pro | تزييف حالة البوت لودر وفتح الحماية القصوى.
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
 zygisk=true

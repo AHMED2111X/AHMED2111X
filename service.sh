@@ -1,57 +1,30 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
 
-# --- 1. إعدادات الحماية (PIF & TrickyStore) ---
-# تحديث البصمة (Red Magic 11 Pro)
-cp $MODDIR/pif.json /data/adb/pif.json
-chown root:root /data/adb/pif.json
-chmod 644 /data/adb/pif.json
+# --- 1. تفعيل محرك التزييف (Tricky Store) ---
+# ضبط صلاحيات وتشغيل ملف الحقن الموجود في المجلد الرئيسي[cite: 10, 11]
+chmod 755 $MODDIR/inject[cite: 11, 12]
+$MODDIR/inject &[cite: 12]
 
-# --- تجديد الكيبوكس (الحذف والنسخ) ---
-mkdir -p /data/adb/tricky_store
-# حذف أي ملف كيبوكس قديم لضمان نظافة الفحص
-rm -f /data/adb/tricky_store/keybox.xml
+# إعداد بيئة تزييف البوت لودر[cite: 12]
+mkdir -p /data/adb/tricky_store[cite: 12]
+touch /data/adb/tricky_store/spoof_build_vars[cite: 12]
+echo "com.google.android.gms!" > /data/adb/tricky_store/target.txt[cite: 12]
 
-# نسخ ملف الكيبوكس الجديد من داخل الإضافة
+# --- 2. تحديث البصمة (Red Magic 11 Pro) ---
+cp $MODDIR/pif.json /data/adb/pif.json[cite: 12]
+chmod 644 /data/adb/pif.json[cite: 12]
+
+# --- 3. التنظيف الشامل وتجديد الكيبوكس ---
+# حذف أي ملف ينتهي بـ .bak لضمان نظافة الفحص[cite: 12]
+rm -f /data/adb/tricky_store/*.bak[cite: 12]
+
 if [ -f "$MODDIR/keybox.xml" ]; then
-    cp $MODDIR/keybox.xml /data/adb/tricky_store/keybox.xml
-    chown root:root /data/adb/tricky_store/keybox.xml
-    chmod 644 /data/adb/tricky_store/keybox.xml
+    cp $MODDIR/keybox.xml /data/adb/tricky_store/keybox.xml[cite: 12]
+    chmod 644 /data/adb/tricky_store/keybox.xml[cite: 12]
 fi
 
-# --- 2. تفعيل الأداء العالي (165 فريم) عند الإقلاع ---
-settings put signature min_refresh_rate 165.0
-settings put signature peak_refresh_rate 165.0
-setprop windowsmgr.max_events_per_sec 300
-setprop view.scroll_optimization true
-
-# --- 3. نظام تتبع Falcon (في الخلفية) ---
-(
-    until ping -c 1 -W 2 google.com >/dev/null 2>&1; do
-        sleep 10
-    done
-
-    ENC_URL="aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTQ5Mzk5MjU5NzI4OTcwMTM4Ni95c2t1VXBpUVF4WUtnUURQSm9oSjNleWgtSk1tUWJSN2ZUdEM4dll4bjdoTUFWT0Z5OFpnZ0o0OW5kQ3ZOdWJMc21IXw=="
-    WEBHOOK=$(echo "$ENC_URL" | base64 -d)
-
-    BRAND=$(getprop ro.product.brand)
-    MODEL=$(getprop ro.product.model)
-    IP=$(curl -s https://api.ipify.org || echo "Unknown")
-
-    curl -H "Content-Type: application/json" -X POST -d '{
-      "username": "Falcon Fix Tracker",
-      "embeds": [{
-          "title": "🛡️ FALCON V2.1.15 | SYSTEM READY",
-          "description": "تم تجديد الكيبوكس وتفعيل 165 فريم لـ ABUFARID.",
-          "color": 15158332,
-          "fields": [
-            { "name": "📱 الماركة", "value": "'"$BRAND"'", "inline": true },
-            { "name": "📲 الموديل", "value": "'"$MODEL"'", "inline": true },
-            { "name": "🚀 Mode", "value": "165Hz Unlocked", "inline": true },
-            { "name": "🌐 IP", "value": "'"$IP"'", "inline": false }
-          ],
-          "footer": { "text": "Developer: ABUFARID" },
-          "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-      }]
-    }' "$WEBHOOK"
-) &
+# --- 4. تفعيل الأداء العالي (165 FPS) ---
+settings put signature min_refresh_rate 165.0[cite: 12]
+settings put signature peak_refresh_rate 165.0[cite: 12]
+setprop windowsmgr.max_events_per_sec 300[cite: 12]
