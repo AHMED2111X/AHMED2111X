@@ -1,1 +1,57 @@
-🦅 FALCON INTEGRITY FIX | v2.18 OfficialSupported Android Versions: 8.0 — 16 (Upcoming)Description | الوصف العربيتحديث شامل وجذري لإضافة FALCON، مصمم خصيصاً لعشاق الألعاب التنافسية ومطوري النظام. هذا الإصدار يركز على كسر قيود الحماية ورفع الأداء إلى مستويات غير مسبوقة مع دعم كامل لأحدث إصدارات الأندرويد.تزييف حالة البوت لودر (جديد): دمج محرك الحقن inject لإظهار الجهاز كـ "Locked" برمجياً وتخطي حماية الألعاب المعقدة.  بصمة Red Magic 11 Pro: تحديث ملف pif.json بأحدث بصمة لعام 2026 لتخطي فحص جوجل بنجاح.  ثورة الـ 165 فريم: تفعيل حقيقي لمعدل تحديث 165Hz لضمان سلاسة خرافية في PUBG وغيرها.  واجهة Falcon Terminal المحدثة: تحكم كامل بجهازك؛ فقط اكتب falcon في الترمينال لتنظيف الكاش وحذف ملفات الـ BAK المزعجة بضغطة زر.  تجديد TrickyStore التلقائي: نظام ذكي يقوم بتبديل ملفات الكيبوكس القديمة بالجديدة لضمان استمرار الحماية.  استجابة لمس فورية: تحسينات برمجية لتقليل تأخير اللمس (Input Lag) وزيادة سرعة التفاعل.  دعم شامل: متوافق تماماً من أندرويد 8 (Oreo) حتى أندرويد 16.Description | English VersionA major overhaul for the FALCON module, engineered for hardcore gamers and power users. This release shatters security barriers and pushes performance to the limit.Bootloader Spoofing (New): Integrated inject engine to mimic a locked bootloader status for elite gaming security bypass.  Red Magic 11 Pro Spoofing: Updated pif.json with elite 2026 fingerprints to bypass Play Integrity.  165 FPS Unlocked: Forced 165Hz refresh rate for ultimate smoothness in competitive titles.  Enhanced Falcon Terminal: Deep cache cleaning (GMS/Store) and automated *.bak file removal by typing falcon (su).  Automated TrickyStore Refresh: Auto-replaces old keybox.xml with fresh keys for guaranteed Strong Integrity.  Zero-Lag Touch: System-level optimizations for faster touch response and fluid scrolling.  Wide Compatibility: Fully supports Android 8.0 (Oreo) through Android 16.👨‍💻 Developer: ABUFARID📢 Telegram: [@falcon_kernal]🦅 Status: Undetected, Stable & Optimizeddescription=🦅 v2.18 | 165 FPS | Red Magic 11 Pro Spoof | Bootloader Spoofing | Supports Android 8-16
+لجعل قصة التحديث أكثر احترافية وجاذبية للمستخدمين والمطورين على حد سواء، قمت بإعادة صياغة المحتوى ليركز على **"الحل المتكامل"** بدلاً من مجرد ميزات منفصلة، مع إبراز هوية **ABUFARID** كمطور رائد.
+
+إليك الترتيب القصصي والاحترافي للوصف:
+
+---
+
+## 🦅 **FALCON INTEGRITY FIX | v2.18 Official**
+### **The Ultimate Performance & Security Bridge**
+**Supported Android Versions:** 8.0 — 16 (Upcoming)
+
+---
+
+### **🛡️ نظرة عامة | Overview**
+يمثل الإصدار **v2.18** القفزة الأهم في تاريخ إضافة **FALCON**. لم نعد نكتفي بفتح الأداء فحسب، بل قمنا ببناء درع برمجى متكامل يجمع بين القوة الخام وتزييف الهوية الرقمية للجهاز، مما يجعله الحل الأمثل لتخطي أقوى أنظمة الحماية في الألعاب والتطبيقات الحديثة[cite: 10, 12, 13].
+
+---
+
+### **💎 الميزات الأساسية | Key Features**
+
+#### **1. نظام التزييف الثوري (Spoofing Engine)**
+*   **تزييف حالة البوت لودر**: لأول مرة، دمج محرك الحقن `inject` لفتح حماية "Strong Integrity" عبر إظهار الجهاز كـ "Locked" برمجياً[cite: 10, 12].
+*   **هوية Red Magic 11 Pro**: تحديث شامل لملف `pif.json` ببصمة حصرية لعام 2026، مما يمنحك المرور الآمن من فحص Google Play Integrity[cite: 12].
+
+#### **2. الأداء الفائق (Elite Performance)**
+*   **تردد 165Hz مستقر**: كسر قيود النظام وإجبار معدل التحديث على **165Hz** لتجربة لعب لا تضاهى في PUBG و MLBB[cite: 12, 13].
+*   **استجابة لمس فورية**: تحسينات برمجية لتقليل زمن التأخير (Latency) وزيادة سرعة التفاعل في المواجهات القريبة[cite: 12].
+
+#### **3. إدارة النظام الذكية (Falcon Terminal UI)**
+*   **تحكم شامل**: واجهة ترمينال مطورة يمكن الوصول إليها بكتابة `falcon` للقيام بعمليات الصيانة الفورية[cite: 11, 13].
+*   **التنظيف العميق**: خيارات ذكية لتفريغ كاش خدمات جوجل وحذف ملفات الـ `*.bak` المؤقتة التي قد تسبب كشف الإضافة[cite: 11, 13].
+
+---
+
+### **📝 سجل التغييرات | Changelog v2.18**
+*   **[جديد]** دمج محرك `inject` لتزييف حالة النظام بشكل كامل[cite: 10, 12].
+*   **[تحسين]** نظام حذف تلقائي لملفات الـ `.bak` في مسار `TrickyStore` عند كل إقلاع[cite: 12].
+*   **[تحديث]** تحديث بصمة النظام إلى أحدث إصدار متوافق مع أندرويد 14 و 15[cite: 12].
+*   **[إصلاح]** معالجة مشكلة توقف الواجهة في بعض إصدارات أجهزة Infinix و Redmi[cite: 11].
+
+---
+
+### **🚀 طريقة التثبيت والاستخدام | How to Use**
+1.  قم بتثبيت الملف عبر تطبيق **Magisk** أو **KernelSU**.
+2.  بعد إعادة التشغيل، افتح تطبيق الترمينال (su) واكتب `falcon`[cite: 11, 13].
+3.  اختر **الوضع 1** لتفعيل قوة الـ 165 فريم مع نظام التزييف التلقائي[cite: 13].
+
+---
+
+**👨‍💻 Developer:** **ABUFARID**  
+**📢 Telegram Channel:** [@falcon_kernal]  
+**🦅 Status:** **Undetected & Battle-Ready**
+
+> **الوصف التقني للملف:**  
+> `description=🦅 v2.18 | 165 FPS Unlocked | Red Magic 11 Pro Spoof | Bootloader Masking | Optimized for Android 8-16`
+
+---
+ارفع التحديث الآن بهذا التنسيق، وسيكون واجهة مشرفة لمشروعك الكبير! 🦅🔥
