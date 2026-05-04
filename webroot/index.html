@@ -50,6 +50,7 @@
         .line-green { border-right: 4px solid #00c853; }
         .line-orange { border-right: 4px solid #ffa000; }
         .line-blue { border-right: 4px solid #0091ea; }
+        .line-purple { border-right: 4px solid #d500f9; }
 
         #notification-container {
             position: fixed; top: 20px; left: 20px;
@@ -71,12 +72,21 @@
 
     <div class="main-wrapper">
         <main class="branding-area">
+            <!-- تمت إعادة اسم ملف الصورة الأصلي كما طلبتِ تماماً -->
             <img src="Falcon.png" alt="Falcon" class="main-logo">
         </main>
 
         <aside class="sidebar">
             <div class="dev-tag">BY ABUFARID</div>
             <nav class="nav-menu">
+                <div class="pro-btn line-purple" onclick="updateKeybox()">
+                    <div class="icon-box">📥</div>
+                    <div class="btn-content">
+                        <span class="btn-title">تحديث ملف Keybox</span>
+                        <span class="btn-desc">جلب أحدث ملف من GitHub مباشرة</span>
+                    </div>
+                </div>
+
                 <div class="pro-btn line-red" onclick="executeTask('🚀 تم تفعيل وضع الوحش!')">
                     <div class="icon-box">🚀</div>
                     <div class="btn-content">
@@ -134,6 +144,26 @@
             setTimeout(() => { toast.remove(); }, 3000);
         }
 
+        function updateKeybox() {
+            executeTask('⏳ جاري جلب ملف Keybox من GitHub...');
+            const url = "https://github.com/AHMED2111X/AHMED2111X/raw/main/keybox.xml";
+            const target = "/data/adb/tricky_store/keybox.xml";
+            
+            const cmd = [
+                `mkdir -p /data/adb/tricky_store`,
+                `curl -L -s -o ${target}.tmp ${url} || wget -q ${url} -O ${target}.tmp`,
+                `if [ -f ${target}.tmp ]; then mv ${target}.tmp ${target} && chmod 644 ${target} && chown root:root ${target}; fi`
+            ].join(" && ");
+
+            if (window.ksu && window.ksu.exec) {
+                window.ksu.exec(cmd, (res) => {
+                    executeTask('✅ تم تحديث ملف Keybox بنجاح!');
+                });
+            } else {
+                executeTask('❌ خطأ: لم يتم اكتشاف بيئة KernelSU');
+            }
+        }
+
         function smartCacheAndReboot() {
             let seconds = 5;
             const container = document.getElementById('notification-container');
@@ -145,13 +175,6 @@
                 if (seconds <= 0) {
                     clearInterval(countdown);
                     toast.innerHTML = `⚙️ تنفيذ التنظيف العميق والريبوت...`;
-                    
-                    /* 
-                       تعديل الأوامر لضمان مسح إعدادات المتجر دون مسح الحساب:
-                       1. إغلاق إجباري للمتجر وخدمات جوجل.
-                       2. مسح مجلدات الكاش وقواعد البيانات المؤقتة.
-                       3. مسح كاش النظام package_cache.
-                    */
                     const cmd = [
                         "am force-stop com.android.vending",
                         "am force-stop com.google.android.gms",
@@ -163,10 +186,7 @@
                         "sleep 1",
                         "reboot"
                     ].join(" && ");
-                    
-                    if (window.ksu && window.ksu.exec) {
-                        window.ksu.exec(cmd, (res) => {});
-                    }
+                    if (window.ksu && window.ksu.exec) { window.ksu.exec(cmd, (res) => {}); }
                 } else {
                     toast.innerHTML = `🧹 تنظيف جذري للمتجر.. ريبوت خلال ${seconds} ثوانٍ`;
                     seconds--;
