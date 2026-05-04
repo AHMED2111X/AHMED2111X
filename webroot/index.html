@@ -5,172 +5,184 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FALCON INTEGRITY FIX</title>
     <style>
-        /* --- الأساسيات --- */
-        * { box-sizing: border-box; }
+        /* التنسيق الاحترافي الخاص بك */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            background-color: #000;
-            font-family: sans-serif;
-            overflow: hidden;
+            height: 100%; background-color: #000;
+            font-family: sans-serif; color: #fff; overflow: hidden;
         }
-
-        .layout-wrapper {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            flex-direction: row-reverse; /* القائمة على اليمين كما في تصميمك */
+        .main-wrapper {
+            display: flex; height: 100vh; width: 100vw;
+            background: radial-gradient(circle at 30% 50%, #0d0d0d 0%, #000 100%);
+            position: relative;
         }
-
-        .sidebar-container {
-            width: 330px;
-            background-color: #050505;
-            border-right: 1px solid #1a1a1a;
-            display: flex;
-            flex-direction: column;
-            padding: 40px 20px;
-            z-index: 99;
-            flex-shrink: 0;
+        .branding-area {
+            flex-grow: 1; display: flex; align-items: center;
+            justify-content: center; padding-right: 380px; z-index: 1;
         }
-
-        /* --- الهيدر وتنسيق النصوص --- */
-        .header-branding {
-            text-align: center;
-            margin-bottom: 45px;
-            width: 100%;
-        }
-
-        .english-name {
-            display: block;
-            color: #fff;
-            font-size: 19px;
-            font-weight: bold;
-            margin: 0 auto;
-            white-space: nowrap;
-            /* حركة الذهاب والإياب الكلية بعد التجميع */
-            animation: global-sway 5s ease-in-out infinite 3.5s;
-        }
-
-        /* --- تأثير تجميع الأحرف --- */
-        .english-name span {
-            display: inline-block;
-            opacity: 0;
-            transform: translateY(-20px);
-            filter: blur(5px);
-            animation: letter-assemble 0.6s forwards;
-        }
-
-        /* توقيت الظهور بالترتيب من اليسار لليمين */
-        .english-name span:nth-child(1) { animation-delay: 0.1s; }
-        .english-name span:nth-child(2) { animation-delay: 0.2s; }
-        .english-name span:nth-child(3) { animation-delay: 0.3s; }
-        .english-name span:nth-child(4) { animation-delay: 0.4s; }
-        .english-name span:nth-child(5) { animation-delay: 0.5s; }
-        .english-name span:nth-child(6) { animation-delay: 0.6s; }
-        .english-name span:nth-child(n+7) { animation-delay: 0.9s; }
-
-        @keyframes letter-assemble {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-                filter: blur(0);
-                text-shadow: 0 0 10px rgba(158, 202, 255, 0.5);
-            }
-        }
-
-        @keyframes global-sway {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(10px); color: #9ecaff; }
-        }
-
-        /* --- اسم المطور --- */
-        .dev-tag {
-            color: #9ecaff;
-            font-size: 12px;
-            margin-top: 10px;
-            display: block;
-            text-align: center;
-            opacity: 0.8;
-            animation: dev-sway 6s ease-in-out infinite;
-        }
-
-        @keyframes dev-sway {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(-6px); }
-        }
-
-        /* --- الأزرار --- */
-        .navigation-menu { display: flex; flex-direction: column; gap: 18px; }
-
-        .action-link {
-            text-decoration: none;
-            padding: 18px 12px;
-            border-radius: 14px;
-            text-align: center;
-            font-weight: bold;
-            display: flex;
-            flex-direction: column;
-            transition: 0.4s;
-        }
-
-        .blue-btn { background: #0088cc; color: #fff; box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3); }
-        .grey-btn { background: #1e1e1e; color: #fff; border: 1px solid #333; }
-        .black-btn { background: #0c0c0c; color: #fff; border: 1px solid #444; }
-        
-        .top-txt { font-size: 13px; margin-bottom: 4px; }
-        .bottom-txt { font-size: 11px; opacity: 0.9; }
-
-        /* --- عارض الصورة --- */
-        .image-viewer {
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: radial-gradient(circle, #111 0%, #000 100%);
-        }
-
         .main-logo {
-            max-width: 80%;
-            max-height: 80%;
-            object-fit: contain;
-            filter: drop-shadow(0 0 30px rgba(0,0,0,0.9));
+            max-width: 60%; max-height: 65vh; object-fit: contain;
+            filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.7));
         }
+        .sidebar {
+            position: absolute; right: 0; top: 0; width: 380px; height: 100%;
+            background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex; flex-direction: column; padding: 40px 25px; z-index: 10;
+        }
+        .dev-tag {
+            color: #9ecaff; font-size: 12px; font-weight: bold;
+            margin-bottom: 30px; text-align: center; letter-spacing: 2px;
+        }
+        .nav-menu { display: flex; flex-direction: column; gap: 14px; }
+        .pro-btn {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px; padding: 18px; color: #fff;
+            text-decoration: none; transition: 0.3s ease;
+            cursor: pointer; display: flex; align-items: center; gap: 15px;
+        }
+        .pro-btn:hover { background: rgba(158, 202, 255, 0.1); border-color: #9ecaff; transform: translateX(-8px); }
+        .icon-box { width: 42px; height: 42px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .btn-content { display: flex; flex-direction: column; text-align: right; }
+        .btn-title { font-size: 14px; font-weight: bold; }
+        .btn-desc { font-size: 10px; color: #777; }
+        .line-red { border-right: 4px solid #ff4444; }
+        .line-green { border-right: 4px solid #00c853; }
+        .line-orange { border-right: 4px solid #ffa000; }
+        .line-blue { border-right: 4px solid #0091ea; }
+
+        #notification-container {
+            position: fixed; top: 20px; left: 20px;
+            display: flex; flex-direction: column; gap: 10px; z-index: 1000;
+        }
+        .falcon-toast {
+            background: rgba(30, 30, 30, 0.95); color: #fff;
+            padding: 15px 25px; border-radius: 12px;
+            border-right: 4px solid #9ecaff;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.4s ease forwards;
+            min-width: 280px; font-size: 14px;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
 <body>
 
-    <div class="layout-wrapper">
-        <aside class="sidebar-container">
-            <div class="header-branding">
-                <h1 class="english-name" dir="ltr">
-                    <span>F</span><span>A</span><span>L</span><span>C</span><span>O</span><span>N</span><span>&nbsp;</span>
-                    <span>I</span><span>N</span><span>T</span><span>E</span><span>G</span><span>R</span><span>I</span><span>T</span><span>Y</span><span>&nbsp;</span>
-                    <span>F</span><span>I</span><span>X</span>
-                </h1>
-                <p class="dev-tag">By ABUFARID</p>
-            </div>
-
-            <nav class="navigation-menu">
-                <a href="https://t.me/falcon_kernel" class="action-link blue-btn">
-                    <span class="top-txt">يوجد لدينا جميع أنواع هاكات ببجي موبايل</span>
-                    <span class="bottom-txt">للتواصل اضغط هنا</span>
-                </a>
-
-                <a href="https://t.me/falconkernal" class="action-link grey-btn">
-                    الانضمام إلى قناة التليجرام
-                </a>
-
-                <a href="https://github.com/AHMED2111X/AHMED2111X/releases/latest" class="action-link black-btn">
-                    تحميل آخر تحديث من FALCON INTEGRITY FIX
-                </a>
-            </nav>
-        </aside>
-
-        <main class="image-viewer">
+    <div class="main-wrapper">
+        <main class="branding-area">
             <img src="Falcon.png" alt="Falcon" class="main-logo">
         </main>
+
+        <aside class="sidebar">
+            <div class="dev-tag">BY ABUFARID</div>
+            <nav class="nav-menu">
+                <div class="pro-btn line-red" onclick="executeTask('🚀 تم تفعيل وضع الوحش!')">
+                    <div class="icon-box">🚀</div>
+                    <div class="btn-content">
+                        <span class="btn-title">وضع الوحش 165Hz</span>
+                        <span class="btn-desc">أقصى أداء وتزييف حالة النظام</span>
+                    </div>
+                </div>
+
+                <div class="pro-btn line-green" onclick="smartCacheAndReboot()">
+                    <div class="icon-box">🧹</div>
+                    <div class="btn-content">
+                        <span class="btn-title">تفريغ الكاش الذكي</span>
+                        <span class="btn-desc" style="color: #00c853; font-weight: bold;">⚠️ ريبوت خلال 5 ثوانٍ لضمان التعديلات</span>
+                    </div>
+                </div>
+
+                <div class="pro-btn line-orange" onclick="executeTask('🗑️ تم تنظيف TrickyStore!')">
+                    <div class="icon-box">📂</div>
+                    <div class="btn-content">
+                        <span class="btn-title">تنظيف TrickyStore</span>
+                        <span class="btn-desc">حذف ملفات الباك والمخلفات</span>
+                    </div>
+                </div>
+
+                <div style="margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.05);"></div>
+
+                <div class="pro-btn line-blue" onclick="jumpToTelegram('falcon_kernel')">
+                    <div class="icon-box">🛡️</div>
+                    <div class="btn-content">
+                        <span class="btn-title">متجر فالكون للهاكات</span>
+                        <span class="btn-desc">تواصل مباشر واشتراكات VIP</span>
+                    </div>
+                </div>
+
+                <div class="pro-btn" onclick="jumpToTelegram('falconkernal')">
+                    <div class="icon-box">📢</div>
+                    <div class="btn-content">
+                        <span class="btn-title">قناة التليجرام العامة</span>
+                        <span class="btn-desc">آخر الأخبار والتحديثات المستمرة</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
     </div>
 
+    <div id="notification-container"></div>
+
+    <script>
+        function executeTask(message) {
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = 'falcon-toast';
+            toast.innerHTML = `🛡️ ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        function smartCacheAndReboot() {
+            let seconds = 5;
+            const container = document.getElementById('notification-container');
+            const toast = document.createElement('div');
+            toast.className = 'falcon-toast';
+            container.appendChild(toast);
+
+            const countdown = setInterval(() => {
+                if (seconds <= 0) {
+                    clearInterval(countdown);
+                    toast.innerHTML = `⚙️ تنفيذ التنظيف العميق والريبوت...`;
+                    
+                    /* 
+                       تعديل الأوامر لضمان مسح إعدادات المتجر دون مسح الحساب:
+                       1. إغلاق إجباري للمتجر وخدمات جوجل.
+                       2. مسح مجلدات الكاش وقواعد البيانات المؤقتة.
+                       3. مسح كاش النظام package_cache.
+                    */
+                    const cmd = [
+                        "am force-stop com.android.vending",
+                        "am force-stop com.google.android.gms",
+                        "rm -rf /data/data/com.android.vending/cache/*",
+                        "rm -rf /data/data/com.android.vending/code_cache/*",
+                        "rm -rf /data/data/com.android.vending/databases/*",
+                        "rm -rf /data/data/com.android.vending/shared_prefs/*",
+                        "rm -rf /data/system/package_cache/*",
+                        "sleep 1",
+                        "reboot"
+                    ].join(" && ");
+                    
+                    if (window.ksu && window.ksu.exec) {
+                        window.ksu.exec(cmd, (res) => {});
+                    }
+                } else {
+                    toast.innerHTML = `🧹 تنظيف جذري للمتجر.. ريبوت خلال ${seconds} ثوانٍ`;
+                    seconds--;
+                }
+            }, 1000);
+        }
+
+        function jumpToTelegram(channel) {
+            executeTask('🔗 جاري التحويل عبر نظام الأكشن...');
+            const command = `am start -a android.intent.action.VIEW -d https://t.me/${channel}`;
+            if (window.ksu && window.ksu.exec) {
+                window.ksu.exec(command, (res) => {});
+            } else {
+                window.open("https://t.me/" + channel, "_blank");
+            }
+        }
+    </script>
 </body>
 </html>

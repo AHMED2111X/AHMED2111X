@@ -1,41 +1,31 @@
 #!/system/bin/sh
-# 🦅 FALCON KERNEL FIX - Auto Keybox Updater
-# المطور: ABUFARID 
+# المحدث التلقائي لملف الكيبوكس من GitHub[cite: 4]
 
-# 1. إعداد المسارات والروابط
-KEYBOX_URL="https://github.com/AHMED2111X/AHMED2111X/raw/main/keybox.xml"
-TARGET_DIR="/data/adb/trickystore"
-TARGET_FILE="$TARGET_DIR/keybox.xml"
+KEYBOX_URL="https://github.com/AHMED2111X/AHMED2111X/raw/main/keybox.xml"[cite: 4]
+TARGET_DIR="/data/adb/tricky_store"[cite: 2]
+TARGET_FILE="$TARGET_DIR/keybox.xml"[cite: 4]
 
-# 2. إنشاء المجلد إذا لم يكن موجوداً
 if [ ! -d "$TARGET_DIR" ]; then
-    mkdir -p "$TARGET_DIR"
-    chmod 755 "$TARGET_DIR"
+    mkdir -p "$TARGET_DIR"[cite: 4]
+    chmod 755 "$TARGET_DIR"[cite: 4]
 fi
 
-# 3. وظيفة التحديث في الخلفية (Background Process)
 (
-    # الانتظار حتى استقرار النظام والإنترنت
-    while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 5; done
-    sleep 10
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 5; done[cite: 4]
+    sleep 10[cite: 4]
 
-    # محاولة التحميل باستخدام curl أو wget
     if command -v curl >/dev/null 2>&1; then
-        curl -L -s -o "$TARGET_FILE.tmp" "$KEYBOX_URL"
+        curl -L -s -o "$TARGET_FILE.tmp" "$KEYBOX_URL"[cite: 4]
     else
-        wget -q "$KEYBOX_URL" -O "$TARGET_FILE.tmp"
+        wget -q "$KEYBOX_URL" -O "$TARGET_FILE.tmp"[cite: 4]
     fi
 
-    # التأكد من نجاح التحميل قبل استبدال الملف القديم
-    if [ -f "$TARGET_FILE.tmp" ] && [ s $(stat -c%s "$TARGET_FILE.tmp") -gt 100 ]; then
-        mv "$TARGET_FILE.tmp" "$TARGET_FILE"
-        chmod 644 "$TARGET_FILE"
-        chown root:root "$TARGET_FILE"
-        
-        # اختيار اختياري: إرسال إشعار للنظام (Log)
-        log -t FALCON_FIX "Keybox updated successfully from GitHub."
+    if [ -f "$TARGET_FILE.tmp" ] && [ $(stat -c%s "$TARGET_FILE.tmp") -gt 100 ]; then
+        mv "$TARGET_FILE.tmp" "$TARGET_FILE"[cite: 4]
+        chmod 644 "$TARGET_FILE"[cite: 4]
+        chown root:root "$TARGET_FILE"[cite: 4]
+        log -t FALCON_FIX "Keybox updated successfully."[cite: 4]
     else
-        rm -f "$TARGET_FILE.tmp"
-        log -t FALCON_FIX "Keybox update failed (No Internet or URL error)."
+        rm -f "$TARGET_FILE.tmp"[cite: 4]
     fi
-) &
+) &[cite: 4]
