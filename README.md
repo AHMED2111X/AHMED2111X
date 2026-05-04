@@ -4,7 +4,7 @@
 
 ---
 
-## 🦅 **FALCON INTEGRITY FIX | v2.18 Official**
+## 🦅 **FALCON INTEGRITY FIX | v2.20 Official**
 ### **The Ultimate Performance & Security Bridge**
 **Supported Android Versions:** 8.0 — 16 (Upcoming)
 
