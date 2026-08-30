@@ -1,15 +1,15 @@
 {
-  "PRODUCT": "NX769J",
-  "DEVICE": "NX769J",
-  "MANUFACTURER": "Nubia",
-  "BRAND": "RedMagic",
-  "MODEL": "REDMAGIC 11 Pro",
-  "FINGERPRINT": "RedMagic/NX769J/NX769J:14/UKQ1.231120.001/24011501:user/release-keys",
-  "SECURITY_PATCH": "2024-05-05",
-  "ID": "UKQ1.231120.001",
+  "PRODUCT": "komodo",
+  "DEVICE": "komodo",
+  "MANUFACTURER": "Google",
+  "BRAND": "google",
+  "MODEL": "Pixel 9 Pro XL",
+  "FINGERPRINT": "google/komodo/komodo:15/AP3A.241005.015/12523205:user/release-keys",
+  "SECURITY_PATCH": "2024-10-05",
+  "ID": "AP3A.241005.015",
   "TYPE": "user",
   "TAGS": "release-keys",
-  "INCREMENTAL": "24011501",
-  "RELEASE": "14",
-  "API_LEVEL": "34"
+  "INCREMENTAL": "12523205",
+  "RELEASE": "15",
+  "API_LEVEL": "35"
 }

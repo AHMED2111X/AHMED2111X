@@ -1,8 +1,8 @@
 id=falcon_integrity_fix
 name=FALCON INTEGRITY FIX
-version=v2.31
-versionCode=33
+version=v2.32
+versionCode=34
 author=ABUFARID
-description=🦅 وضع الـ 165 فريم نشط | بصمة Red Magic 11 Pro | تزييف حالة البوت لودر وفتح الحماية القصوى.
+description=🦅 وضع الـ 165 فريم نشط | بصمة Pixel 9 Pro XL | تزييف حالة البوت لودر وفتح الحماية القصوى.
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
 zygisk=true
