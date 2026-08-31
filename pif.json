@@ -3,13 +3,8 @@
   "DEVICE": "komodo",
   "MANUFACTURER": "Google",
   "BRAND": "google",
-  "MODEL": "Pixel 9 Pro XL",
-  "FINGERPRINT": "google/komodo/komodo:15/AP3A.241005.015/12523205:user/release-keys",
-  "SECURITY_PATCH": "2024-10-05",
-  "ID": "AP3A.241005.015",
-  "TYPE": "user",
-  "TAGS": "release-keys",
-  "INCREMENTAL": "12523205",
-  "RELEASE": "15",
-  "API_LEVEL": "35"
+  "MODEL": "Pixel 10",
+  "FINGERPRINT": "google/komodo/komodo:15/AP3A.241005.015/12500000:user/release-keys",
+  "SECURITY_PATCH": "2026-08-05",
+  "FIRST_API_LEVEL": "32"
 }

@@ -1,44 +1,46 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
 
-# --- 1. تفعيل محرك الحقن الصافي ---
-# فحص وجود ملف الحقن أولاً وضبط الصلاحيات
-if [ -f "$MODDIR/inject" ]; then
-    chmod 755 "$MODDIR/inject"
-    "$MODDIR/inject" &
+# الانتظار حتى اكتمال إقلاع النظام
+until [ "$(getprop sys.boot_completed)" = "1" ]; do
+    sleep 2
+done
+
+# ----------------------------------------------------
+# 1. إخفاء البوت لودر المفتوح (Play Integrity Fix)
+# ----------------------------------------------------
+resetprop -n ro.boot.verifiedbootstate "green"
+resetprop -n ro.boot.flash.locked "1"
+resetprop -n ro.boot.veritymode "enforcing"
+resetprop -n ro.boot.vbmeta.device_state "locked"
+resetprop -n ro.boot.warrantybit "0"
+resetprop -n ro.warranty_bit "0"
+resetprop -n ro.debuggable "0"
+resetprop -n ro.secure "1"
+
+# خصائص الـ Vendor
+resetprop -n vendor.boot.verifiedbootstate "green"
+resetprop -n vendor.boot.flash.locked "1"
+
+# ----------------------------------------------------
+# 2. إعدادات وتوافقية SUSFS (KernelSU)
+# ----------------------------------------------------
+if [ -d "/data/adb/susfs4ksu" ] || [ -f "/data/adb/ksu/bin/susfs" ] || [ -d "/data/adb/sufs" ]; then
+    resetprop -n ksu.susfs.enabled "1"
+    
+    if [ -f "/data/adb/susfs4ksu/sus_path.txt" ]; then
+        chmod 0644 /data/adb/susfs4ksu/sus_path.txt
+    fi
 fi
 
-# إنشاء مسار الحماية الأساسي
-mkdir -p /data/adb/tricky_store
-chmod 755 /data/adb/tricky_store
-chown root:root /data/adb/tricky_store
+# ----------------------------------------------------
+# 3. دعم Zygisk Next 1.5.0 و Keybox
+# ----------------------------------------------------
+if [ -d "/data/adb/modules/zygisk_next" ]; then
+    resetprop -n zygisk.next.version "1.5.0"
+fi
 
-# --- 2. تحديث البصمة الأصلية (Pixel 9 Pro XL) ---
-# لضمان تجاوز فحص Play Integrity دون تعارض
 if [ -f "$MODDIR/pif.json" ]; then
-    cp "$MODDIR/pif.json" /data/adb/pif.json
-    chmod 644 /data/adb/pif.json
-    chown root:root /data/adb/pif.json
-    chcon u:object_r:system_file:s0 /data/adb/pif.json 2>/dev/null
+    chmod 0644 $MODDIR/pif.json
+    chmod 0644 $MODDIR/keybox.xml 2>/dev/null
 fi
-
-# --- 3. إدارة وتنظيف ملفات الكيبوكس (Keybox) ---
-# حذف كافة الملفات القديمة والاحتياطية لضمان الاستبدال النظيف
-rm -f /data/adb/tricky_store/keybox.xml
-rm -f /data/adb/tricky_store/keybox.xml.bak
-rm -f /data/adb/tricky_store/*.bak
-rm -f /data/adb/tricky_store/*.tmp
-
-# نقل ملف الكيبوكس الجديد وضبط الصلاحيات وسياق SELinux لـ Android 16
-if [ -f "$MODDIR/keybox.xml" ]; then
-    cp "$MODDIR/keybox.xml" /data/adb/tricky_store/keybox.xml
-    chmod 644 /data/adb/tricky_store/keybox.xml
-    chown root:root /data/adb/tricky_store/keybox.xml
-    chcon u:object_r:system_file:s0 /data/adb/tricky_store/keybox.xml 2>/dev/null
-fi
-
-# --- 4. تفعيل الأداء الأقصى (وضع الوحش) ---
-# تفعيل الـ 165 FPS وضبط الاستجابة الأقصى للمس
-settings put system min_refresh_rate 165.0
-settings put system peak_refresh_rate 165.0
-setprop windowsmgr.max_events_per_sec 300
