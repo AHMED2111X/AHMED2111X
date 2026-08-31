@@ -1,7 +1,7 @@
 id=falcon_integrity_fix
 name=FALCON INTEGRITY FIX
-version=v2.33
-versionCode=35
+version=v2.34
+versionCode=36
 author=ABUFARID
 description=🦅 وضع الـ 165 فريم نشط | بصمة Pixel 10 | دعم SUSFS و Zygisk Next | اضغط زر Action لتحديث البصمة تلقائياً.
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
