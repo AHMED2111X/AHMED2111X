@@ -3,7 +3,7 @@
 SKIPUNZIP=0
 
 ui_print "*************************************"
-ui_print "*     FALCON INTEGRITY FIX v2.40    *"
+ui_print "*     FALCON INTEGRITY FIX v2.35    *"
 ui_print "*         By Author: ABUFARID       *"
 ui_print "*************************************"
 
