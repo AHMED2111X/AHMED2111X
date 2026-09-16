@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FALCON INTEGRITY FIX</title>
     <style>
-        /* التنسيق الاحترافي الخاص بك */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html {
             height: 100%; background-color: #000;
@@ -18,16 +17,16 @@
         }
         .branding-area {
             flex-grow: 1; display: flex; align-items: center;
-            justify-content: center; padding-right: 380px; z-index: 1;
+            justify-content: center; padding-left: 380px; z-index: 1;
         }
         .main-logo {
             max-width: 60%; max-height: 65vh; object-fit: contain;
             filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.7));
         }
         .sidebar {
-            position: absolute; right: 0; top: 0; width: 380px; height: 100%;
+            position: absolute; left: 0; top: 0; width: 380px; height: 100%;
             background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(20px);
-            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
             display: flex; flex-direction: column; padding: 40px 25px; z-index: 10;
         }
         .dev-tag {
@@ -41,38 +40,37 @@
             text-decoration: none; transition: 0.3s ease;
             cursor: pointer; display: flex; align-items: center; gap: 15px;
         }
-        .pro-btn:hover { background: rgba(158, 202, 255, 0.1); border-color: #9ecaff; transform: translateX(-8px); }
+        .pro-btn:hover { background: rgba(158, 202, 255, 0.1); border-color: #9ecaff; transform: translateX(8px); }
         .icon-box { width: 42px; height: 42px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .btn-content { display: flex; flex-direction: column; text-align: right; }
+        .btn-content { display: flex; flex-direction: column; text-align: left; }
         .btn-title { font-size: 14px; font-weight: bold; }
         .btn-desc { font-size: 10px; color: #777; }
-        .line-red { border-right: 4px solid #ff4444; }
-        .line-green { border-right: 4px solid #00c853; }
-        .line-orange { border-right: 4px solid #ffa000; }
-        .line-blue { border-right: 4px solid #0091ea; }
-        .line-purple { border-right: 4px solid #d500f9; }
+        .line-red { border-left: 4px solid #ff4444; }
+        .line-green { border-left: 4px solid #00c853; }
+        .line-orange { border-left: 4px solid #ffa000; }
+        .line-blue { border-left: 4px solid #0091ea; }
+        .line-purple { border-left: 4px solid #d500f9; }
 
         #notification-container {
-            position: fixed; top: 20px; left: 20px;
+            position: fixed; top: 20px; right: 20px;
             display: flex; flex-direction: column; gap: 10px; z-index: 1000;
         }
         .falcon-toast {
             background: rgba(30, 30, 30, 0.95); color: #fff;
             padding: 15px 25px; border-radius: 12px;
-            border-right: 4px solid #9ecaff;
+            border-left: 4px solid #9ecaff;
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             backdrop-filter: blur(10px);
             animation: slideIn 0.4s ease forwards;
             min-width: 280px; font-size: 14px;
         }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
 <body>
 
     <div class="main-wrapper">
         <main class="branding-area">
-            <!-- تمت إعادة اسم ملف الصورة الأصلي كما طلبتِ تماماً -->
             <img src="Falcon.png" alt="Falcon" class="main-logo">
         </main>
 
@@ -82,32 +80,32 @@
                 <div class="pro-btn line-purple" onclick="updateKeybox()">
                     <div class="icon-box">📥</div>
                     <div class="btn-content">
-                        <span class="btn-title">تحديث ملف Keybox</span>
-                        <span class="btn-desc">جلب أحدث ملف من GitHub مباشرة</span>
+                        <span class="btn-title">Update Keybox File</span>
+                        <span class="btn-desc">Fetch latest keybox directly from GitHub</span>
                     </div>
                 </div>
 
-                <div class="pro-btn line-red" onclick="executeTask('🚀 تم تفعيل وضع الوحش!')">
+                <div class="pro-btn line-red" onclick="executeTask('🚀 Beast Mode 165Hz Enabled!')">
                     <div class="icon-box">🚀</div>
                     <div class="btn-content">
-                        <span class="btn-title">وضع الوحش 165Hz</span>
-                        <span class="btn-desc">أقصى أداء وتزييف حالة النظام</span>
+                        <span class="btn-title">Beast Mode 165Hz</span>
+                        <span class="btn-desc">Maximum performance and system spoofing</span>
                     </div>
                 </div>
 
                 <div class="pro-btn line-green" onclick="smartCacheAndReboot()">
                     <div class="icon-box">🧹</div>
                     <div class="btn-content">
-                        <span class="btn-title">تفريغ الكاش الذكي</span>
-                        <span class="btn-desc" style="color: #00c853; font-weight: bold;">⚠️ ريبوت خلال 5 ثوانٍ لضمان التعديلات</span>
+                        <span class="btn-title">Smart Cache Clear</span>
+                        <span class="btn-desc" style="color: #00c853; font-weight: bold;">⚠️ Auto-reboot in 5 seconds</span>
                     </div>
                 </div>
 
-                <div class="pro-btn line-orange" onclick="executeTask('🗑️ تم تنظيف TrickyStore!')">
+                <div class="pro-btn line-orange" onclick="executeTask('🗑️ TrickyStore Cleaned!')">
                     <div class="icon-box">📂</div>
                     <div class="btn-content">
-                        <span class="btn-title">تنظيف TrickyStore</span>
-                        <span class="btn-desc">حذف ملفات الباك والمخلفات</span>
+                        <span class="btn-title">Clean TrickyStore</span>
+                        <span class="btn-desc">Delete backup and temporary files</span>
                     </div>
                 </div>
 
@@ -116,16 +114,16 @@
                 <div class="pro-btn line-blue" onclick="jumpToTelegram('falcon_kernel')">
                     <div class="icon-box">🛡️</div>
                     <div class="btn-content">
-                        <span class="btn-title">متجر فالكون للهاكات</span>
-                        <span class="btn-desc">تواصل مباشر واشتراكات VIP</span>
+                        <span class="btn-title">Falcon Store</span>
+                        <span class="btn-desc">Direct contact & VIP subscriptions</span>
                     </div>
                 </div>
 
                 <div class="pro-btn" onclick="jumpToTelegram('falconkernal')">
                     <div class="icon-box">📢</div>
                     <div class="btn-content">
-                        <span class="btn-title">قناة التليجرام العامة</span>
-                        <span class="btn-desc">آخر الأخبار والتحديثات المستمرة</span>
+                        <span class="btn-title">Telegram Channel</span>
+                        <span class="btn-desc">Latest updates and announcements</span>
                     </div>
                 </div>
             </nav>
@@ -145,7 +143,7 @@
         }
 
         function updateKeybox() {
-            executeTask('⏳ جاري جلب ملف Keybox من GitHub...');
+            executeTask('⏳ Fetching Keybox file from GitHub...');
             const url = "https://github.com/AHMED2111X/AHMED2111X/raw/main/keybox.xml";
             const target = "/data/adb/tricky_store/keybox.xml";
             
@@ -157,10 +155,10 @@
 
             if (window.ksu && window.ksu.exec) {
                 window.ksu.exec(cmd, (res) => {
-                    executeTask('✅ تم تحديث ملف Keybox بنجاح!');
+                    executeTask('✅ Keybox file updated successfully!');
                 });
             } else {
-                executeTask('❌ خطأ: لم يتم اكتشاف بيئة KernelSU');
+                executeTask('❌ Error: KernelSU environment not detected');
             }
         }
 
@@ -174,7 +172,7 @@
             const countdown = setInterval(() => {
                 if (seconds <= 0) {
                     clearInterval(countdown);
-                    toast.innerHTML = `⚙️ تنفيذ التنظيف العميق والريبوت...`;
+                    toast.innerHTML = `⚙️ Executing deep clean and rebooting...`;
                     const cmd = [
                         "am force-stop com.android.vending",
                         "am force-stop com.google.android.gms",
@@ -188,14 +186,14 @@
                     ].join(" && ");
                     if (window.ksu && window.ksu.exec) { window.ksu.exec(cmd, (res) => {}); }
                 } else {
-                    toast.innerHTML = `🧹 تنظيف جذري للمتجر.. ريبوت خلال ${seconds} ثوانٍ`;
+                    toast.innerHTML = `🧹 Clearing Store cache.. Rebooting in ${seconds}s`;
                     seconds--;
                 }
             }, 1000);
         }
 
         function jumpToTelegram(channel) {
-            executeTask('🔗 جاري التحويل عبر نظام الأكشن...');
+            executeTask('🔗 Redirecting via intent action...');
             const command = `am start -a android.intent.action.VIEW -d https://t.me/${channel}`;
             if (window.ksu && window.ksu.exec) {
                 window.ksu.exec(command, (res) => {});
