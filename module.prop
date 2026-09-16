@@ -1,8 +1,8 @@
 id=falcon_integrity_fix
 name=FALCON INTEGRITY FIX
-version=v2.42
-versionCode=44
+version=v2.43
+versionCode=45
 author=ABUFARID
-description=🦅 وضع الـ 165 فريم نشط | بصمة Pixel 9 Pro XL | تزييف حالة البوت لودر وفتح الحماية القصوى.
+description=🦅 165 FPS Mode Active | Bootloader Spoofing & Max Security Bypass.
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
 zygisk=true
