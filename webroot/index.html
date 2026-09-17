@@ -27,24 +27,74 @@
             position: absolute; left: 0; top: 0; width: 380px; height: 100%;
             background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(20px);
             border-right: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex; flex-direction: column; padding: 40px 25px; z-index: 10;
+            display: flex; flex-direction: column; padding: 20px 20px; z-index: 10;
+            overflow-y: auto;
         }
         .dev-tag {
             color: #9ecaff; font-size: 12px; font-weight: bold;
-            margin-bottom: 30px; text-align: center; letter-spacing: 2px;
+            margin-bottom: 12px; text-align: center; letter-spacing: 2px;
         }
-        .nav-menu { display: flex; flex-direction: column; gap: 14px; }
+
+        /* Real-Time Status Panel */
+        .status-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+        }
+        .status-label { color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-value { font-weight: bold; padding: 3px 8px; border-radius: 6px; font-size: 10px; }
+        
+        .badge-green { background: rgba(0, 200, 83, 0.15); color: #00c853; border: 1px solid rgba(0, 200, 83, 0.3); }
+        .badge-red { background: rgba(255, 68, 68, 0.15); color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.3); }
+
+        /* Active Users Badge */
+        .online-badge {
+            background: rgba(0, 200, 83, 0.08);
+            border: 1px solid rgba(0, 200, 83, 0.3);
+            border-radius: 15px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .online-left { display: flex; align-items: center; gap: 8px; }
+        .pulse-dot {
+            width: 8px; height: 8px; background-color: #00c853;
+            border-radius: 50%; box-shadow: 0 0 8px #00c853;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(0, 200, 83, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
+        }
+        .online-title { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .online-count { font-size: 16px; font-weight: bold; color: #00c853; }
+
+        .nav-menu { display: flex; flex-direction: column; gap: 10px; }
         .pro-btn {
             background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px; padding: 18px; color: #fff;
+            border-radius: 16px; padding: 14px; color: #fff;
             text-decoration: none; transition: 0.3s ease;
-            cursor: pointer; display: flex; align-items: center; gap: 15px;
+            cursor: pointer; display: flex; align-items: center; gap: 12px;
         }
-        .pro-btn:hover { background: rgba(158, 202, 255, 0.1); border-color: #9ecaff; transform: translateX(8px); }
-        .icon-box { width: 42px; height: 42px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .pro-btn:hover { background: rgba(158, 202, 255, 0.1); border-color: #9ecaff; transform: translateX(5px); }
+        .icon-box { width: 36px; height: 36px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
         .btn-content { display: flex; flex-direction: column; text-align: left; }
-        .btn-title { font-size: 14px; font-weight: bold; }
-        .btn-desc { font-size: 10px; color: #777; }
+        .btn-title { font-size: 13px; font-weight: bold; }
+        .btn-desc { font-size: 9px; color: #777; }
         .line-red { border-left: 4px solid #ff4444; }
         .line-green { border-left: 4px solid #00c853; }
         .line-orange { border-left: 4px solid #ffa000; }
@@ -57,12 +107,12 @@
         }
         .falcon-toast {
             background: rgba(30, 30, 30, 0.95); color: #fff;
-            padding: 15px 25px; border-radius: 12px;
+            padding: 12px 20px; border-radius: 10px;
             border-left: 4px solid #9ecaff;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             backdrop-filter: blur(10px);
             animation: slideIn 0.4s ease forwards;
-            min-width: 280px; font-size: 14px;
+            min-width: 250px; font-size: 13px;
         }
         @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
     </style>
@@ -76,12 +126,34 @@
 
         <aside class="sidebar">
             <div class="dev-tag">BY ABUFARID</div>
+
+            <!-- Real-Time Status Panel -->
+            <div class="status-panel">
+                <div class="status-row">
+                    <span class="status-label">Zygisk Status:</span>
+                    <span id="zygisk-status" class="status-value badge-green">Active</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Bootloader:</span>
+                    <span id="bl-status" class="status-value badge-green">Spoofed (Safe)</span>
+                </div>
+            </div>
+
+            <!-- Active Users Badge with Falcon Icon -->
+            <div class="online-badge">
+                <div class="online-left">
+                    <div class="pulse-dot"></div>
+                    <span class="online-title"> Online Users</span>
+                </div>
+                <div class="online-count" id="online-counter">--</div>
+            </div>
+
             <nav class="nav-menu">
                 <div class="pro-btn line-purple" onclick="updateKeybox()">
                     <div class="icon-box">📥</div>
                     <div class="btn-content">
                         <span class="btn-title">Update Keybox File</span>
-                        <span class="btn-desc">Fetch latest keybox directly from GitHub</span>
+                        <span class="btn-desc">Fetch latest keybox from GitHub</span>
                     </div>
                 </div>
 
@@ -89,7 +161,7 @@
                     <div class="icon-box">🚀</div>
                     <div class="btn-content">
                         <span class="btn-title">Beast Mode 165Hz</span>
-                        <span class="btn-desc">Maximum performance and system spoofing</span>
+                        <span class="btn-desc">Max performance and settings</span>
                     </div>
                 </div>
 
@@ -97,7 +169,7 @@
                     <div class="icon-box">🧹</div>
                     <div class="btn-content">
                         <span class="btn-title">Smart Cache Clear</span>
-                        <span class="btn-desc" style="color: #00c853; font-weight: bold;">⚠️ Auto-reboot in 5 seconds</span>
+                        <span class="btn-desc" style="color: #00c853; font-weight: bold;">⚠️ Auto-reboot in 5s</span>
                     </div>
                 </div>
 
@@ -105,11 +177,11 @@
                     <div class="icon-box">📂</div>
                     <div class="btn-content">
                         <span class="btn-title">Clean TrickyStore</span>
-                        <span class="btn-desc">Delete backup and temporary files</span>
+                        <span class="btn-desc">Delete temp and backup files</span>
                     </div>
                 </div>
 
-                <div style="margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.05);"></div>
+                <div style="margin: 5px 0; border-top: 1px solid rgba(255,255,255,0.05);"></div>
 
                 <div class="pro-btn line-blue" onclick="jumpToTelegram('falcon_kernel')">
                     <div class="icon-box">🛡️</div>
@@ -123,7 +195,7 @@
                     <div class="icon-box">📢</div>
                     <div class="btn-content">
                         <span class="btn-title">Telegram Channel</span>
-                        <span class="btn-desc">Latest updates and announcements</span>
+                        <span class="btn-desc">Latest updates</span>
                     </div>
                 </div>
             </nav>
@@ -133,6 +205,35 @@
     <div id="notification-container"></div>
 
     <script>
+        const SERVER_URL = "https://falcon-counter-server.onrender.com";
+
+        let deviceId = localStorage.getItem('falcon_device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('falcon_device_id', deviceId);
+        }
+
+        function refreshLiveStatus() {
+            // Real-time server ping for active users counter
+            fetch(`${SERVER_URL}/ping`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deviceId: deviceId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.onlineUsers !== undefined) {
+                    document.getElementById('online-counter').innerText = data.onlineUsers;
+                }
+            })
+            .catch(() => {
+                document.getElementById('online-counter').innerText = '1';
+            });
+        }
+
+        refreshLiveStatus();
+        setInterval(refreshLiveStatus, 10000);
+
         function executeTask(message) {
             const container = document.getElementById('notification-container');
             const toast = document.createElement('div');
