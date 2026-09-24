@@ -1,7 +1,7 @@
 id=falcon_integrity_fix
 name=FALCON INTEGRITY FIX
-version=v2.48
-versionCode=50
+version=v2.49
+versionCode=51
 author=ABUFARID
 description=🔴 Zygisk Not Injecting | 🔴 BL Unspoofed | 🦅 Online: 1
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json

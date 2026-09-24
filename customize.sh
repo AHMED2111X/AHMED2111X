@@ -51,7 +51,18 @@ if [ -f "$MODPATH/pif.json" ]; then
 fi
 
 [ -f "$MODPATH/keybox.xml" ] && cp -f "$MODPATH/keybox.xml" /data/adb/tricky_store/
-[ -f "$MODPATH/target.txt" ] && cp -f "$MODPATH/target.txt" /data/adb/tricky_store/
+
+# --- Preserve existing target.txt selections & Merge without deleting ---
+if [ -f "$MODPATH/target.txt" ]; then
+    if [ -f "/data/adb/tricky_store/target.txt" ]; then
+        # Append new targets while removing duplicates to keep user choices safe
+        cat "$MODPATH/target.txt" >> /data/adb/tricky_store/target.txt
+        sort -u /data/adb/tricky_store/target.txt -o /data/adb/tricky_store/target.txt
+    else
+        cp -f "$MODPATH/target.txt" /data/adb/tricky_store/
+    fi
+fi
+
 [ -f "$MODPATH/security_patch.txt" ] && cp -f "$MODPATH/security_patch.txt" /data/adb/tricky_store/
 
 # 3. Add Key Applications to Magisk DenyList

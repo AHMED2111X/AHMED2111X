@@ -50,7 +50,6 @@ chmod 755 /data/adb/tricky_store
 chown root:root /data/adb/tricky_store
 
 # --- 2. Manage and Clean Keybox Files ---
-rm -f /data/adb/tricky_store/keybox.xml
 rm -f /data/adb/tricky_store/keybox.xml.bak
 rm -f /data/adb/tricky_store/*.bak
 rm -f /data/adb/tricky_store/*.tmp
@@ -67,7 +66,50 @@ settings put system min_refresh_rate 165.0
 settings put system peak_refresh_rate 165.0
 setprop windowsmgr.max_events_per_sec 300
 
-# --- 4. Real-time Status, Bootloader & Online Users Checker ---
+# --- 4. Auto-Hide Newly Installed Packages & Clean Backup Files ---
+(
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do 
+        sleep 3
+    done
+
+    TARGET_FILE="/data/adb/tricky_store/target.txt"
+    touch "$TARGET_FILE"
+
+    # Cache current package list
+    KNOWN_PACKAGES_FILE="/data/adb/falcon_known_packages.txt"
+    pm list packages | cut -d':' -f2 | sort -u > "$KNOWN_PACKAGES_FILE"
+
+    # Add all current packages to target.txt once at boot if missing
+    cat "$KNOWN_PACKAGES_FILE" >> "$TARGET_FILE"
+    sort -u "$TARGET_FILE" -o "$TARGET_FILE"
+
+    while true; do
+        sleep 5
+
+        # Cleanup any .bak or .tmp files created by TrickyStore automatically
+        rm -f /data/adb/tricky_store/*.bak 2>/dev/null
+        rm -f /data/adb/tricky_store/*.tmp 2>/dev/null
+
+        # Fetch latest packages
+        CURRENT_PACKAGES=$(pm list packages | cut -d':' -f2 | sort -u)
+        
+        # Check for new packages installed
+        NEW_PACKAGES=$(comm -13 "$KNOWN_PACKAGES_FILE" <(echo "$CURRENT_PACKAGES"))
+
+        if [ -n "$NEW_PACKAGES" ]; then
+            for pkg in $NEW_PACKAGES; do
+                if ! grep -q "^$pkg$" "$TARGET_FILE"; then
+                    echo "$pkg" >> "$TARGET_FILE"
+                fi
+            done
+            # Refresh known packages list
+            echo "$CURRENT_PACKAGES" > "$KNOWN_PACKAGES_FILE"
+            chmod 644 "$TARGET_FILE"
+        fi
+    done
+) &
+
+# --- 5. Real-time Status, Bootloader & Online Users Checker ---
 SERVER_URL="https://falcon-counter-server.onrender.com"
 
 DEVICE_ID_FILE="/data/adb/falcon_device_id"
@@ -95,16 +137,16 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     while true; do
         # Check Zygisk Injection Status
         if [ -p /dev/socket/zygisk ] || [ -d "/data/adb/modules/zygisk_next" ] || pgrep -f "zygisk" >/dev/null 2>&1; then
-            ZYGISK_STATUS="🟢 Zygisk Injecting"
+            ZYGISK_STATUS="🦅 Zygisk Injecting"
         else
-            ZYGISK_STATUS="🔴 Zygisk Not Injecting"
+            ZYGISK_STATUS="⚠️ Zygisk Not Injecting"
         fi
 
         # Check Bootloader Spoofing Status
         if [ -f "/data/adb/tricky_store/keybox.xml" ] && [ -s "/data/adb/tricky_store/keybox.xml" ]; then
-            BL_STATUS="🟢 BL Spoofed"
+            BL_STATUS="🛡️ BL Spoofed"
         else
-            BL_STATUS="🔴 BL Unspoofed"
+            BL_STATUS="⚠️ BL Unspoofed"
         fi
 
         # Get Online Users Count
@@ -121,7 +163,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
         fi
 
         # Update description dynamically
-        NEW_DESC="$ZYGISK_STATUS | $BL_STATUS | 🦅 Online: $ONLINE_USERS"
+        NEW_DESC="$ZYGISK_STATUS | $BL_STATUS | 👥 Online: $ONLINE_USERS"
 
         TARGET_PROP="/data/adb/modules/falcon_integrity_fix/module.prop"
         if [ -f "$TARGET_PROP" ]; then
