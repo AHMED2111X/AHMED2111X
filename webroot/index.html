@@ -100,6 +100,7 @@
         .line-orange { border-left: 4px solid #ffa000; }
         .line-blue { border-left: 4px solid #0091ea; }
         .line-purple { border-left: 4px solid #d500f9; }
+        .line-dark-purple { border-left: 4px solid #6e40c9; }
 
         #notification-container {
             position: fixed; top: 20px; right: 20px;
@@ -191,11 +192,21 @@
                     </div>
                 </div>
 
-                <div class="pro-btn" onclick="jumpToTelegram('falconkernal')">
+                <!-- زر التلجرام المعدل -->
+                <div class="pro-btn line-purple" onclick="jumpToTelegram('falcon_kernel')">
                     <div class="icon-box">📢</div>
                     <div class="btn-content">
-                        <span class="btn-title">Telegram Channel</span>
-                        <span class="btn-desc">Latest updates</span>
+                        <span class="btn-title">Telegram Developer</span>
+                        <span class="btn-desc">@falcon_kernel</span>
+                    </div>
+                </div>
+
+                <!-- زر GitHub الجديد -->
+                <div class="pro-btn line-dark-purple" onclick="jumpToExternalUrl('https://github.com/AHMED2111X/AHMED2111X')">
+                    <div class="icon-box">🐙</div>
+                    <div class="btn-content">
+                        <span class="btn-title">GitHub Repository</span>
+                        <span class="btn-desc">AHMED2111X / Source</span>
                     </div>
                 </div>
             </nav>
@@ -300,6 +311,16 @@
                 window.ksu.exec(command, (res) => {});
             } else {
                 window.open("https://t.me/" + channel, "_blank");
+            }
+        }
+
+        function jumpToExternalUrl(url) {
+            executeTask('🔗 Opening GitHub Repository...');
+            const command = `am start -a android.intent.action.VIEW -d ${url}`;
+            if (window.ksu && window.ksu.exec) {
+                window.ksu.exec(command, (res) => {});
+            } else {
+                window.open(url, "_blank");
             }
         }
     </script>

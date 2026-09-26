@@ -22,7 +22,7 @@ resetprop_if_match() {
 }
 
 # --- Security Patches & Sensitive Props (Early Stage) ---
-novo_patch="2025-08-05"
+novo_patch="2026-03-05"
 resetprop -n ro.build.version.security_patch "$novo_patch"
 resetprop -n ro.vendor.build.security_patch "$novo_patch"
 
@@ -135,18 +135,18 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     resetprop_if_diff sys.oem_unlock_allowed 0
 
     while true; do
-        # Check Zygisk Injection Status
+        # Check Zygisk Injection Status (🟢 مفعل - 🔴 غير مفعل)
         if [ -p /dev/socket/zygisk ] || [ -d "/data/adb/modules/zygisk_next" ] || pgrep -f "zygisk" >/dev/null 2>&1; then
-            ZYGISK_STATUS="🦅 Zygisk Injecting"
+            ZYGISK_STATUS="🟢 Zygisk Injecting"
         else
-            ZYGISK_STATUS="⚠️ Zygisk Not Injecting"
+            ZYGISK_STATUS="🔴 Zygisk Not Injecting"
         fi
 
-        # Check Bootloader Spoofing Status
+        # Check Bootloader Status (🟢 موهّم/آمن - 🔴 غير موهّم/غير آمن)
         if [ -f "/data/adb/tricky_store/keybox.xml" ] && [ -s "/data/adb/tricky_store/keybox.xml" ]; then
-            BL_STATUS="🛡️ BL Spoofed"
+            BL_STATUS="🟢 BL Spoofed"
         else
-            BL_STATUS="⚠️ BL Unspoofed"
+            BL_STATUS="🔴 BL Unspoofed"
         fi
 
         # Get Online Users Count
@@ -162,8 +162,8 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             ONLINE_USERS="$FETCHED_COUNT"
         fi
 
-        # Update description dynamically
-        NEW_DESC="$ZYGISK_STATUS | $BL_STATUS | 👥 Online: $ONLINE_USERS"
+        # Update description dynamically using User Logo 👤
+        NEW_DESC="$ZYGISK_STATUS | $BL_STATUS | 👤 Online: $ONLINE_USERS"
 
         TARGET_PROP="/data/adb/modules/falcon_integrity_fix/module.prop"
         if [ -f "$TARGET_PROP" ]; then
