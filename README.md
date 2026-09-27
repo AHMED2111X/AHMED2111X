@@ -12,7 +12,7 @@ Version 2.48 addresses recent Play Integrity API changes, restoring full device 
 - **Universal Support:** Compatible with Magisk, KernelSU, KernelSU-Next, and APatch.
 
 ## 🛠️ Installation Instructions
-1. Download `FALCONINTEGITY_FIX_V2.48.zip` from the Releases section.
+1. Download `FALCONINTEGITY_FIX_V2.55.zip` from the Releases section.
 2. Flash the module via **Magisk Manager / KernelSU / APatch**.
 3. Reboot your device.
 4. Clear data for **Google Play Services** (`com.google.android.gms`) and **Google Play Store** (`com.android.vending`).
