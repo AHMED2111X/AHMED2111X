@@ -1,5 +1,6 @@
 #!/system/bin/sh
-MODDIR=${0%/*}
+MODPATH="${0%/*}"
+MODDIR="$MODPATH"
 
 # --- Auxiliary Functions for Safe Property Spoofing ---
 resetprop_if_diff() {
@@ -21,6 +22,11 @@ resetprop_if_match() {
     fi
 }
 
+delprop_if_exist() {
+    local NAME="$1"
+    [ -n "$(getprop "$NAME")" ] && resetprop --delete "$NAME" 2>/dev/null
+}
+
 # --- Security Patches & Sensitive Props (Early Stage) ---
 novo_patch="2026-03-05"
 resetprop -n ro.build.version.security_patch "$novo_patch"
@@ -33,9 +39,13 @@ resetprop_if_match vendor.boot.mode recovery unknown
 
 # SELinux Protection
 resetprop_if_diff ro.boot.selinux enforcing
+if [ "$SKIPDELPROP" != "true" ]; then
+    delprop_if_exist ro.build.selinux
+fi
+
 if [ -f /sys/fs/selinux/enforce ] && [ "$(toybox cat /sys/fs/selinux/enforce 2>/dev/null)" = "0" ]; then
-    chmod 640 /sys/fs/selinux/enforce
-    chmod 440 /sys/fs/selinux/policy
+    chmod 640 /sys/fs/selinux/enforce 2>/dev/null
+    chmod 440 /sys/fs/selinux/policy 2>/dev/null
 fi
 
 # --- 1. Enable Injection Engine ---
@@ -50,21 +60,28 @@ chmod 755 /data/adb/tricky_store
 chown root:root /data/adb/tricky_store
 
 # --- 2. Manage and Clean Keybox Files ---
-rm -f /data/adb/tricky_store/keybox.xml.bak
-rm -f /data/adb/tricky_store/*.bak
-rm -f /data/adb/tricky_store/*.tmp
+rm -f /data/adb/tricky_store/keybox.xml.bak 2>/dev/null
+rm -f /data/adb/tricky_store/*.bak 2>/dev/null
+rm -f /data/adb/tricky_store/*.tmp 2>/dev/null
 
+KEYBOX_SRC=""
 if [ -f "$MODDIR/keybox.xml" ]; then
-    cp "$MODDIR/keybox.xml" /data/adb/tricky_store/keybox.xml
+    KEYBOX_SRC="$MODDIR/keybox.xml"
+elif [ -f "$MODDIR/zygisk/keybox.xml" ]; then
+    KEYBOX_SRC="$MODDIR/zygisk/keybox.xml"
+fi
+
+if [ -n "$KEYBOX_SRC" ]; then
+    cp -f "$KEYBOX_SRC" /data/adb/tricky_store/keybox.xml
     chmod 644 /data/adb/tricky_store/keybox.xml
     chown root:root /data/adb/tricky_store/keybox.xml
     chcon u:object_r:system_file:s0 /data/adb/tricky_store/keybox.xml 2>/dev/null
 fi
 
 # --- 3. Enable Performance Options ---
-settings put system min_refresh_rate 165.0
-settings put system peak_refresh_rate 165.0
-setprop windowsmgr.max_events_per_sec 300
+settings put system min_refresh_rate 165.0 2>/dev/null
+settings put system peak_refresh_rate 165.0 2>/dev/null
+setprop windowsmgr.max_events_per_sec 300 2>/dev/null
 
 # --- 4. Auto-Hide Newly Installed Packages & Clean Backup Files ---
 (
@@ -79,12 +96,17 @@ setprop windowsmgr.max_events_per_sec 300
     KNOWN_PACKAGES_FILE="/data/adb/falcon_known_packages.txt"
     pm list packages | cut -d':' -f2 | sort -u > "$KNOWN_PACKAGES_FILE"
 
-    # Add all current packages to target.txt once at boot if missing
+    # Add all current packages to target.txt once at boot if missing safely
     cat "$KNOWN_PACKAGES_FILE" >> "$TARGET_FILE"
-    sort -u "$TARGET_FILE" -o "$TARGET_FILE"
+    sort -u "$TARGET_FILE" > "$TARGET_FILE.tmp" 2>/dev/null
+    if [ -s "$TARGET_FILE.tmp" ]; then
+        mv -f "$TARGET_FILE.tmp" "$TARGET_FILE"
+    else
+        rm -f "$TARGET_FILE.tmp" 2>/dev/null
+    fi
 
     while true; do
-        sleep 5
+        sleep 10
 
         # Cleanup any .bak or .tmp files created by TrickyStore automatically
         rm -f /data/adb/tricky_store/*.bak 2>/dev/null
@@ -104,7 +126,7 @@ setprop windowsmgr.max_events_per_sec 300
             done
             # Refresh known packages list
             echo "$CURRENT_PACKAGES" > "$KNOWN_PACKAGES_FILE"
-            chmod 644 "$TARGET_FILE"
+            chmod 644 "$TARGET_FILE" 2>/dev/null
         fi
     done
 ) &
@@ -129,10 +151,14 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     resetprop_if_diff ro.boot.flash.locked 1
     resetprop_if_diff ro.boot.realme.lockstate 1
     resetprop_if_diff ro.boot.vbmeta.device_state locked
+    resetprop_if_diff vendor.boot.vbmeta.device_state locked
     resetprop_if_diff vendor.boot.verifiedbootstate green
     resetprop_if_diff ro.boot.verifiedbootstate green
     resetprop_if_diff ro.boot.veritymode enforcing
     resetprop_if_diff sys.oem_unlock_allowed 0
+
+    LOOP_COUNTER=0
+    ONLINE_USERS="1"
 
     while true; do
         # Check Zygisk Injection Status (🟢 مفعل - 🔴 غير مفعل)
@@ -149,17 +175,19 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             BL_STATUS="🔴 BL Unspoofed"
         fi
 
-        # Get Online Users Count
-        ONLINE_USERS="1"
-        if command -v curl >/dev/null 2>&1; then
-            RESPONSE=$(curl -s --connect-timeout 1 -X POST -H "Content-Type: application/json" -d "{\"deviceId\":\"$DEVICE_ID\"}" "$SERVER_URL/ping")
-        elif command -v wget >/dev/null 2>&1; then
-            RESPONSE=$(wget -qO- --timeout=1 --post-data="{\"deviceId\":\"$DEVICE_ID\"}" --header="Content-Type: application/json" "$SERVER_URL/ping")
-        fi
+        # Fetch Online Users Count every 6 loops (~30 seconds) to conserve network & battery
+        if [ $((LOOP_COUNTER % 6)) -eq 0 ]; then
+            RESPONSE=""
+            if command -v curl >/dev/null 2>&1; then
+                RESPONSE=$(curl -s --connect-timeout 2 --max-time 3 -X POST -H "Content-Type: application/json" -d "{\"deviceId\":\"$DEVICE_ID\"}" "$SERVER_URL/ping" 2>/dev/null)
+            elif command -v wget >/dev/null 2>&1; then
+                RESPONSE=$(wget -qO- --timeout=3 --post-data="{\"deviceId\":\"$DEVICE_ID\"}" --header="Content-Type: application/json" "$SERVER_URL/ping" 2>/dev/null)
+            fi
 
-        FETCHED_COUNT=$(echo "$RESPONSE" | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
-        if [ -n "$FETCHED_COUNT" ]; then
-            ONLINE_USERS="$FETCHED_COUNT"
+            FETCHED_COUNT=$(echo "$RESPONSE" | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
+            if [ -n "$FETCHED_COUNT" ]; then
+                ONLINE_USERS="$FETCHED_COUNT"
+            fi
         fi
 
         # Update description dynamically using User Logo 👤
@@ -174,6 +202,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             sed -i "s/^description=.*/description=$NEW_DESC/g" "$MODDIR/module.prop"
         fi
 
-        sleep 1
+        LOOP_COUNTER=$((LOOP_COUNTER + 1))
+        sleep 5
     done
 ) &

@@ -25,9 +25,9 @@ SERVER_URL="https://falcon-counter-server.onrender.com"
 ONLINE_USERS=""
 
 if command -v curl >/dev/null 2>&1; then
-    ONLINE_USERS=$(curl -s --connect-timeout 5 -X POST -H "Content-Type: application/json" -d '{"deviceId":"install_check"}' "$SERVER_URL/ping" | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
+    ONLINE_USERS=$(curl -s --connect-timeout 5 --max-time 5 -X POST -H "Content-Type: application/json" -d '{"deviceId":"install_check"}' "$SERVER_URL/ping" 2>/dev/null | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
 elif command -v wget >/dev/null 2>&1; then
-    ONLINE_USERS=$(wget -qO- --timeout=5 --post-data='{"deviceId":"install_check"}' --header='Content-Type: application/json' "$SERVER_URL/ping" | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
+    ONLINE_USERS=$(wget -qO- --timeout=5 --post-data='{"deviceId":"install_check"}' --header='Content-Type: application/json' "$SERVER_URL/ping" 2>/dev/null | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
 fi
 
 if [ -n "$ONLINE_USERS" ] && [ -f "$MODPATH/module.prop" ]; then
@@ -35,13 +35,15 @@ if [ -n "$ONLINE_USERS" ] && [ -f "$MODPATH/module.prop" ]; then
     sed -i -E "s/Online Users: [0-9]+/Online Users: $ONLINE_USERS/g" "$MODPATH/module.prop"
 fi
 
-# 1. Set standard permissions
+# 1. Set standard permissions & Protect system execution scripts
 set_perm_recursive $MODPATH 0 0 0755 0644
 if [ -d "$MODPATH/zygisk" ]; then
   set_perm_recursive $MODPATH/zygisk 0 0 0755 0755
 fi
+[ -f "$MODPATH/service.sh" ] && set_perm $MODPATH/service.sh 0 0 0755
+[ -f "$MODPATH/post-fs-data.sh" ] && set_perm $MODPATH/post-fs-data.sh 0 0 0755
 
-# 2. Deploy Spoofing & Keybox Files
+# 2. Deploy Spoofing & Keybox Files (TEE Attestation Fix)
 ui_print "- 🎭 Deploying PIF & Tricky Store components..." ; delay
 mkdir -p /data/adb/tricky_store 2>/dev/null
 
@@ -50,20 +52,34 @@ if [ -f "$MODPATH/pif.json" ]; then
     cp -f "$MODPATH/pif.json" /data/adb/pif.json
 fi
 
-[ -f "$MODPATH/keybox.xml" ] && cp -f "$MODPATH/keybox.xml" /data/adb/tricky_store/
+# Deploy keybox.xml from either zygisk directory or module root
+if [ -f "$MODPATH/zygisk/keybox.xml" ]; then
+    cp -f "$MODPATH/zygisk/keybox.xml" /data/adb/tricky_store/keybox.xml
+elif [ -f "$MODPATH/keybox.xml" ]; then
+    cp -f "$MODPATH/keybox.xml" /data/adb/tricky_store/keybox.xml
+fi
 
-# --- Preserve existing target.txt selections & Merge without deleting ---
+# --- Preserve existing target.txt selections & Merge safely without file truncation ---
 if [ -f "$MODPATH/target.txt" ]; then
     if [ -f "/data/adb/tricky_store/target.txt" ]; then
-        # Append new targets while removing duplicates to keep user choices safe
+        # Append new targets and deduplicate safely via temporary file
         cat "$MODPATH/target.txt" >> /data/adb/tricky_store/target.txt
-        sort -u /data/adb/tricky_store/target.txt -o /data/adb/tricky_store/target.txt
+        sort -u /data/adb/tricky_store/target.txt > /data/adb/tricky_store/target.tmp 2>/dev/null
+        if [ -s "/data/adb/tricky_store/target.tmp" ]; then
+            mv -f /data/adb/tricky_store/target.tmp /data/adb/tricky_store/target.txt
+        else
+            rm -f /data/adb/tricky_store/target.tmp 2>/dev/null
+        fi
     else
         cp -f "$MODPATH/target.txt" /data/adb/tricky_store/
     fi
 fi
 
 [ -f "$MODPATH/security_patch.txt" ] && cp -f "$MODPATH/security_patch.txt" /data/adb/tricky_store/
+
+# Sanitize permissions for tricky_store directory
+chmod 755 /data/adb/tricky_store 2>/dev/null
+chmod 644 /data/adb/tricky_store/* 2>/dev/null
 
 # 3. Add Key Applications to Magisk DenyList
 ui_print "- 🛡️ Applying Auto DenyList for Apps & Banking..." ; delay
@@ -86,7 +102,7 @@ com.android.vending com.android.vending:background
 com.android.vending com.android.vending:instant_app_installer
 com.android.vending com.android.vending:com.google.android.finsky.verifier.apkanalysis.service.ApkContentsScanService"
 
-if magisk --denylist status >/dev/null 2>&1; then
+if command -v magisk >/dev/null 2>&1 && magisk --denylist status >/dev/null 2>&1; then
     for item in $DENY_LIST_APPS; do
         magisk --denylist add $item >/dev/null 2>&1
     done

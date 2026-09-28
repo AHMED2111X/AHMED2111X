@@ -1,23 +1,46 @@
 #!/system/bin/sh
-# FALCON KERNEL FIX - KEYBOX UPDATER & SECURITY PROPS
+# FALCON KERNEL FIX - INTEGRATED POST-FS-DATA SCRIPT
 
 MODPATH="${0%/*}"
 
-# --- Helper Functions for Safe Property Spoofing ---
-resetprop_if_diff() {
-    local PROP="$1"
-    local EXPECTED="$2"
-    local CURRENT=$(getprop "$PROP")
-    if [ -n "$CURRENT" ] && [ "$CURRENT" != "$EXPECTED" ]; then
-        resetprop -n "$PROP" "$EXPECTED"
-    fi
-}
+# Load common functions if available
+if [ -f "$MODPATH/common_func.sh" ]; then
+    . "$MODPATH/common_func.sh"
+fi
 
-# --- 1. Magisk DenyList & Shamiko Compatibility ---
-if magisk --denylist status >/dev/null 2>&1; then
-    magisk --denylist rm com.google.android.gms >/dev/null 2>&1
+# Fallback helper functions if missing
+if ! command -v resetprop_if_diff >/dev/null 2>&1; then
+    resetprop_if_diff() {
+        local PROP="$1"
+        local EXPECTED="$2"
+        local CURRENT=$(getprop "$PROP")
+        if [ -n "$CURRENT" ] && [ "$CURRENT" != "$EXPECTED" ]; then
+            resetprop -n "$PROP" "$EXPECTED"
+        fi
+    }
+fi
+
+if ! command -v delprop_if_exist >/dev/null 2>&1; then
+    delprop_if_exist() {
+        local NAME="$1"
+        [ -n "$(getprop "$NAME")" ] && resetprop --delete "$NAME" 2>/dev/null
+    }
+fi
+
+# --- 1. Magisk DenyList, Zygisk & Shamiko Compatibility ---
+if [ -d "$MODPATH/zygisk" ]; then
+    # Zygisk mode: remove Play Services and Store from DenyList so Zygisk can inject
+    if magisk --denylist status >/dev/null 2>&1; then
+        magisk --denylist rm com.google.android.gms >/dev/null 2>&1
+        magisk --denylist rm com.android.vending >/dev/null 2>&1
+    fi
+    [ -f "$MODPATH/common_setup.sh" ] && . "$MODPATH/common_setup.sh"
 else
-    if [ -d "/data/adb/modules/zygisk_shamiko" ] && [ ! -f "/data/adb/shamiko/whitelist" ]; then
+    # Scripts-only mode / Shamiko fallback
+    if magisk --denylist status >/dev/null 2>&1; then
+        magisk --denylist add com.google.android.gms com.google.android.gms.unstable >/dev/null 2>&1
+        magisk --denylist add com.android.vending com.android.vending >/dev/null 2>&1
+    elif [ -d "/data/adb/modules/zygisk_shamiko" ] && [ ! -f "/data/adb/shamiko/whitelist" ]; then
         magisk --denylist add com.google.android.gms com.google.android.gms >/dev/null 2>&1
         magisk --denylist add com.google.android.gms com.google.android.gms.unstable >/dev/null 2>&1
         magisk --denylist add com.android.vending com.android.vending >/dev/null 2>&1
@@ -25,6 +48,7 @@ else
 fi
 
 # --- 2. Early Sensitive Properties & OEM Spoofing ---
+
 # Samsung Warranty Bit Fixes
 resetprop_if_diff ro.boot.warranty_bit 0
 resetprop_if_diff ro.vendor.boot.warranty_bit 0
@@ -37,7 +61,7 @@ resetprop_if_diff ro.boot.realmebootstate green
 # OnePlus Orange State Warning Fix
 resetprop_if_diff ro.is_ever_orange 0
 
-# Pixel Project First API Level Cleanup
+# Cleanup Play Integrity Pihooks
 resetprop --delete persist.sys.pihooks.first_api_level 2>/dev/null
 
 # Set System Build Tags to release-keys
@@ -49,10 +73,18 @@ done
 for PROP in $(resetprop | grep -oE 'ro.*.build.type'); do
     resetprop_if_diff "$PROP" user
 done
+
 resetprop_if_diff ro.adb.secure 1
 resetprop_if_diff ro.debuggable 0
 resetprop_if_diff ro.force.debuggable 0
 resetprop_if_diff ro.secure 1
+resetprop_if_diff ro.boot.veritymode.managed yes
+
+# Delete verification error flags if allowed
+if [ "$SKIPDELPROP" != "true" ]; then
+    delprop_if_exist ro.boot.verifiedbooterror
+    delprop_if_exist ro.boot.verifyerrorpart
+fi
 
 # Custom ROM Conflicts Fixes (AOSPA, PixelPropsUtils, LeafOS)
 if [ -n "$(getprop ro.aospa.version)" ]; then
