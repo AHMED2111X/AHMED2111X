@@ -2,7 +2,8 @@ name: Auto Sync and Replace Keybox
 
 on:
   schedule:
-    - cron: '0 */3 * * *'
+    # يعمل تلقائياً كل 5 دقائق
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
