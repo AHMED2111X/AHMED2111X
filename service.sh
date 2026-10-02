@@ -1,6 +1,20 @@
 #!/system/bin/sh
+
+# ==============================================================================
+# FALCON INTEGRITY FIX - SERVICE SCRIPT
+# Developer: ABUFARID | Telegram: @FALCON_KERNEL
+# ==============================================================================
+
 MODPATH="${0%/*}"
 MODDIR="$MODPATH"
+
+# --- SELinux Policy Rules Application ---
+if [ -f "$MODPATH/sepolicy.rule" ]; then
+    magisk policy --live --file "$MODPATH/sepolicy.rule" 2>/dev/null || true
+fi
+
+chcon u:object_r:system_file:s0 "$MODPATH/service.sh" 2>/dev/null || true
+chmod 755 "$MODPATH/service.sh" 2>/dev/null || true
 
 # --- Auxiliary Functions for Safe Property Spoofing ---
 resetprop_if_diff() {
@@ -161,15 +175,16 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     ONLINE_USERS="1"
 
     while true; do
-        # Check Zygisk Injection Status (🟢 مفعل - 🔴 غير مفعل)
-        if [ -p /dev/socket/zygisk ] || [ -d "/data/adb/modules/zygisk_next" ] || pgrep -f "zygisk" >/dev/null 2>&1; then
-            ZYGISK_STATUS="🟢 Zygisk Injecting"
+        # 🔍 فحص دقيق وحقيقي لحالة حقن الزيجسك (Zygisk Injection Status)
+        if [ -p /dev/socket/zygisk ] || [ -S /dev/socket/zygiskd ] || pgrep -f "zygiskd" >/dev/null 2>&1 || pgrep -f "zygisk_next" >/dev/null 2>&1 || ([ -d "/data/adb/modules/zygisk_next" ] && [ ! -f "/data/adb/modules/zygisk_next/disable" ]); then
+            ZYGISK_STATUS="🟢 Zygisk Injected"
         else
             ZYGISK_STATUS="🔴 Zygisk Not Injecting"
         fi
 
-        # Check Bootloader Status (🟢 موهّم/آمن - 🔴 غير موهّم/غير آمن)
-        if [ -f "/data/adb/tricky_store/keybox.xml" ] && [ -s "/data/adb/tricky_store/keybox.xml" ]; then
+        # 🔍 فحص دقيق وحقيقي لحالة تمويه البوت لودر (Bootloader Spoofing Status)
+        KEYBOX_FILE="/data/adb/tricky_store/keybox.xml"
+        if [ -s "$KEYBOX_FILE" ] && grep -qi "Keybox" "$KEYBOX_FILE" 2>/dev/null; then
             BL_STATUS="🟢 BL Spoofed"
         else
             BL_STATUS="🔴 BL Unspoofed"
@@ -195,14 +210,61 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
 
         TARGET_PROP="/data/adb/modules/falcon_integrity_fix/module.prop"
         if [ -f "$TARGET_PROP" ]; then
-            sed -i "s/^description=.*/description=$NEW_DESC/g" "$TARGET_PROP"
+            sed -i "s|^description=.*|description=$NEW_DESC|g" "$TARGET_PROP"
         fi
         
         if [ -f "$MODDIR/module.prop" ]; then
-            sed -i "s/^description=.*/description=$NEW_DESC/g" "$MODDIR/module.prop"
+            sed -i "s|^description=.*|description=$NEW_DESC|g" "$MODDIR/module.prop"
         fi
 
         LOOP_COUNTER=$((LOOP_COUNTER + 1))
         sleep 5
+    done
+) &
+
+# --- 6. Auto-Sync KeyBox from GitHub (Every 30 Minutes) ---
+(
+    # Wait for full system boot and internet initialization
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do 
+        sleep 5
+    done
+
+    KEYBOX_BASE_URL="https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml"
+    TARGET_KEYBOX="/data/adb/tricky_store/keybox.xml"
+    TMP_KEYBOX="/data/adb/tricky_store/keybox.xml.tmp"
+
+    while true; do
+        # Generate timestamp query parameter to bypass GitHub raw CDN cache
+        TIMESTAMP=$(date +%s 2>/dev/null || echo "$RANDOM")
+        FRESH_KEYBOX_URL="${KEYBOX_BASE_URL}?t=${TIMESTAMP}"
+
+        # Download keybox.xml from GitHub
+        if command -v curl >/dev/null 2>&1; then
+            curl -sSL -H "Cache-Control: no-cache" --connect-timeout 5 --max-time 10 -o "$TMP_KEYBOX" "$FRESH_KEYBOX_URL"
+        elif command -v wget >/dev/null 2>&1; then
+            wget -q --no-cache --timeout=10 -O "$TMP_KEYBOX" "$FRESH_KEYBOX_URL"
+        fi
+
+        # Verify downloaded file is valid and contains Keybox tag
+        if [ -s "$TMP_KEYBOX" ] && grep -qi "Keybox" "$TMP_KEYBOX" 2>/dev/null; then
+            # Replace file if GitHub file is new/different or target file is missing
+            if ! cmp -s "$TMP_KEYBOX" "$TARGET_KEYBOX"; then
+                # Delete old Keybox file completely from TrickyStore
+                rm -f "$TARGET_KEYBOX"
+                
+                # Install new Keybox file directly
+                mv -f "$TMP_KEYBOX" "$TARGET_KEYBOX"
+                chmod 644 "$TARGET_KEYBOX"
+                chown root:root "$TARGET_KEYBOX"
+                chcon u:object_r:system_file:s0 "$TARGET_KEYBOX" 2>/dev/null
+            else
+                rm -f "$TMP_KEYBOX"
+            fi
+        else
+            rm -f "$TMP_KEYBOX"
+        fi
+
+        # Sleep 30 minutes (1800 seconds)
+        sleep 1800
     done
 ) &

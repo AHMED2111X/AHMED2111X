@@ -24,78 +24,104 @@
             filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.7));
         }
         .sidebar {
-            position: absolute; left: 0; top: 0; width: 380px; height: 100%;
+            position: absolute; left: 0; top: 0; width: 400px; height: 100%;
             background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(20px);
             border-right: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex; flex-direction: column; padding: 20px 20px; z-index: 10;
+            display: flex; flex-direction: column; padding: 15px 15px; z-index: 10;
             overflow-y: auto;
         }
-        .dev-tag {
-            color: #9ecaff; font-size: 12px; font-weight: bold;
-            margin-bottom: 12px; text-align: center; letter-spacing: 2px;
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
+        .dev-tag {
+            color: #9ecaff; font-size: 11px; font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .lang-switcher {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            outline: none;
+        }
+        .lang-switcher option { background: #111; color: #fff; }
 
-        /* Real-Time Status Panel */
+        /* Panels */
         .status-panel {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 15px;
-            padding: 12px 15px;
-            margin-bottom: 15px;
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
+        }
+        .panel-title {
+            font-size: 10px; color: #9ecaff; text-transform: uppercase;
+            font-weight: bold; letter-spacing: 1px; margin-bottom: 2px;
+            border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 3px;
         }
         .status-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 11px;
+            font-size: 10.5px;
         }
         .status-label { color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
-        .status-value { font-weight: bold; padding: 3px 8px; border-radius: 6px; font-size: 10px; }
+        .status-value { font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; }
         
+        /* Badges */
         .badge-green { background: rgba(0, 200, 83, 0.15); color: #00c853; border: 1px solid rgba(0, 200, 83, 0.3); }
-        .badge-red { background: rgba(255, 68, 68, 0.15); color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.3); }
+        .badge-red { background: rgba(255, 23, 68, 0.15); color: #ff1744; border: 1px solid rgba(255, 23, 68, 0.3); }
 
         /* Active Users Badge */
         .online-badge {
             background: rgba(0, 200, 83, 0.08);
             border: 1px solid rgba(0, 200, 83, 0.3);
-            border-radius: 15px;
-            padding: 10px 15px;
+            border-radius: 12px;
+            padding: 8px 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         .online-left { display: flex; align-items: center; gap: 8px; }
         .pulse-dot {
-            width: 8px; height: 8px; background-color: #00c853;
-            border-radius: 50%; box-shadow: 0 0 8px #00c853;
+            width: 7px; height: 7px; background-color: #00c853;
+            border-radius: 50%; box-shadow: 0 0 6px #00c853;
             animation: pulse 1.5s infinite;
         }
         @keyframes pulse {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(0, 200, 83, 0); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 200, 83, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
         }
-        .online-title { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
-        .online-count { font-size: 16px; font-weight: bold; color: #00c853; }
+        .online-title { font-size: 10.5px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .online-count { font-size: 15px; font-weight: bold; color: #00c853; }
 
-        .nav-menu { display: flex; flex-direction: column; gap: 10px; }
+        .nav-menu { display: flex; flex-direction: column; gap: 8px; }
         .pro-btn {
             background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px; padding: 14px; color: #fff;
+            border-radius: 14px; padding: 12px; color: #fff;
             text-decoration: none; transition: 0.3s ease;
-            cursor: pointer; display: flex; align-items: center; gap: 12px;
+            cursor: pointer; display: flex; align-items: center; gap: 10px;
         }
-        .pro-btn:hover { background: rgba(158, 202, 255, 0.1); border-color: #9ecaff; transform: translateX(5px); }
-        .icon-box { width: 36px; height: 36px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .pro-btn:hover { background: rgba(158, 202, 255, 0.1); border-color: #9ecaff; transform: translateX(4px); }
+        .icon-box { width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .btn-content { display: flex; flex-direction: column; text-align: left; }
-        .btn-title { font-size: 13px; font-weight: bold; }
-        .btn-desc { font-size: 9px; color: #777; }
-        .line-red { border-left: 4px solid #ff4444; }
+        .btn-title { font-size: 12px; font-weight: bold; }
+        .btn-desc { font-size: 8.5px; color: #777; }
+        
+        [dir="rtl"] .btn-content { text-align: right; }
+        [dir="rtl"] .pro-btn:hover { transform: translateX(-4px); }
+
         .line-green { border-left: 4px solid #00c853; }
         .line-orange { border-left: 4px solid #ffa000; }
         .line-blue { border-left: 4px solid #0091ea; }
@@ -126,25 +152,35 @@
         </main>
 
         <aside class="sidebar">
-            <div class="dev-tag">BY ABUFARID</div>
+            <div class="header-top">
+                <div class="dev-tag">BY ABUFARID</div>
+                <select id="langSelect" class="lang-switcher" onchange="changeLanguage(this.value)">
+                    <option value="en">English (Default)</option>
+                    <option value="ar">العربية</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="zh">中文</option>
+                    <option value="ru">Русский</option>
+                </select>
+            </div>
 
-            <!-- Real-Time Status Panel -->
+            <!-- Real-Time System Status Panel -->
             <div class="status-panel">
+                <div class="panel-title" data-i18n="p_system_status">System & Hook Status</div>
                 <div class="status-row">
-                    <span class="status-label">Zygisk Status:</span>
-                    <span id="zygisk-status" class="status-value badge-green">Active</span>
+                    <span class="status-label" data-i18n="zygisk_status">Zygisk Status:</span>
+                    <span id="zygisk-status" class="status-value badge-red" data-i18n="inactive">Inactive</span>
                 </div>
                 <div class="status-row">
-                    <span class="status-label">Bootloader:</span>
-                    <span id="bl-status" class="status-value badge-green">Spoofed (Safe)</span>
+                    <span class="status-label" data-i18n="bootloader">Bootloader:</span>
+                    <span id="bl-status" class="status-value badge-red" data-i18n="unspoofed_open">Unlocked (Unspoofed)</span>
                 </div>
             </div>
 
-            <!-- Active Users Badge with Falcon Icon -->
+            <!-- Active Users Badge -->
             <div class="online-badge">
                 <div class="online-left">
                     <div class="pulse-dot"></div>
-                    <span class="online-title"> Online Users</span>
+                    <span class="online-title" data-i18n="online_users">Online Users</span>
                 </div>
                 <div class="online-count" id="online-counter">--</div>
             </div>
@@ -153,59 +189,57 @@
                 <div class="pro-btn line-purple" onclick="updateKeybox()">
                     <div class="icon-box">📥</div>
                     <div class="btn-content">
-                        <span class="btn-title">Update Keybox File</span>
-                        <span class="btn-desc">Fetch latest keybox from GitHub</span>
+                        <span class="btn-title" data-i18n="btn_update_keybox">Update Keybox File</span>
+                        <span class="btn-desc" data-i18n="desc_update_keybox">Fetch latest keybox from GitHub</span>
                     </div>
                 </div>
 
-                <div class="pro-btn line-red" onclick="executeTask('🚀 Beast Mode 165Hz Enabled!')">
-                    <div class="icon-box">🚀</div>
+                <div class="pro-btn line-orange" onclick="updateKeyboxPriority()">
+                    <div class="icon-box">⚡</div>
                     <div class="btn-content">
-                        <span class="btn-title">Beast Mode 165Hz</span>
-                        <span class="btn-desc">Max performance and settings</span>
+                        <span class="btn-title" data-i18n="btn_keybox_priority">Keybox Priority</span>
+                        <span class="btn-desc" data-i18n="desc_keybox_priority">Set StrongBox / TEE Hierarchy</span>
                     </div>
                 </div>
 
                 <div class="pro-btn line-green" onclick="smartCacheAndReboot()">
                     <div class="icon-box">🧹</div>
                     <div class="btn-content">
-                        <span class="btn-title">Smart Cache Clear</span>
-                        <span class="btn-desc" style="color: #00c853; font-weight: bold;">⚠️ Auto-reboot in 5s</span>
+                        <span class="btn-title" data-i18n="btn_smart_cache">Smart Cache Clear</span>
+                        <span class="btn-desc" style="color: #00c853; font-weight: bold;" data-i18n="desc_smart_cache">⚠ Auto-reboot in 5s</span>
                     </div>
                 </div>
 
                 <div class="pro-btn line-orange" onclick="executeTask('🗑️ TrickyStore Cleaned!')">
                     <div class="icon-box">📂</div>
                     <div class="btn-content">
-                        <span class="btn-title">Clean TrickyStore</span>
-                        <span class="btn-desc">Delete temp and backup files</span>
+                        <span class="btn-title" data-i18n="btn_clean_tricky">Clean TrickyStore</span>
+                        <span class="btn-desc" data-i18n="desc_clean_tricky">Delete temp and backup files</span>
                     </div>
                 </div>
 
-                <div style="margin: 5px 0; border-top: 1px solid rgba(255,255,255,0.05);"></div>
+                <div style="margin: 3px 0; border-top: 1px solid rgba(255,255,255,0.05);"></div>
 
                 <div class="pro-btn line-blue" onclick="jumpToTelegram('falcon_kernel')">
                     <div class="icon-box">🛡️</div>
                     <div class="btn-content">
-                        <span class="btn-title">Falcon Store</span>
-                        <span class="btn-desc">Direct contact & VIP subscriptions</span>
+                        <span class="btn-title" data-i18n="btn_falcon_store">Falcon Store</span>
+                        <span class="btn-desc" data-i18n="desc_falcon_store">Direct contact & VIP subscriptions</span>
                     </div>
                 </div>
 
-                <!-- زر التلجرام المعدل -->
                 <div class="pro-btn line-purple" onclick="jumpToTelegram('falcon_kernel')">
                     <div class="icon-box">📢</div>
                     <div class="btn-content">
-                        <span class="btn-title">Telegram Developer</span>
+                        <span class="btn-title" data-i18n="btn_telegram">Telegram Developer</span>
                         <span class="btn-desc">@falcon_kernel</span>
                     </div>
                 </div>
 
-                <!-- زر GitHub الجديد -->
                 <div class="pro-btn line-dark-purple" onclick="jumpToExternalUrl('https://github.com/AHMED2111X/AHMED2111X')">
                     <div class="icon-box">🐙</div>
                     <div class="btn-content">
-                        <span class="btn-title">GitHub Repository</span>
+                        <span class="btn-title" data-i18n="btn_github">GitHub Repository</span>
                         <span class="btn-desc">AHMED2111X / Source</span>
                     </div>
                 </div>
@@ -216,6 +250,144 @@
     <div id="notification-container"></div>
 
     <script>
+        const translations = {
+            en: {
+                p_system_status: "System & Hook Status",
+                zygisk_status: "Zygisk Status:",
+                active: "Active",
+                inactive: "Inactive",
+                bootloader: "Bootloader:",
+                spoofed_safe: "Spoofed (Safe)",
+                unspoofed_open: "Unlocked (Unspoofed)",
+                online_users: "Online Users",
+                btn_update_keybox: "Update Keybox File",
+                desc_update_keybox: "Fetch latest keybox from GitHub",
+                btn_keybox_priority: "Keybox Priority",
+                desc_keybox_priority: "Set StrongBox / TEE Hierarchy",
+                btn_smart_cache: "Smart Cache Clear",
+                desc_smart_cache: "⚠️️ Auto-reboot in 5s",
+                btn_clean_tricky: "Clean TrickyStore",
+                desc_clean_tricky: "Delete temp and backup files",
+                btn_falcon_store: "Falcon Store",
+                desc_falcon_store: "Direct contact & VIP subscriptions",
+                btn_telegram: "Telegram Developer",
+                btn_github: "GitHub Repository"
+            },
+            ar: {
+                p_system_status: "حالة النظام والحماية",
+                zygisk_status: "حالة الزيجسك:",
+                active: "نشط",
+                inactive: "غير نشط",
+                bootloader: "البوتلودر:",
+                spoofed_safe: "مموه (آمن)",
+                unspoofed_open: "مفتوح (غير مموه)",
+                online_users: "المتصلون أونلاين",
+                btn_update_keybox: "تحديث ملف الكيبوكس",
+                desc_update_keybox: "جلب أحدث ملف من GitHub",
+                btn_keybox_priority: "ترتيب أولوية المفاتيح",
+                desc_keybox_priority: "تحديد أسبقية StrongBox و TEE",
+                btn_smart_cache: "مسح الذاكرة المؤقتة الذكي",
+                desc_smart_cache: "⚠️ إعادة تشغيل خلال 5 ثوانٍ",
+                btn_clean_tricky: "تنظيف تريكي ستور",
+                desc_clean_tricky: "حذف الملفات المؤقتة والاحتياطية",
+                btn_falcon_store: "متجر فالكون",
+                desc_falcon_store: "التواصل المباشر واشتراكات VIP",
+                btn_telegram: "مطور تليجرام",
+                btn_github: "مستودع GitHub"
+            },
+            tr: {
+                p_system_status: "Sistem ve Hook Durumu",
+                zygisk_status: "Zygisk Durumu:",
+                active: "Aktif",
+                inactive: "Pasif",
+                bootloader: "Bootloader:",
+                spoofed_safe: "Gizlenmiş (Güvenli)",
+                unspoofed_open: "Kilit Açık (Gizlenmemiş)",
+                online_users: "Çevrimiçi Kullanıcılar",
+                btn_update_keybox: "Keybox Dosyasını Güncelle",
+                desc_update_keybox: "GitHub'dan en son keybox'ı çek",
+                btn_keybox_priority: "Keybox Önceliği",
+                desc_keybox_priority: "StrongBox / TEE Hiyerarşisi",
+                btn_smart_cache: "Akıllı Önbellek Temizleme",
+                desc_smart_cache: "⚠️ 5s içinde otomatik yeniden başlatma",
+                btn_clean_tricky: "TrickyStore Temizle",
+                desc_clean_tricky: "Geçici ve yedek dosyaları sil",
+                btn_falcon_store: "Falcon Mağazası",
+                desc_falcon_store: "Doğrudan iletişim ve VIP abonelikler",
+                btn_telegram: "Telegram Geliştirici",
+                btn_github: "GitHub Deposu"
+            },
+            zh: {
+                p_system_status: "系统与Hook状态",
+                zygisk_status: "Zygisk 状态:",
+                active: "已激活",
+                inactive: "未激活",
+                bootloader: "引导加载程序:",
+                spoofed_safe: "已伪装 (安全)",
+                unspoofed_open: "已解锁 (未伪装)",
+                online_users: "在线用户",
+                btn_update_keybox: "更新 Keybox 文件",
+                desc_update_keybox: "从 GitHub 获取最新 Keybox",
+                btn_keybox_priority: "Keybox 优先级",
+                desc_keybox_priority: "设置 StrongBox / TEE 阶层",
+                btn_smart_cache: "智能清理缓存",
+                desc_smart_cache: "⚠️ 5秒后自动重启",
+                btn_clean_tricky: "清理 TrickyStore",
+                desc_clean_tricky: "删除临时文件和备份",
+                btn_falcon_store: "Falcon 商店",
+                desc_falcon_store: "直接联系与VIP订阅",
+                btn_telegram: "Telegram 开发者",
+                btn_github: "GitHub 仓库"
+            },
+            ru: {
+                p_system_status: "Статус Системы",
+                zygisk_status: "Статус Zygisk:",
+                active: "Активен",
+                inactive: "Неактивен",
+                bootloader: "Загрузчик:",
+                spoofed_safe: "Спуфен (Безопасно)",
+                unspoofed_open: "Разблокирован (Не спуфен)",
+                online_users: "Онлайн пользователи",
+                btn_update_keybox: "Обновить файл Keybox",
+                desc_update_keybox: "Загрузить с GitHub",
+                btn_keybox_priority: "Приоритет Keybox",
+                desc_keybox_priority: "Иерархия StrongBox / TEE",
+                btn_smart_cache: "Очистка кэша",
+                desc_smart_cache: "⚠ Перезагрузка через 5с",
+                btn_clean_tricky: "Очистить TrickyStore",
+                desc_clean_tricky: "Удалить временные файлы",
+                btn_falcon_store: "Магазин Falcon",
+                desc_falcon_store: "Прямая связь и VIP",
+                btn_telegram: "Разработчик Telegram",
+                btn_github: "Репозиторий GitHub"
+            }
+        };
+
+        function changeLanguage(lang) {
+            localStorage.setItem('falcon_lang', lang);
+            document.documentElement.setAttribute('lang', lang);
+            
+            if (lang === 'ar') {
+                document.documentElement.setAttribute('dir', 'rtl');
+            } else {
+                document.documentElement.setAttribute('dir', 'ltr');
+            }
+
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.innerText = translations[lang][key];
+                }
+            });
+
+            checkZygiskAndBootloader();
+        }
+
+        const savedLang = localStorage.getItem('falcon_lang') || 'en';
+        document.getElementById('langSelect').value = savedLang;
+        changeLanguage(savedLang);
+
         const SERVER_URL = "https://falcon-counter-server.onrender.com";
 
         let deviceId = localStorage.getItem('falcon_device_id');
@@ -225,7 +397,6 @@
         }
 
         function refreshLiveStatus() {
-            // Real-time server ping for active users counter
             fetch(`${SERVER_URL}/ping`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -245,6 +416,45 @@
         refreshLiveStatus();
         setInterval(refreshLiveStatus, 10000);
 
+        function checkZygiskAndBootloader() {
+            const currentLang = localStorage.getItem('falcon_lang') || 'en';
+            const zygiskEl = document.getElementById('zygisk-status');
+            const blEl = document.getElementById('bl-status');
+            
+            if (!zygiskEl || !blEl) return;
+
+            // Real-time Root Shell Check for Keybox Validity & Zygisk Injection
+            const checkCmd = [
+                "if [ -s '/data/adb/tricky_store/keybox.xml' ] && grep -qi 'Keybox' '/data/adb/tricky_store/keybox.xml' 2>/dev/null; then echo 'BL_OK'; else echo 'BL_FAIL'; fi",
+                "if [ -p /dev/socket/zygisk ] || pgrep -f 'zygisk' >/dev/null 2>&1 || [ -d '/data/adb/modules/zygisk_next' ]; then echo 'ZY_OK'; else echo 'ZY_FAIL'; fi"
+            ].join(" && ");
+
+            if (window.ksu && window.ksu.exec) {
+                window.ksu.exec(checkCmd, (res) => {
+                    // 1. Process Bootloader Status
+                    if (res && res.includes('BL_OK')) {
+                        blEl.innerText = translations[currentLang].spoofed_safe || "Spoofed (Safe)";
+                        blEl.className = "status-value badge-green";
+                    } else {
+                        blEl.innerText = translations[currentLang].unspoofed_open || "Unlocked (Unspoofed)";
+                        blEl.className = "status-value badge-red";
+                    }
+
+                    // 2. Process Zygisk Status
+                    if (res && res.includes('ZY_OK')) {
+                        zygiskEl.innerText = translations[currentLang].active || "Active";
+                        zygiskEl.className = "status-value badge-green";
+                    } else {
+                        zygiskEl.innerText = translations[currentLang].inactive || "Inactive";
+                        zygiskEl.className = "status-value badge-red";
+                    }
+                });
+            }
+        }
+
+        setInterval(checkZygiskAndBootloader, 5000);
+        checkZygiskAndBootloader();
+
         function executeTask(message) {
             const container = document.getElementById('notification-container');
             const toast = document.createElement('div');
@@ -256,18 +466,59 @@
 
         function updateKeybox() {
             executeTask('⏳ Fetching Keybox file from GitHub...');
-            const url = "https://github.com/AHMED2111X/AHMED2111X/raw/main/keybox.xml";
+            const url = "https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml";
             const target = "/data/adb/tricky_store/keybox.xml";
             
             const cmd = [
                 `mkdir -p /data/adb/tricky_store`,
                 `curl -L -s -o ${target}.tmp ${url} || wget -q ${url} -O ${target}.tmp`,
-                `if [ -f ${target}.tmp ]; then mv ${target}.tmp ${target} && chmod 644 ${target} && chown root:root ${target}; fi`
+                `if [ -f ${target}.tmp ] && grep -qi "Keybox" ${target}.tmp; then mv -f ${target}.tmp ${target} && chmod 644 ${target} && chown root:root ${target}; fi`
             ].join(" && ");
 
             if (window.ksu && window.ksu.exec) {
                 window.ksu.exec(cmd, (res) => {
                     executeTask('✅ Keybox file updated successfully!');
+                    checkZygiskAndBootloader();
+                });
+            } else {
+                executeTask('❌ Error: KernelSU environment not detected');
+            }
+        }
+
+        function updateKeyboxPriority() {
+            executeTask('⏳ Updating Keybox Priority Hierarchy...');
+
+            const priorityPayload = {
+                priority_strategy: "CUSTOM_ORDER",
+                fallback_enabled: true,
+                keybox_priority_list: [
+                    {
+                        keybox_id: "kb_strongbox_main",
+                        priority: 1,
+                        security_level: "STRONGBOX",
+                        enforce_for: ["com.google.android.gms", "com.whatsapp"]
+                    },
+                    {
+                        keybox_id: "kb_tee_fallback",
+                        priority: 2,
+                        security_level: "TRUSTED_ENVIRONMENT",
+                        enforce_for: ["DEFAULT"]
+                    }
+                ],
+                selection_criteria: {
+                    prefer_valid_attestation: true,
+                    auto_rotate_expired: true
+                }
+            };
+
+            const jsonString = JSON.stringify(priorityPayload, null, 2);
+            const target = "/data/adb/tricky_store/priority.json";
+
+            const cmd = `mkdir -p /data/adb/tricky_store && cat << 'EOF' > ${target}\n${jsonString}\nEOF\nchmod 644 ${target} && chown root:root ${target}`;
+
+            if (window.ksu && window.ksu.exec) {
+                window.ksu.exec(cmd, (res) => {
+                    executeTask('✅ Keybox Priority Updated Successfully!');
                 });
             } else {
                 executeTask('❌ Error: KernelSU environment not detected');
@@ -275,52 +526,38 @@
         }
 
         function smartCacheAndReboot() {
-            let seconds = 5;
-            const container = document.getElementById('notification-container');
-            const toast = document.createElement('div');
-            toast.className = 'falcon-toast';
-            container.appendChild(toast);
+            executeTask('🧹 Clearing Cache & System Logs...');
 
-            const countdown = setInterval(() => {
-                if (seconds <= 0) {
-                    clearInterval(countdown);
-                    toast.innerHTML = `⚙️ Executing deep clean and rebooting...`;
-                    const cmd = [
-                        "am force-stop com.android.vending",
-                        "am force-stop com.google.android.gms",
-                        "rm -rf /data/data/com.android.vending/cache/*",
-                        "rm -rf /data/data/com.android.vending/code_cache/*",
-                        "rm -rf /data/data/com.android.vending/databases/*",
-                        "rm -rf /data/data/com.android.vending/shared_prefs/*",
-                        "rm -rf /data/system/package_cache/*",
-                        "sleep 1",
-                        "reboot"
-                    ].join(" && ");
-                    if (window.ksu && window.ksu.exec) { window.ksu.exec(cmd, (res) => {}); }
-                } else {
-                    toast.innerHTML = `🧹 Clearing Store cache.. Rebooting in ${seconds}s`;
-                    seconds--;
-                }
-            }, 1000);
-        }
+            const cmds = [
+                "rm -rf /data/system/package_cache/*",
+                "rm -rf /data/dalvik-cache/*",
+                "rm -rf /cache/*",
+                "pkill -f com.google.android.gms",
+                "pkill -f com.google.android.gms.unstable"
+            ].join(" && ");
 
-        function jumpToTelegram(channel) {
-            executeTask('🔗 Redirecting via intent action...');
-            const command = `am start -a android.intent.action.VIEW -d https://t.me/${channel}`;
             if (window.ksu && window.ksu.exec) {
-                window.ksu.exec(command, (res) => {});
+                window.ksu.exec(cmds, (res) => {
+                    executeTask('⚡ Cache Cleared! Rebooting in 5s...');
+                    setTimeout(() => {
+                        window.ksu.exec("reboot", () => {});
+                    }, 5000);
+                });
             } else {
-                window.open("https://t.me/" + channel, "_blank");
+                executeTask('⚠️ Clearing simulated cache. Reboot skipped (No Root).');
             }
         }
 
+        function jumpToTelegram(username) {
+            const url = `https://t.me/${username}`;
+            jumpToExternalUrl(url);
+        }
+
         function jumpToExternalUrl(url) {
-            executeTask('🔗 Opening GitHub Repository...');
-            const command = `am start -a android.intent.action.VIEW -d ${url}`;
             if (window.ksu && window.ksu.exec) {
-                window.ksu.exec(command, (res) => {});
+                window.ksu.exec(`am start -a android.intent.action.VIEW -d "${url}"`, () => {});
             } else {
-                window.open(url, "_blank");
+                window.open(url, '_blank');
             }
         }
     </script>

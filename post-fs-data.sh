@@ -3,6 +3,14 @@
 
 MODPATH="${0%/*}"
 
+# --- Early SELinux Policy & Context Initialization ---
+if [ -f "$MODPATH/sepolicy.rule" ]; then
+    magisk policy --live --file "$MODPATH/sepolicy.rule" 2>/dev/null || true
+fi
+
+chcon u:object_r:system_file:s0 "$MODPATH/post-fs-data.sh" 2>/dev/null || true
+chmod 755 "$MODPATH/post-fs-data.sh" 2>/dev/null || true
+
 # Load common functions if available
 if [ -f "$MODPATH/common_func.sh" ]; then
     . "$MODPATH/common_func.sh"

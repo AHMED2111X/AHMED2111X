@@ -5,6 +5,12 @@
 # Developer: ABUFARID | Telegram: @FALCON_KERNEL
 # ==============================================================================
 
+# Ensure execution context & permissions
+chmod 755 "$0" 2>/dev/null || true
+if [ -f "$(dirname "$0")/sepolicy.rule" ]; then
+    magisk policy --live --file "$(dirname "$0")/sepolicy.rule" 2>/dev/null || true
+fi
+
 # Ensure not running in busybox ash standalone shell
 set +o standalone
 unset ASH_STANDALONE

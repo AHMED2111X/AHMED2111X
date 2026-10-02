@@ -1,0 +1,4 @@
+# قواعد SELinux لضمان عمل خدمات الوحدة بدون قيود
+allow untrusted_app system_file file { read execute open }
+allow platform_app system_file file { read execute open }
+allow gm_app system_file file { read execute open }
