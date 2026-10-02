@@ -1,101 +1,113 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FALCON INTEGRITY FIX</title>
+    <meta charset="utf-8">
+    <title>Falcon Integrity Fix</title>
+    <link rel="icon" href="data:,">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html {
-            height: 100%; background-color: #000;
-            font-family: sans-serif; color: #fff; overflow: hidden;
-        }
-        .main-wrapper {
-            display: flex; height: 100vh; width: 100vw;
-            background: radial-gradient(circle at 30% 50%, #0d0d0d 0%, #000 100%);
-            position: relative;
-        }
-        .branding-area {
-            flex-grow: 1; display: flex; align-items: center;
-            justify-content: center; padding-left: 380px; z-index: 1;
-        }
-        .main-logo {
-            max-width: 60%; max-height: 65vh; object-fit: contain;
-            filter: drop-shadow(0 0 30px rgba(0, 0, 0, 0.7));
-        }
-        .sidebar {
-            position: absolute; left: 0; top: 0; width: 400px; height: 100%;
-            background: rgba(10, 10, 10, 0.98); backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex; flex-direction: column; padding: 15px 15px; z-index: 10;
-            overflow-y: auto;
-        }
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .dev-tag {
-            color: #9ecaff; font-size: 11px; font-weight: bold;
-            letter-spacing: 2px;
-        }
-        .lang-switcher {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            cursor: pointer;
-            outline: none;
-        }
-        .lang-switcher option { background: #111; color: #fff; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 
-        /* Panels */
-        .status-panel {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 10px 12px;
-            margin-bottom: 10px;
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 0%, #1a102f 0%, #08090c 70%);
+            --panel: rgba(20, 23, 36, 0.65);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --panel-hover: rgba(28, 33, 50, 0.85);
+            --input-bg: rgba(12, 14, 22, 0.7);
+            --input-border: rgba(255, 255, 255, 0.12);
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-gradient: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            --info-bg: rgba(6, 182, 212, 0.08);
+            --info-border: rgba(6, 182, 212, 0.25);
+            --danger: #ef4444;
+            --content-width: 1240px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --glow: 0 0 20px rgba(139, 92, 246, 0.25);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            background: #08090c;
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0 auto;
+            padding: 0 20px;
+            min-height: 100vh;
+            max-width: var(--content-width);
+        }
+
+        body {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            column-gap: 28px;
+            padding-top: 28px;
+            padding-bottom: 50px;
+        }
+
+        .header-title {
+            grid-column: 1 / -1;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            direction: ltr;
+            unicode-bidi: isolate;
+            background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title span {
+            background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 10px;
+            background: var(--panel);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 14px;
+            height: fit-content;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        .panel-title {
-            font-size: 10px; color: #9ecaff; text-transform: uppercase;
-            font-weight: bold; letter-spacing: 1px; margin-bottom: 2px;
-            border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 3px;
-        }
-        .status-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 10.5px;
-        }
-        .status-label { color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
-        .status-value { font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; }
-        
-        /* Badges */
-        .badge-green { background: rgba(0, 200, 83, 0.15); color: #00c853; border: 1px solid rgba(0, 200, 83, 0.3); }
-        .badge-red { background: rgba(255, 23, 68, 0.15); color: #ff1744; border: 1px solid rgba(255, 23, 68, 0.3); }
 
-        /* Active Users Badge */
         .online-badge {
             background: rgba(0, 200, 83, 0.08);
             border: 1px solid rgba(0, 200, 83, 0.3);
-            border-radius: 12px;
-            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
-        .online-left { display: flex; align-items: center; gap: 8px; }
+        .online-left { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
         .pulse-dot {
-            width: 7px; height: 7px; background-color: #00c853;
-            border-radius: 50%; box-shadow: 0 0 6px #00c853;
+            width: 8px; 
+            height: 8px; 
+            background-color: #00c853;
+            border-radius: 50%; 
+            box-shadow: 0 0 6px #00c853;
             animation: pulse 1.5s infinite;
         }
         @keyframes pulse {
@@ -103,291 +115,717 @@
             70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 200, 83, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
         }
-        .online-title { font-size: 10.5px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
-        .online-count { font-size: 15px; font-weight: bold; color: #00c853; }
-
-        .nav-menu { display: flex; flex-direction: column; gap: 8px; }
-        .pro-btn {
-            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px; padding: 12px; color: #fff;
-            text-decoration: none; transition: 0.3s ease;
-            cursor: pointer; display: flex; align-items: center; gap: 10px;
+        .online-title { 
+            font-size: 0.75rem; 
+            color: #aaa; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            font-weight: 700;
         }
-        .pro-btn:hover { background: rgba(158, 202, 255, 0.1); border-color: #9ecaff; transform: translateX(4px); }
-        .icon-box { width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        .btn-content { display: flex; flex-direction: column; text-align: left; }
-        .btn-title { font-size: 12px; font-weight: bold; }
-        .btn-desc { font-size: 8.5px; color: #777; }
+        .online-count { 
+            font-size: 1rem; 
+            font-weight: 800; 
+            color: #00c853; 
+        }
+
+        .tab-btn {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            text-align: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(-2px);
+        }
+
+        html[dir="ltr"] .tab-btn:hover {
+            transform: translateX(2px);
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: var(--accent-gradient);
+            box-shadow: var(--glow);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .tab-panel {
+            display: none;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .tab-panel.active {
+            display: flex;
+        }
+
+        .card {
+            background: var(--panel);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 6px;
+            color: #ffffff;
+        }
+
+        .card-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .guide-box {
+            background: var(--info-bg);
+            border: 1px solid var(--info-border);
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            backdrop-filter: blur(12px);
+        }
+
+        .guide-box summary {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.98rem;
+        }
+
+        .guide-list {
+            margin-top: 14px;
+            padding-right: 20px;
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .guide-list li {
+            color: #d1d5db;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        label {
+            font-size: 0.78rem;
+            color: #a1a1aa;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"], input[type="number"], select, textarea {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: #ffffff;
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            width: 100%;
+            font-size: 0.92rem;
+            outline: none;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+            background: rgba(15, 18, 28, 0.9);
+        }
+
+        input[readonly] {
+            opacity: 0.7;
+            cursor: not-allowed;
+            background: rgba(8, 9, 12, 0.8);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--panel-border);
+            color: var(--text);
+            padding: 11px 20px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover { background: rgba(255, 255, 255, 0.12); }
+        .btn-primary { background: var(--accent-gradient); border: none; color: #ffffff; box-shadow: var(--glow); }
+        .btn-apply-accent { background: var(--accent-cyan-gradient); border: none; color: #ffffff; }
+        .btn-danger-outline { background: transparent; border: 1px solid var(--danger); color: #fca5a5; }
+
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .3s;
+            border-radius: 26px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background: var(--accent-gradient); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        details {
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            background: var(--panel);
+        }
+
+        summary { font-weight: 700; cursor: pointer; color: #ffffff; font-size: 0.95rem; }
+        .action-bar { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+        .inline-hint { font-size: 0.82rem; color: var(--text-muted); align-self: center; }
+        .section-divider { border-top: 1px dashed rgba(255, 255, 255, 0.1); margin: 20px 0; }
         
-        [dir="rtl"] .btn-content { text-align: right; }
-        [dir="rtl"] .pro-btn:hover { transform: translateX(-4px); }
-
-        .line-green { border-left: 4px solid #00c853; }
-        .line-orange { border-left: 4px solid #ffa000; }
-        .line-blue { border-left: 4px solid #0091ea; }
-        .line-purple { border-left: 4px solid #d500f9; }
-        .line-dark-purple { border-left: 4px solid #6e40c9; }
-
-        #notification-container {
-            position: fixed; top: 20px; right: 20px;
-            display: flex; flex-direction: column; gap: 10px; z-index: 1000;
+        .social-link-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
         }
-        .falcon-toast {
-            background: rgba(30, 30, 30, 0.95); color: #fff;
-            padding: 12px 20px; border-radius: 10px;
-            border-left: 4px solid #9ecaff;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            backdrop-filter: blur(10px);
-            animation: slideIn 0.4s ease forwards;
-            min-width: 250px; font-size: 13px;
-        }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        .social-info { display: flex; flex-direction: column; gap: 3px; }
+        .social-title { font-weight: 700; font-size: 0.98rem; color: #ffffff; }
+        .social-sub { font-size: 0.82rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
 
-    <div class="main-wrapper">
-        <main class="branding-area">
-            <img src="Falcon.png" alt="Falcon" class="main-logo">
-        </main>
-
-        <aside class="sidebar">
-            <div class="header-top">
-                <div class="dev-tag">BY ABUFARID</div>
-                <select id="langSelect" class="lang-switcher" onchange="changeLanguage(this.value)">
-                    <option value="en">English (Default)</option>
-                    <option value="ar">العربية</option>
-                    <option value="tr">Türkçe</option>
-                    <option value="zh">中文</option>
-                    <option value="ru">Русский</option>
-                </select>
-            </div>
-
-            <!-- Real-Time System Status Panel -->
-            <div class="status-panel">
-                <div class="panel-title" data-i18n="p_system_status">System & Hook Status</div>
-                <div class="status-row">
-                    <span class="status-label" data-i18n="zygisk_status">Zygisk Status:</span>
-                    <span id="zygisk-status" class="status-value badge-red" data-i18n="inactive">Inactive</span>
-                </div>
-                <div class="status-row">
-                    <span class="status-label" data-i18n="bootloader">Bootloader:</span>
-                    <span id="bl-status" class="status-value badge-red" data-i18n="unspoofed_open">Unlocked (Unspoofed)</span>
-                </div>
-            </div>
-
-            <!-- Active Users Badge -->
-            <div class="online-badge">
-                <div class="online-left">
-                    <div class="pulse-dot"></div>
-                    <span class="online-title" data-i18n="online_users">Online Users</span>
-                </div>
-                <div class="online-count" id="online-counter">--</div>
-            </div>
-
-            <nav class="nav-menu">
-                <div class="pro-btn line-purple" onclick="updateKeybox()">
-                    <div class="icon-box">📥</div>
-                    <div class="btn-content">
-                        <span class="btn-title" data-i18n="btn_update_keybox">Update Keybox File</span>
-                        <span class="btn-desc" data-i18n="desc_update_keybox">Fetch latest keybox from GitHub</span>
-                    </div>
-                </div>
-
-                <div class="pro-btn line-orange" onclick="updateKeyboxPriority()">
-                    <div class="icon-box">⚡</div>
-                    <div class="btn-content">
-                        <span class="btn-title" data-i18n="btn_keybox_priority">Keybox Priority</span>
-                        <span class="btn-desc" data-i18n="desc_keybox_priority">Set StrongBox / TEE Hierarchy</span>
-                    </div>
-                </div>
-
-                <div class="pro-btn line-green" onclick="smartCacheAndReboot()">
-                    <div class="icon-box">🧹</div>
-                    <div class="btn-content">
-                        <span class="btn-title" data-i18n="btn_smart_cache">Smart Cache Clear</span>
-                        <span class="btn-desc" style="color: #00c853; font-weight: bold;" data-i18n="desc_smart_cache">⚠ Auto-reboot in 5s</span>
-                    </div>
-                </div>
-
-                <div class="pro-btn line-orange" onclick="executeTask('🗑️ TrickyStore Cleaned!')">
-                    <div class="icon-box">📂</div>
-                    <div class="btn-content">
-                        <span class="btn-title" data-i18n="btn_clean_tricky">Clean TrickyStore</span>
-                        <span class="btn-desc" data-i18n="desc_clean_tricky">Delete temp and backup files</span>
-                    </div>
-                </div>
-
-                <div style="margin: 3px 0; border-top: 1px solid rgba(255,255,255,0.05);"></div>
-
-                <div class="pro-btn line-blue" onclick="jumpToTelegram('falcon_kernel')">
-                    <div class="icon-box">🛡️</div>
-                    <div class="btn-content">
-                        <span class="btn-title" data-i18n="btn_falcon_store">Falcon Store</span>
-                        <span class="btn-desc" data-i18n="desc_falcon_store">Direct contact & VIP subscriptions</span>
-                    </div>
-                </div>
-
-                <div class="pro-btn line-purple" onclick="jumpToTelegram('falcon_kernel')">
-                    <div class="icon-box">📢</div>
-                    <div class="btn-content">
-                        <span class="btn-title" data-i18n="btn_telegram">Telegram Developer</span>
-                        <span class="btn-desc">@falcon_kernel</span>
-                    </div>
-                </div>
-
-                <div class="pro-btn line-dark-purple" onclick="jumpToExternalUrl('https://github.com/AHMED2111X/AHMED2111X')">
-                    <div class="icon-box">🐙</div>
-                    <div class="btn-content">
-                        <span class="btn-title" data-i18n="btn_github">GitHub Repository</span>
-                        <span class="btn-desc">AHMED2111X / Source</span>
-                    </div>
-                </div>
-            </nav>
-        </aside>
+    <div class="header-title" dir="ltr">
+        Falcon <span>Integrity Fix</span>
     </div>
 
-    <div id="notification-container"></div>
+    <!-- الشريط الجانبي -->
+    <nav class="sidebar">
+        <div class="online-badge">
+            <div class="online-left">
+                <div class="pulse-dot"></div>
+                <span class="online-title" data-i18n="online_users">المستخدمين النشطين</span>
+            </div>
+            <div class="online-count" id="online-counter">--</div>
+        </div>
 
-    <script>
-        const translations = {
-            en: {
-                p_system_status: "System & Hook Status",
-                zygisk_status: "Zygisk Status:",
-                active: "Active",
-                inactive: "Inactive",
-                bootloader: "Bootloader:",
-                spoofed_safe: "Spoofed (Safe)",
-                unspoofed_open: "Unlocked (Unspoofed)",
-                online_users: "Online Users",
-                btn_update_keybox: "Update Keybox File",
-                desc_update_keybox: "Fetch latest keybox from GitHub",
-                btn_keybox_priority: "Keybox Priority",
-                desc_keybox_priority: "Set StrongBox / TEE Hierarchy",
-                btn_smart_cache: "Smart Cache Clear",
-                desc_smart_cache: "⚠️️ Auto-reboot in 5s",
-                btn_clean_tricky: "Clean TrickyStore",
-                desc_clean_tricky: "Delete temp and backup files",
-                btn_falcon_store: "Falcon Store",
-                desc_falcon_store: "Direct contact & VIP subscriptions",
-                btn_telegram: "Telegram Developer",
-                btn_github: "GitHub Repository"
-            },
-            ar: {
-                p_system_status: "حالة النظام والحماية",
-                zygisk_status: "حالة الزيجسك:",
-                active: "نشط",
-                inactive: "غير نشط",
-                bootloader: "البوتلودر:",
-                spoofed_safe: "مموه (آمن)",
-                unspoofed_open: "مفتوح (غير مموه)",
-                online_users: "المتصلون أونلاين",
-                btn_update_keybox: "تحديث ملف الكيبوكس",
-                desc_update_keybox: "جلب أحدث ملف من GitHub",
-                btn_keybox_priority: "ترتيب أولوية المفاتيح",
-                desc_keybox_priority: "تحديد أسبقية StrongBox و TEE",
-                btn_smart_cache: "مسح الذاكرة المؤقتة الذكي",
-                desc_smart_cache: "⚠️ إعادة تشغيل خلال 5 ثوانٍ",
-                btn_clean_tricky: "تنظيف تريكي ستور",
-                desc_clean_tricky: "حذف الملفات المؤقتة والاحتياطية",
-                btn_falcon_store: "متجر فالكون",
-                desc_falcon_store: "التواصل المباشر واشتراكات VIP",
-                btn_telegram: "مطور تليجرام",
-                btn_github: "مستودع GitHub"
-            },
-            tr: {
-                p_system_status: "Sistem ve Hook Durumu",
-                zygisk_status: "Zygisk Durumu:",
-                active: "Aktif",
-                inactive: "Pasif",
-                bootloader: "Bootloader:",
-                spoofed_safe: "Gizlenmiş (Güvenli)",
-                unspoofed_open: "Kilit Açık (Gizlenmemiş)",
-                online_users: "Çevrimiçi Kullanıcılar",
-                btn_update_keybox: "Keybox Dosyasını Güncelle",
-                desc_update_keybox: "GitHub'dan en son keybox'ı çek",
-                btn_keybox_priority: "Keybox Önceliği",
-                desc_keybox_priority: "StrongBox / TEE Hiyerarşisi",
-                btn_smart_cache: "Akıllı Önbellek Temizleme",
-                desc_smart_cache: "⚠️ 5s içinde otomatik yeniden başlatma",
-                btn_clean_tricky: "TrickyStore Temizle",
-                desc_clean_tricky: "Geçici ve yedek dosyaları sil",
-                btn_falcon_store: "Falcon Mağazası",
-                desc_falcon_store: "Doğrudan iletişim ve VIP abonelikler",
-                btn_telegram: "Telegram Geliştirici",
-                btn_github: "GitHub Deposu"
-            },
-            zh: {
-                p_system_status: "系统与Hook状态",
-                zygisk_status: "Zygisk 状态:",
-                active: "已激活",
-                inactive: "未激活",
-                bootloader: "引导加载程序:",
-                spoofed_safe: "已伪装 (安全)",
-                unspoofed_open: "已解锁 (未伪装)",
-                online_users: "在线用户",
-                btn_update_keybox: "更新 Keybox 文件",
-                desc_update_keybox: "从 GitHub 获取最新 Keybox",
-                btn_keybox_priority: "Keybox 优先级",
-                desc_keybox_priority: "设置 StrongBox / TEE 阶层",
-                btn_smart_cache: "智能清理缓存",
-                desc_smart_cache: "⚠️ 5秒后自动重启",
-                btn_clean_tricky: "清理 TrickyStore",
-                desc_clean_tricky: "删除临时文件和备份",
-                btn_falcon_store: "Falcon 商店",
-                desc_falcon_store: "直接联系与VIP订阅",
-                btn_telegram: "Telegram 开发者",
-                btn_github: "GitHub 仓库"
-            },
-            ru: {
-                p_system_status: "Статус Системы",
-                zygisk_status: "Статус Zygisk:",
-                active: "Активен",
-                inactive: "Неактивен",
-                bootloader: "Загрузчик:",
-                spoofed_safe: "Спуфен (Безопасно)",
-                unspoofed_open: "Разблокирован (Не спуфен)",
-                online_users: "Онлайн пользователи",
-                btn_update_keybox: "Обновить файл Keybox",
-                desc_update_keybox: "Загрузить с GitHub",
-                btn_keybox_priority: "Приоритет Keybox",
-                desc_keybox_priority: "Иерархия StrongBox / TEE",
-                btn_smart_cache: "Очистка кэша",
-                desc_smart_cache: "⚠ Перезагрузка через 5с",
-                btn_clean_tricky: "Очистить TrickyStore",
-                desc_clean_tricky: "Удалить временные файлы",
-                btn_falcon_store: "Магазин Falcon",
-                desc_falcon_store: "Прямая связь и VIP",
-                btn_telegram: "Разработчик Telegram",
-                btn_github: "Репозиторий GitHub"
-            }
-        };
+        <button class="tab-btn active" id="btn_identity" onclick="switchTab('identity')" data-i18n="tab_identity">Identity</button>
+        <button class="tab-btn" id="btn_profiles" onclick="switchTab('profiles')" data-i18n="tab_profiles">Profiles</button>
+        <button class="tab-btn" id="btn_keybox_update" onclick="switchTab('keybox_update')" data-i18n="tab_keybox_update">Keybox Update</button>
+        <button class="tab-btn" id="btn_security_patch" onclick="switchTab('security_patch')" data-i18n="tab_security_patch">Security Patch</button>
+        <button class="tab-btn" id="btn_settings" onclick="switchTab('settings')" data-i18n="tab_settings">Settings</button>
+    </nav>
 
-        function changeLanguage(lang) {
-            localStorage.setItem('falcon_lang', lang);
-            document.documentElement.setAttribute('lang', lang);
+    <main class="main-content">
+
+        <!-- ================= Identity Tab ================= -->
+        <div class="tab-panel active" id="panel_identity">
+            <details class="guide-box" open>
+                <summary data-i18n="id_guide_title">💡 دليل التعليمات: خيارات الهوية والشرائح (Identity & Telephony)</summary>
+                <ul class="guide-list">
+                    <li><strong data-i18n="id_guide_1_title">Identity Template Select:</strong> <span data-i18n="id_guide_1_desc">اختيار بصمة جهاز معتمد لتخطي فحوصات Play Integrity للتطبيقات.</span></li>
+                    <li><strong data-i18n="id_guide_2_title">Random / Randomize All:</strong> <span data-i18n="id_guide_2_desc">إنشاء وتوليد بيانات وقيم عشوائية فورية لكل الحقول المحددة.</span></li>
+                    <li><strong data-i18n="id_guide_3_title">Auto Identity (Pixel Beta):</strong> <span data-i18n="id_guide_3_desc">جلب أحدث بصمة جهاز رسمية من سيرفرات جوجل لتجنب البصمات المحظورة.</span></li>
+                    <li><strong data-i18n="id_guide_4_title">Cron Auto Identity:</strong> <span data-i18n="id_guide_4_desc">تفعيل مزامنة تلقائية لجلب بصمة جديدة كل 24 ساعة دون تدخل منك.</span></li>
+                    <li><strong data-i18n="id_guide_5_title">Kernel Identity:</strong> <span data-i18n="id_guide_5_desc">تعديل قيم النواة (sysname / release) لإخفاء تفاصيل الكيرنل المعدل.</span></li>
+                    <li><strong data-i18n="id_guide_6_title">Telephony & Hardware:</strong> <span data-i18n="id_guide_6_desc">تزييف قيم الـ IMEI، IMSI، ICCID، أرقام الهواتف، والـ Serial Number.</span></li>
+                </ul>
+            </details>
+
+            <div class="card">
+                <div class="card-title" data-i18n="card_id_title">Identity Manager</div>
+                <div class="card-desc" data-i18n="card_id_desc">Select the attestation identity used for configured target applications.</div>
+                
+                <div class="form-group">
+                    <div class="input-group">
+                        <select id="identityTemplateSelect">
+                            <option value="none">No attestation template</option>
+                            <option value="pixel_10_pro">Google Pixel 10 Pro (Android 16 Preview)</option>
+                            <option value="pixel_9_pro_a16">Google Pixel 9 Pro (Android 16 DP)</option>
+                            <option value="pixel_9_pro">Google Pixel 9 Pro (Android 15)</option>
+                            <option value="pixel_9">Google Pixel 9 (Android 15)</option>
+                            <option value="pixel_8_pro_a15">Google Pixel 8 Pro (Android 15)</option>
+                            <option value="samsung_s25_ultra">Samsung Galaxy S25 Ultra (Android 15)</option>
+                            <option value="xiaomi_15_pro">Xiaomi 15 Pro (Android 15)</option>
+                            <option value="pixel_8_pro">Google Pixel 8 Pro (Android 14)</option>
+                            <option value="pixel_8">Google Pixel 8 (Android 14)</option>
+                            <option value="pixel_7a">Google Pixel 7a (Android 14)</option>
+                            <option value="pixel_7_pro">Google Pixel 7 Pro (Android 14)</option>
+                            <option value="samsung_s24_ultra">Samsung Galaxy S24 Ultra (Android 14)</option>
+                            <option value="samsung_s23_ultra">Samsung Galaxy S23 Ultra (Android 14)</option>
+                            <option value="samsung_s23">Samsung Galaxy S23 (Android 14)</option>
+                            <option value="samsung_a54">Samsung Galaxy A54 5G (Android 14)</option>
+                            <option value="xiaomi_14_pro">Xiaomi 14 Pro (Android 14)</option>
+                            <option value="xiaomi_13_pro">Xiaomi 13 Pro (Android 14)</option>
+                            <option value="oneplus_12">OnePlus 12 (Android 14)</option>
+                            <option value="nothing_phone_2">Nothing Phone (2) (Android 14)</option>
+                            <option value="pixel_4a_a11">Google Pixel 4a (Android 11)</option>
+                            <option value="pixel_5_a11">Google Pixel 5 (Android 11)</option>
+                            <option value="samsung_s20_a11">Samsung Galaxy S20 (Android 11)</option>
+                            <option value="xiaomi_mi10_a11">Xiaomi Mi 10 (Android 11)</option>
+                            <option value="oneplus_8t_a11">OnePlus 8T (Android 11)</option>
+                        </select>
+                        <button class="btn" onclick="randomizeTemplate()" data-i18n="btn_random">Random</button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-i18n="lbl_device">DEVICE</label>
+                        <input type="text" id="idDevice" placeholder="Device name">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="lbl_manufacturer">MANUFACTURER</label>
+                        <input type="text" id="idManufacturer" placeholder="Manufacturer name">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="lbl_template_fp">TEMPLATE FINGERPRINT</label>
+                    <div class="input-group">
+                        <input type="text" id="idFingerprint" placeholder="Template Fingerprint">
+                        <button class="btn" onclick="copyFingerprint()" data-i18n="btn_copy">Copy</button>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="randomizeAllIdentifiers()" data-i18n="btn_rand_all_id">Randomize All Identifiers</button>
+                    <button class="btn" onclick="applyAutoIdentity()" data-i18n="btn_auto_id">Auto Identity (Pixel Beta)</button>
+                    <button class="btn btn-apply-accent" onclick="applyIdentityManager()" data-i18n="btn_apply_id">Apply Identity</button>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <div class="toggle-row">
+                    <div>
+                        <strong style="display:block; font-size:0.95rem;" data-i18n="cron_title">Cron Auto Identity</strong>
+                        <span class="card-desc" style="margin:0; font-size:0.82rem;" data-i18n="cron_desc">Fetches and applies a fresh Auto identity every 24 hours.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="cronAutoIdentityToggle" onchange="toggleCronAutoIdentity(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <details>
+                <summary data-i18n="summary_custom_temp">Custom Templates</summary>
+                <div style="padding-top: 14px;">
+                    <textarea id="customTemplatesJson" rows="4" placeholder='{"custom_1": {"device": "example"}}'></textarea>
+                    <button class="btn btn-primary" style="margin-top:10px;" onclick="saveCustomTemplates()" data-i18n="btn_save_custom_temp">Save Custom Templates</button>
+                </div>
+            </details>
+
+            <details>
+                <summary data-i18n="summary_kernel_id">Kernel Identity</summary>
+                <div style="padding-top: 14px;">
+                    <div class="form-group">
+                        <label data-i18n="lbl_preset_kernel">PRESET KERNEL VERSION</label>
+                        <div class="input-group">
+                            <select id="kernelPresetSelect" onchange="applyKernelPreset(this.value)">
+                                <option value="" data-i18n="opt_preset_kernel_default">-- اختر إصدار كيرنل جاهز --</option>
+                                <option value="android16_6_6">Linux 6.6.21 (Android 16)</option>
+                                <option value="android15_6_1">Linux 6.1.75 (Android 15)</option>
+                                <option value="android14_6_1">Linux 6.1.25 (Android 14)</option>
+                                <option value="android14_5_15">Linux 5.15.110 (Android 14)</option>
+                                <option value="android13_5_10">Linux 5.10.168 (Android 13)</option>
+                                <option value="android12_5_10">Linux 5.10.160 (Android 12)</option>
+                                <option value="android11_4_19">Linux 4.19.191 (Android 11)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row" style="margin-top:12px;">
+                        <div class="form-group">
+                            <label>sysname</label>
+                            <input type="text" id="kernelSysname" placeholder="Linux" value="Linux">
+                        </div>
+                        <div class="form-group">
+                            <label>release</label>
+                            <input type="text" id="kernelRelease" placeholder="5.10.160-android12-9-g123456">
+                        </div>
+                    </div>
+
+                    <div class="action-bar" style="margin-top:10px;">
+                        <button class="btn btn-primary" onclick="saveKernelIdentity()" data-i18n="btn_save_kernel_id">Save Kernel Identity</button>
+                    </div>
+                </div>
+            </details>
+
+            <div class="card">
+                <div class="card-title" data-i18n="card_telephony_title">Attestation and Telephony Identifiers</div>
+                
+                <strong style="color:var(--text-muted); font-size:0.8rem; display:block; margin-bottom:10px;">SIM 1</strong>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>IMEI</label>
+                        <div class="input-group">
+                            <input type="text" id="sim1_imei" placeholder="35...">
+                            <button class="btn" onclick="randomizeField('sim1_imei', 'imei')" data-i18n="btn_random">Random</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>MEID</label>
+                        <div class="input-group">
+                            <input type="text" id="sim1_meid" placeholder="MEID">
+                            <button class="btn" onclick="randomizeField('sim1_meid', 'meid')" data-i18n="btn_random">Random</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>IMSI</label>
+                        <div class="input-group">
+                            <input type="text" id="sim1_imsi" placeholder="IMSI">
+                            <button class="btn" onclick="randomizeField('sim1_imsi', 'imsi')" data-i18n="btn_random">Random</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>ICCID</label>
+                        <div class="input-group">
+                            <input type="text" id="sim1_iccid" placeholder="ICCID">
+                            <button class="btn" onclick="randomizeField('sim1_iccid', 'iccid')" data-i18n="btn_random">Random</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="lbl_phone_num">Phone number</label>
+                    <div class="input-group">
+                        <input type="text" id="sim1_phone" placeholder="+12025550124">
+                        <button class="btn" onclick="randomizeField('sim1_phone', 'phone')" data-i18n="btn_random">Random</button>
+                    </div>
+                </div>
+
+                <!-- SIM 2 -->
+                <strong style="color:var(--text-muted); font-size:0.8rem; display:block; margin-top:18px; margin-bottom:10px;">SIM 2 (OPTIONAL)</strong>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>IMEI 2</label>
+                        <div class="input-group">
+                            <input type="text" id="sim2_imei" placeholder="35...">
+                            <button class="btn" onclick="randomizeField('sim2_imei', 'imei')" data-i18n="btn_random">Random</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>MEID 2</label>
+                        <div class="input-group">
+                            <input type="text" id="sim2_meid" placeholder="MEID">
+                            <button class="btn" onclick="randomizeField('sim2_meid', 'meid')" data-i18n="btn_random">Random</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>IMSI 2</label>
+                        <div class="input-group">
+                            <input type="text" id="sim2_imsi" placeholder="IMSI">
+                            <button class="btn" onclick="randomizeField('sim2_imsi', 'imsi')" data-i18n="btn_random">Random</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>ICCID 2</label>
+                        <div class="input-group">
+                            <input type="text" id="sim2_iccid" placeholder="ICCID">
+                            <button class="btn" onclick="randomizeField('sim2_iccid', 'iccid')" data-i18n="btn_random">Random</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="lbl_phone_num_2">Phone number 2</label>
+                    <div class="input-group">
+                        <input type="text" id="sim2_phone" placeholder="+12025550125">
+                        <button class="btn" onclick="randomizeField('sim2_phone', 'phone')" data-i18n="btn_random">Random</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="lbl_visible_sim_count">Visible SIM count</label>
+                    <div style="display: grid; grid-template-columns: 1fr auto 2fr; gap: 10px; align-items: center;">
+                        <input type="number" id="visibleSimCount" min="0" max="4" placeholder="1">
+                        <button class="btn" onclick="randomizeField('visibleSimCount', 'simCount')" data-i18n="btn_random">Random</button>
+                        <span class="inline-hint" data-i18n="hint_visible_sim">Limits active subscriptions.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="lbl_visible_cam_count">Visible camera count</label>
+                    <div style="display: grid; grid-template-columns: 1fr auto 2fr; gap: 10px; align-items: center;">
+                        <input type="number" id="visibleCameraCount" min="0" max="8" placeholder="2">
+                        <button class="btn" onclick="randomizeField('visibleCameraCount', 'camCount')" data-i18n="btn_random">Random</button>
+                        <span class="inline-hint" data-i18n="hint_visible_cam">Limits camera IDs.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-i18n="lbl_serial">Serial</label>
+                    <div class="input-group">
+                        <input type="text" id="deviceSerial" placeholder="Device serial">
+                        <button class="btn" onclick="randomizeField('deviceSerial', 'serial')" data-i18n="btn_random">Random</button>
+                    </div>
+                </div>
+
+                <div class="action-bar" style="margin-top:26px; border-top:1px solid var(--panel-border); padding-top:18px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <button class="btn" onclick="randomizeAllTelephonyAndHardware()" data-i18n="btn_rand_all">Randomize All</button>
+                    <button class="btn btn-danger-outline" onclick="clearAllTelephonyFields()" data-i18n="btn_clear_all">Clear All</button>
+                    <button class="btn btn-apply-accent" onclick="applyTelephonyIdentifiers()" data-i18n="btn_apply_id">Apply Identity</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= Profiles Tab ================= -->
+        <div class="tab-panel" id="panel_profiles">
+            <details class="guide-box" open>
+                <summary data-i18n="pf_guide_title">💡 دليل التعليمات: إدارة البروفايلات (Profiles Guide)</summary>
+                <ul class="guide-list">
+                    <li><strong data-i18n="pf_guide_1_title">New Profile:</strong> <span data-i18n="pf_guide_1_desc">إنشاء بروفايل وإعدادات مخصصة للتطبيقات المثبتة أو عبر الرموز التعبيرية (Wildcards).</span></li>
+                    <li><strong data-i18n="pf_guide_2_title">Export:</strong> <span data-i18n="pf_guide_2_desc">تصدير كافة إعدادات البروفايلات المحفوظة للنسخ الاحتياطي.</span></li>
+                    <li><strong data-i18n="pf_guide_3_title">Import:</strong> <span data-i18n="pf_guide_3_desc">استيراد وتطبيق ملفات البروفايلات الجاهزة مباشرة.</span></li>
+                </ul>
+            </details>
+
+            <div class="card">
+                <div class="card-title" data-i18n="card_profiles_title">Profiles</div>
+                <div class="card-desc" data-i18n="card_profiles_desc">App-centric configuration. Assign installed apps or wildcards, then choose privacy, identity, keybox and feature overrides.</div>
+
+                <div class="action-bar" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px;">
+                    <button id="btn-new-profile" class="btn btn-primary" onclick="createNewProfile()" data-i18n="btn_new_profile">New profile</button>
+                    <button id="btn-export" class="btn" onclick="exportProfiles()" data-i18n="btn_export">Export</button>
+                    <button id="btn-import" class="btn" onclick="importProfiles()" data-i18n="btn_import">Import</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= Keybox Update Tab ================= -->
+        <div class="tab-panel" id="panel_keybox_update">
+            <details class="guide-box" open>
+                <summary data-i18n="kb_guide_title">💡 دليل التعليمات: تحديث وإدارة ملف الكيبوكس (Keybox Management Guide)</summary>
+                <ul class="guide-list">
+                    <li><strong data-i18n="kb_guide_1_title">Manual Keybox Installer:</strong> <span data-i18n="kb_guide_1_desc">تحميل وتنزيل ملف Keybox مباشرة من المستودع المحمي إلى مجلد TrickyStore.</span></li>
+                    <li><strong data-i18n="kb_guide_2_title">Delete Old Keybox:</strong> <span data-i18n="kb_guide_2_desc">حذف ملف keybox.xml و keybox.bak والملفات المؤقتة يدوياً.</span></li>
+                </ul>
+            </details>
+
+            <div class="card">
+                <div class="card-title" data-i18n="card_kb_title">Keybox Auto Fetcher & Installer</div>
+                <div class="card-desc" data-i18n="card_kb_desc">Download or delete Keybox files directly in the TrickyStore directory (/data/adb/tricky_store/).</div>
+
+                <div class="form-group">
+                    <label data-i18n="lbl_kb_url">OFFICIAL KEYBOX SOURCE URL (PROTECTED)</label>
+                    <input type="text" id="keyboxSourceUrl" readonly value="https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml">
+                </div>
+
+                <div class="action-bar" style="margin-top:20px; display: flex; gap: 12px;">
+                    <button class="btn btn-primary" onclick="fetchAndInstallKeybox()" data-i18n="btn_dl_kb">📥 Download & Install Keybox</button>
+                    <button class="btn btn-danger-outline" onclick="deleteCurrentKeybox()" data-i18n="btn_del_kb">🗑️ Delete Current Keybox & Bak</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= Security Patch Tab ================= -->
+        <div class="tab-panel" id="panel_security_patch">
+            <details class="guide-box" open>
+                <summary data-i18n="sp_guide_title">💡 دليل التعليمات: تصحيحات وتاريخ الأمان (Security Patch Guide)</summary>
+                <ul class="guide-list">
+                    <li><strong data-i18n="sp_guide_1_title">Auto Security Patch:</strong> <span data-i18n="sp_guide_1_desc">تفعيل المزامنة التلقائية لتواريخ التحديثات والأمان.</span></li>
+                    <li><strong data-i18n="sp_guide_2_title">Stale ROM threshold:</strong> <span data-i18n="sp_guide_2_desc">تحديد أقصى مدة بالأشهر لتحديثات الروم القديمة.</span></li>
+                    <li><strong data-i18n="sp_guide_3_title">Package to resolve:</strong> <span data-i18n="sp_guide_3_desc">فحص تطبيق محدد عن طريق اختيار التطبيق المباشر أو اسم الحزمة.</span></li>
+                </ul>
+            </details>
+
+            <div class="card">
+                <div class="card-title" data-i18n="card_sp_title">Security Patch</div>
+                <div class="toggle-row">
+                    <div>
+                        <strong style="display:block; font-size:0.95rem;" data-i18n="title_auto_sp">Auto Security Patch</strong>
+                        <span class="card-desc" style="margin:0;" data-i18n="desc_auto_sp">Use automatic mode for System, Vendor and Boot.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="autoSecurityPatchToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="form-group" style="margin-top:16px;">
+                    <label data-i18n="lbl_stale_rom">Stale ROM threshold (months)</label>
+                    <input type="number" id="staleRomThreshold" min="1" max="36" value="3">
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="saveSecurityPatchSettings()" data-i18n="btn_save_sp">Save Security Patch</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title" data-i18n="card_resolve_title">Resolve for an app</div>
+                <div class="card-desc" data-i18n="card_resolve_desc">اختر تطبيقاً من القائمة المثبتة على جهازك أو أدخل اسم الحزمة للفحص المباشر.</div>
+
+                <div class="form-group">
+                    <label data-i18n="lbl_select_app">SELECT INSTALLED APPLICATION</label>
+                    <div class="input-group">
+                        <select id="installedAppsSelect" onchange="onAppSelected(this.value)">
+                            <option value="">جارٍ التحميل...</option>
+                        </select>
+                        <button class="btn" onclick="loadInstalledApps()" data-i18n="btn_refresh_apps">🔄 Refresh Apps</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:14px;">
+                    <label data-i18n="lbl_pkg_resolve">PACKAGE TO RESOLVE</label>
+                    <input type="text" id="appPackageResolve" placeholder="com.example.app">
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="resolveAppPackage()" data-i18n="btn_resolve">Resolve</button>
+                </div>
+
+                <div class="form-group" style="margin-top:16px;">
+                    <textarea id="resolveResultOutput" rows="5" readonly placeholder="Output values will appear here..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= Settings Tab ================= -->
+        <div class="tab-panel" id="panel_settings">
+            <details class="guide-box" open>
+                <summary data-i18n="st_guide_title">💡 دليل التعليمات: إعدادات التطبيق والدعم (Settings Guide)</summary>
+                <ul class="guide-list">
+                    <li><strong data-i18n="st_guide_1_title">Language / اللغة:</strong> <span data-i18n="st_guide_1_desc">تغيير وتعيين لغة واجهة الأداة.</span></li>
+                    <li><strong data-i18n="st_guide_2_title">Community & Official Links:</strong> <span data-i18n="st_guide_2_desc">الوصول المباشر لقنوات التلجرام الرسمية ومستودع GitHub.</span></li>
+                </ul>
+            </details>
             
-            if (lang === 'ar') {
-                document.documentElement.setAttribute('dir', 'rtl');
-            } else {
-                document.documentElement.setAttribute('dir', 'ltr');
-            }
+            <div class="card">
+                <div class="card-title" data-i18n="card_settings_title">Settings & Preferences</div>
+                <div class="form-group">
+                    <label data-i18n="lbl_lang">Language / اللغة</label>
+                    <select id="appLanguageSelect" onchange="changeLanguage(this.value)">
+                        <option value="ar" selected>العربية (Arabic)</option>
+                        <option value="en">English</option>
+                        <option value="tr">Türkçe (Turkish)</option>
+                        <option value="zh">中文 (Chinese)</option>
+                        <option value="ru">Русский (Russian)</option>
+                    </select>
+                </div>
+            </div>
 
-            const elements = document.querySelectorAll('[data-i18n]');
-            elements.forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang] && translations[lang][key]) {
-                    el.innerText = translations[lang][key];
-                }
-            });
+            <div class="card">
+                <div class="card-title" data-i18n="card_community_title">Community & Official Links</div>
+                
+                <div class="social-link-card">
+                    <div class="social-info">
+                        <div class="social-title" data-i18n="title_tg_dev">Telegram Developer Contact</div>
+                        <div class="social-sub">@falcon_kernel</div>
+                    </div>
+                    <a href="https://t.me/falcon_kernel" target="_blank" class="btn btn-primary" data-i18n="btn_contact">Contact</a>
+                </div>
 
-            checkZygiskAndBootloader();
-        }
+                <div class="social-link-card">
+                    <div class="social-info">
+                        <div class="social-title" data-i18n="title_tg_channel">Telegram Official Channel</div>
+                        <div class="social-sub">@FALCON_KERNEL_PRO</div>
+                    </div>
+                    <a href="https://t.me/FALCON_KERNEL_PRO" target="_blank" class="btn btn-primary" data-i18n="btn_join">Join</a>
+                </div>
 
-        const savedLang = localStorage.getItem('falcon_lang') || 'en';
-        document.getElementById('langSelect').value = savedLang;
-        changeLanguage(savedLang);
+                <div class="social-link-card">
+                    <div class="social-info">
+                        <div class="social-title" data-i18n="title_github">GitHub Repository</div>
+                        <div class="social-sub">AHMED2111X / Source</div>
+                    </div>
+                    <a href="https://github.com/AHMED2111X/AHMED2111X" target="_blank" class="btn btn-primary" data-i18n="btn_visit">Visit</a>
+                </div>
+            </div>
+        </div>
 
+    </main>
+
+    <script src="bridge.js"></script>
+    <script>
         const SERVER_URL = "https://falcon-counter-server.onrender.com";
 
         let deviceId = localStorage.getItem('falcon_device_id');
@@ -405,161 +843,613 @@
             .then(res => res.json())
             .then(data => {
                 if (data && data.onlineUsers !== undefined) {
-                    document.getElementById('online-counter').innerText = data.onlineUsers;
+                    const counterEl = document.getElementById('online-counter');
+                    if (counterEl) {
+                        counterEl.innerText = data.onlineUsers;
+                    }
                 }
             })
-            .catch(() => {
-                document.getElementById('online-counter').innerText = '1';
+            .catch(() => {});
+        }
+
+        // كائن الترجمات الشامل لكافة الأجزاء والأوصاف والعناوين
+        const translations = {
+            ar: {
+                dir: 'rtl',
+                online_users: 'المستخدمين النشطين',
+                tab_identity: 'Identity',
+                tab_profiles: 'Profiles',
+                tab_keybox_update: 'Keybox Update',
+                tab_security_patch: 'Security Patch',
+                tab_settings: 'Settings',
+
+                id_guide_title: '💡 دليل التعليمات: خيارات الهوية والشرائح (Identity & Telephony)',
+                id_guide_1_title: 'Identity Template Select:',
+                id_guide_1_desc: 'اختيار بصمة جهاز معتمد لتخطي فحوصات Play Integrity للتطبيقات.',
+                id_guide_2_title: 'Random / Randomize All:',
+                id_guide_2_desc: 'إنشاء وتوليد بيانات وقيم عشوائية فورية لكل الحقول المحددة.',
+                id_guide_3_title: 'Auto Identity (Pixel Beta):',
+                id_guide_3_desc: 'جلب أحدث بصمة جهاز رسمية من سيرفرات جوجل لتجنب البصمات المحظورة.',
+                id_guide_4_title: 'Cron Auto Identity:',
+                id_guide_4_desc: 'تفعيل مزامنة تلقائية لجلب بصمة جديدة كل 24 ساعة دون تدخل منك.',
+                id_guide_5_title: 'Kernel Identity:',
+                id_guide_5_desc: 'تعديل قيم النواة (sysname / release) لإخفاء تفاصيل الكيرنل المعدل.',
+                id_guide_6_title: 'Telephony & Hardware:',
+                id_guide_6_desc: 'تزييف قيم الـ IMEI، IMSI، ICCID، أرقام الهواتف، والـ Serial Number.',
+
+                card_id_title: 'إدارة الهوية (Identity Manager)',
+                card_id_desc: 'حدد هوية التصديق المستخدمة للتطبيقات المستهدفة وتخصيص البصمات.',
+                btn_random: 'عشوائي',
+                lbl_device: 'اسم الجهاز (DEVICE)',
+                lbl_manufacturer: 'الشركة المصنعة (MANUFACTURER)',
+                lbl_template_fp: 'بصمة القالب (TEMPLATE FINGERPRINT)',
+                btn_copy: 'نسخ',
+                btn_rand_all_id: 'توليد عشوائي لكافة المعرفات',
+                btn_auto_id: 'هوية تلقائية (Pixel Beta)',
+                btn_apply_id: 'تطبيق الهوية',
+                cron_title: 'توليد الهوية المجدولة (Cron Auto Identity)',
+                cron_desc: 'جلب وتطبيق هوية تلقائية جديدة كل 24 ساعة بدون تدخل.',
+
+                summary_custom_temp: 'القوالب المخصصة (Custom Templates)',
+                btn_save_custom_temp: 'حفظ القوالب المخصصة',
+                summary_kernel_id: 'هوية النواة (Kernel Identity)',
+                lbl_preset_kernel: 'إصدار الكيرنل الجاهز',
+                opt_preset_kernel_default: '-- اختر إصدار كيرنل جاهز --',
+                btn_save_kernel_id: 'حفظ هوية الكيرنل',
+
+                card_telephony_title: 'معرفات التصديق والاتصالات (Telephony Identifiers)',
+                lbl_phone_num: 'رقم الهاتف',
+                lbl_phone_num_2: 'رقم الهاتف 2',
+                lbl_visible_sim_count: 'عدد الشرائح الظاهرة',
+                hint_visible_sim: 'يحدد عدد الاشتراكات النشطة.',
+                lbl_visible_cam_count: 'عدد الكاميرات الظاهرة',
+                hint_visible_cam: 'يحدد معرفات الكاميرا.',
+                lbl_serial: 'الرقم التسلسلي (Serial)',
+                btn_rand_all: 'توليد الكل عشوائياً',
+                btn_clear_all: 'مسح الكل',
+
+                pf_guide_title: '💡 دليل التعليمات: إدارة البروفايلات (Profiles Guide)',
+                pf_guide_1_title: 'New Profile:',
+                pf_guide_1_desc: 'إنشاء بروفايل وإعدادات مخصصة للتطبيقات المثبتة أو عبر الرموز التعبيرية (Wildcards).',
+                pf_guide_2_title: 'Export:',
+                pf_guide_2_desc: 'تصدير كافة إعدادات البروفايلات المحفوظة للنسخ الاحتياطي.',
+                pf_guide_3_title: 'Import:',
+                pf_guide_3_desc: 'استيراد وتطبيق ملفات البروفايلات الجاهزة مباشرة.',
+                card_profiles_title: 'إدارة البروفايلات (Profiles)',
+                card_profiles_desc: 'تكوين مخصص للتطبيقات. حدد التطبيقات المثبتة أو النماذج، ثم اختر الخصوصية والهوية وتجاوز الميزات.',
+                btn_new_profile: 'بروفايل جديد',
+                btn_export: 'تصدير',
+                btn_import: 'استيراد',
+
+                kb_guide_title: '💡 دليل التعليمات: تحديث وإدارة ملف الكيبوكس (Keybox Management Guide)',
+                kb_guide_1_title: 'Manual Keybox Installer:',
+                kb_guide_1_desc: 'تحميل وتنزيل ملف Keybox مباشرة من المستودع المحمي إلى مجلد TrickyStore.',
+                kb_guide_2_title: 'Delete Old Keybox:',
+                kb_guide_2_desc: 'حذف ملف keybox.xml و keybox.bak والملفات المؤقتة يدوياً.',
+                card_kb_title: 'محدث ومثبت الكيبوكس التلقائي (Keybox Installer)',
+                card_kb_desc: 'تنزيل أو حذف ملفات الكيبوكس مباشرة في مجلد TrickyStore (/data/adb/tricky_store/).',
+                lbl_kb_url: 'رابط مصدر الكيبوكس الرسمي (محمي)',
+                btn_dl_kb: '📥 تنزيل وتثبيت الكيبوكس',
+                btn_del_kb: '🗑️ حذف الكيبوكس الحالي والنسخة الاحتياطية',
+
+                sp_guide_title: '💡 دليل التعليمات: تصحيحات وتاريخ الأمان (Security Patch Guide)',
+                sp_guide_1_title: 'Auto Security Patch:',
+                sp_guide_1_desc: 'تفعيل المزامنة التلقائية لتواريخ التحديثات والأمان.',
+                sp_guide_2_title: 'Stale ROM threshold:',
+                sp_guide_2_desc: 'تحديد أقصى مدة بالأشهر لتحديثات الروم القديمة.',
+                sp_guide_3_title: 'Package to resolve:',
+                sp_guide_3_desc: 'فحص تطبيق محدد عن طريق اختيار التطبيق المباشر أو اسم الحزمة.',
+                card_sp_title: 'تصحيح الأمان (Security Patch)',
+                title_auto_sp: 'تصحيح الأمان التلقائي',
+                desc_auto_sp: 'استخدام الوضع التلقائي للنظام، المورد، والإقلاع (System, Vendor, Boot).',
+                lbl_stale_rom: 'مهلة الروم القديم (بالأشهر)',
+                btn_save_sp: 'حفظ تصحيح الأمان',
+                card_resolve_title: 'فحص واستعلام حزمة تطبيق (Resolve for an app)',
+                card_resolve_desc: 'اختر تطبيقاً من القائمة المثبتة على جهازك أو أدخل اسم الحزمة للفحص المباشر.',
+                lbl_select_app: 'اختر التطبيق المثبت',
+                btn_refresh_apps: '🔄 تحديث القائمة',
+                lbl_pkg_resolve: 'اسم حزمة التطبيق (Package)',
+                btn_resolve: 'فحص التطبيق',
+
+                st_guide_title: '💡 دليل التعليمات: إعدادات التطبيق والدعم (Settings Guide)',
+                st_guide_1_title: 'Language / اللغة:',
+                st_guide_1_desc: 'تغيير وتعيين لغة واجهة الأداة.',
+                st_guide_2_title: 'Community & Official Links:',
+                st_guide_2_desc: 'الوصول المباشر لقنوات التلجرام الرسمية ومستودع GitHub.',
+                card_settings_title: 'الإعدادات والتفضيلات',
+                lbl_lang: 'Language / اللغة',
+                card_community_title: 'المجتمع والروابط الرسمية',
+                title_tg_dev: 'التواصل مع المطور عبر تلجرام',
+                title_tg_channel: 'القناة الرسمية على تلجرام',
+                title_github: 'مستودع جيت هاب الرسمي',
+                btn_contact: 'تواصل',
+                btn_join: 'انضمام',
+                btn_visit: 'زيارة'
+            },
+            en: {
+                dir: 'ltr',
+                online_users: 'Active Users',
+                tab_identity: 'Identity',
+                tab_profiles: 'Profiles',
+                tab_keybox_update: 'Keybox Update',
+                tab_security_patch: 'Security Patch',
+                tab_settings: 'Settings',
+
+                id_guide_title: '💡 User Guide: Identity & Telephony Options',
+                id_guide_1_title: 'Identity Template Select:',
+                id_guide_1_desc: 'Select certified device fingerprint to pass Play Integrity checks.',
+                id_guide_2_title: 'Random / Randomize All:',
+                id_guide_2_desc: 'Generate instant randomized data for all specified fields.',
+                id_guide_3_title: 'Auto Identity (Pixel Beta):',
+                id_guide_3_desc: 'Fetch fresh device fingerprints from Google servers to avoid banned hashes.',
+                id_guide_4_title: 'Cron Auto Identity:',
+                id_guide_4_desc: 'Enable automatic sync every 24 hours without manual effort.',
+                id_guide_5_title: 'Kernel Identity:',
+                id_guide_5_desc: 'Modify Kernel variables (sysname / release) to hide custom builds.',
+                id_guide_6_title: 'Telephony & Hardware:',
+                id_guide_6_desc: 'Spoof IMEI, IMSI, ICCID, Phone numbers, and Serial numbers.',
+
+                card_id_title: 'Identity Manager',
+                card_id_desc: 'Select the attestation identity used for configured target applications.',
+                btn_random: 'Random',
+                lbl_device: 'DEVICE',
+                lbl_manufacturer: 'MANUFACTURER',
+                lbl_template_fp: 'TEMPLATE FINGERPRINT',
+                btn_copy: 'Copy',
+                btn_rand_all_id: 'Randomize All Identifiers',
+                btn_auto_id: 'Auto Identity (Pixel Beta)',
+                btn_apply_id: 'Apply Identity',
+                cron_title: 'Cron Auto Identity',
+                cron_desc: 'Fetches and applies a fresh Auto identity every 24 hours.',
+
+                summary_custom_temp: 'Custom Templates',
+                btn_save_custom_temp: 'Save Custom Templates',
+                summary_kernel_id: 'Kernel Identity',
+                lbl_preset_kernel: 'PRESET KERNEL VERSION',
+                opt_preset_kernel_default: '-- Select Preset Kernel Version --',
+                btn_save_kernel_id: 'Save Kernel Identity',
+
+                card_telephony_title: 'Attestation and Telephony Identifiers',
+                lbl_phone_num: 'Phone number',
+                lbl_phone_num_2: 'Phone number 2',
+                lbl_visible_sim_count: 'Visible SIM count',
+                hint_visible_sim: 'Limits active subscriptions.',
+                lbl_visible_cam_count: 'Visible camera count',
+                hint_visible_cam: 'Limits camera IDs.',
+                lbl_serial: 'Serial',
+                btn_rand_all: 'Randomize All',
+                btn_clear_all: 'Clear All',
+
+                pf_guide_title: '💡 User Guide: Profiles Management',
+                pf_guide_1_title: 'New Profile:',
+                pf_guide_1_desc: 'Create custom profile & settings for installed apps or wildcards.',
+                pf_guide_2_title: 'Export:',
+                pf_guide_2_desc: 'Export all saved profiles for backup.',
+                pf_guide_3_title: 'Import:',
+                pf_guide_3_desc: 'Import and apply pre-configured profile JSON files directly.',
+                card_profiles_title: 'Profiles Management',
+                card_profiles_desc: 'App-centric configuration. Assign installed apps or wildcards, then choose privacy, identity, keybox and feature overrides.',
+                btn_new_profile: 'New profile',
+                btn_export: 'Export',
+                btn_import: 'Import',
+
+                kb_guide_title: '💡 User Guide: Keybox Management',
+                kb_guide_1_title: 'Manual Keybox Installer:',
+                kb_guide_1_desc: 'Download Keybox file directly from protected repo to TrickyStore folder.',
+                kb_guide_2_title: 'Delete Old Keybox:',
+                kb_guide_2_desc: 'Manually delete keybox.xml, keybox.bak, and temp files.',
+                card_kb_title: 'Keybox Auto Fetcher & Installer',
+                card_kb_desc: 'Download or delete Keybox files directly in the TrickyStore directory (/data/adb/tricky_store/).',
+                lbl_kb_url: 'OFFICIAL KEYBOX SOURCE URL (PROTECTED)',
+                btn_dl_kb: '📥 Download & Install Keybox',
+                btn_del_kb: '🗑️ Delete Current Keybox & Bak',
+
+                sp_guide_title: '💡 User Guide: Security Patch & Dates',
+                sp_guide_1_title: 'Auto Security Patch:',
+                sp_guide_1_desc: 'Enable automatic synchronization for security patch dates.',
+                sp_guide_2_title: 'Stale ROM threshold:',
+                sp_guide_2_desc: 'Define maximum months for stale ROM updates.',
+                sp_guide_3_title: 'Package to resolve:',
+                sp_guide_3_desc: 'Inspect specific target app by selecting package name.',
+                card_sp_title: 'Security Patch',
+                title_auto_sp: 'Auto Security Patch',
+                desc_auto_sp: 'Use automatic mode for System, Vendor and Boot.',
+                lbl_stale_rom: 'Stale ROM threshold (months)',
+                btn_save_sp: 'Save Security Patch',
+                card_resolve_title: 'Resolve for an app',
+                card_resolve_desc: 'Select an application from installed list or type package name to resolve.',
+                lbl_select_app: 'SELECT INSTALLED APPLICATION',
+                btn_refresh_apps: '🔄 Refresh Apps',
+                lbl_pkg_resolve: 'PACKAGE TO RESOLVE',
+                btn_resolve: 'Resolve',
+
+                st_guide_title: '💡 User Guide: Application Settings & Support',
+                st_guide_1_title: 'Language:',
+                st_guide_1_desc: 'Switch tool user interface language.',
+                st_guide_2_title: 'Community & Official Links:',
+                st_guide_2_desc: 'Direct access to official Telegram channels and GitHub repo.',
+                card_settings_title: 'Settings & Preferences',
+                lbl_lang: 'Language',
+                card_community_title: 'Community & Official Links',
+                title_tg_dev: 'Telegram Developer Contact',
+                title_tg_channel: 'Telegram Official Channel',
+                title_github: 'GitHub Repository',
+                btn_contact: 'Contact',
+                btn_join: 'Join',
+                btn_visit: 'Visit'
+            },
+            tr: {
+                dir: 'ltr',
+                online_users: 'Aktif Kullanıcılar',
+                tab_identity: 'Kimlik',
+                tab_profiles: 'Profiller',
+                tab_keybox_update: 'Keybox Güncelle',
+                tab_security_patch: 'Güvenlik Yaması',
+                tab_settings: 'Ayarlar',
+
+                id_guide_title: '💡 Kullanım Kılavuzu: Kimlik ve Telefon Seçenekleri',
+                id_guide_1_title: 'Kimlik Şablonu Seçimi:',
+                id_guide_1_desc: 'Play Integrity kontrollerini geçmek için onaylı cihaz parmak izi seçin.',
+                id_guide_2_title: 'Rastgele / Tümünü Rastgele Yap:',
+                id_guide_2_desc: 'Tüm alanlar için anında rastgele veriler oluşturun.',
+                id_guide_3_title: 'Otomatik Kimlik (Pixel Beta):',
+                id_guide_3_desc: 'Yasaklı kimliklerden kaçınmak için Google sunucularından güncel parmak izi alın.',
+                id_guide_4_title: 'Zamanlanmış Otomatik Kimlik:',
+                id_guide_4_desc: 'Her 24 saatte bir otomatik kimlik senkronizasyonunu etkinleştirin.',
+                id_guide_5_title: 'Çekirdek Kimliği:',
+                id_guide_5_desc: 'Özel kernel detaylarını gizlemek için sysname / release değerlerini değiştirin.',
+                id_guide_6_title: 'Telefon ve Donanım:',
+                id_guide_6_desc: 'IMEI, IMSI, ICCID, Telefon numaraları ve Seri Numarasını sahteyle değiştirin.',
+
+                card_id_title: 'Kimlik Yöneticisi',
+                card_id_desc: 'Hedef uygulamalar için kullanılan doğrulama kimliğini seçin.',
+                btn_random: 'Rastgele',
+                lbl_device: 'CİHAZ',
+                lbl_manufacturer: 'ÜRETİCİ',
+                lbl_template_fp: 'ŞABLON PARMAK İZİ',
+                btn_copy: 'Kopyala',
+                btn_rand_all_id: 'Tüm Kimlikleri Rastgele Yap',
+                btn_auto_id: 'Otomatik Kimlik (Pixel Beta)',
+                btn_apply_id: 'Kimliği Uygula',
+                cron_title: 'Zamanlanmış Otomatik Kimlik',
+                cron_desc: 'Her 24 saatte bir yeni otomatik kimlik alır ve uygular.',
+
+                summary_custom_temp: 'Özel Şablonlar',
+                btn_save_custom_temp: 'Özel Şablonları Kaydet',
+                summary_kernel_id: 'Çekirdek Kimliği',
+                lbl_preset_kernel: 'HAZIR ÇEKİRDEK SÜRÜMÜ',
+                opt_preset_kernel_default: '-- Çekirdek Sürümü Seçin --',
+                btn_save_kernel_id: 'Çekirdek Kimliğini Kaydet',
+
+                card_telephony_title: 'Doğrulama ve Telefon Kimlikleri',
+                lbl_phone_num: 'Telefon Numarası',
+                lbl_phone_num_2: 'Telefon Numarası 2',
+                lbl_visible_sim_count: 'Görünen SIM Sayısı',
+                hint_visible_sim: 'Etkin abonelikleri sınırlar.',
+                lbl_visible_cam_count: 'Görünen Kamera Sayısı',
+                hint_visible_cam: 'Kamera kimliklerini sınırlar.',
+                lbl_serial: 'Seri Numarası',
+                btn_rand_all: 'Tümünü Rastgele Yap',
+                btn_clear_all: 'Tümünü Temizle',
+
+                pf_guide_title: '💡 Kullanım Kılavuzu: Profil Yönetimi',
+                pf_guide_1_title: 'Yeni Profil:',
+                pf_guide_1_desc: 'Yüklü uygulamalar veya joker karakterler için özel profiller oluşturun.',
+                pf_guide_2_title: 'Dışa Aktar:',
+                pf_guide_2_desc: 'Yedekleme için tüm kayıtlı profilleri dışa aktarın.',
+                pf_guide_3_title: 'İçe Aktar:',
+                pf_guide_3_desc: 'Hazır profil JSON dosyalarını doğrudan içe aktarın.',
+                card_profiles_title: 'Profil Yönetimi',
+                card_profiles_desc: 'Uygulama odaklı yapılandırma. Gizlilik, kimlik ve keybox ayarlarını seçin.',
+                btn_new_profile: 'Yeni Profil',
+                btn_export: 'Dışa Aktar',
+                btn_import: 'İçe Aktar',
+
+                kb_guide_title: '💡 Kullanım Kılavuzu: Keybox Güncelleme',
+                kb_guide_1_title: 'Manuel Keybox Yükleyici:',
+                kb_guide_1_desc: 'Keybox dosyasını korumalı sunucudan doğrudan TrickyStore klasörüne indirin.',
+                kb_guide_2_title: 'Eski Keybox Sil:',
+                kb_guide_2_desc: 'keybox.xml ve yedek dosyaları manuel olarak silin.',
+                card_kb_title: 'Otomatik Keybox Yükleyici',
+                card_kb_desc: 'Keybox dosyalarını doğrudan TrickyStore dizininde yönetin.',
+                lbl_kb_url: 'RESMİ KEYBOX KAYNAK URL (KORUMALI)',
+                btn_dl_kb: '📥 Keybox İndir ve Yükle',
+                btn_del_kb: '🗑️ Mevcut Keybox & Bak Sil',
+
+                sp_guide_title: '💡 Kullanım Kılavuzu: Güvenlik Yaması',
+                sp_guide_1_title: 'Otomatik Güvenlik Yaması:',
+                sp_guide_1_desc: 'Yama tarihleri için otomatik senkronizasyonu etkinleştirin.',
+                sp_guide_2_title: 'Eski ROM Eşiği:',
+                sp_guide_2_desc: 'Eski ROM güncellemeleri için maksimum ay süresi belirleyin.',
+                sp_guide_3_title: 'İncelenecek Paket:',
+                sp_guide_3_desc: 'Paket adını seçerek belirli bir uygulamayı inceleyin.',
+                card_sp_title: 'Güvenlik Yaması',
+                title_auto_sp: 'Otomatik Güvenlik Yaması',
+                desc_auto_sp: 'Sistem, Satıcı ve Önyükleme için otomatik modu kullanın.',
+                lbl_stale_rom: 'Eski ROM Eşiği (ay)',
+                btn_save_sp: 'Güvenlik Yamasını Kaydet',
+                card_resolve_title: 'Uygulama İnceleme',
+                card_resolve_desc: 'Listeden bir uygulama seçin veya paket adını girin.',
+                lbl_select_app: 'YÜKLÜ UYGULAMAYI SEÇİN',
+                btn_refresh_apps: '🔄 Yenile',
+                lbl_pkg_resolve: 'PAKET ADI',
+                btn_resolve: 'İncele',
+
+                st_guide_title: '💡 Kullanım Kılavuzu: Ayarlar ve Destek',
+                st_guide_1_title: 'Dil:',
+                st_guide_1_desc: 'Arayüz dilini değiştirin.',
+                st_guide_2_title: 'Topluluk ve Resmi Bağlantılar:',
+                st_guide_2_desc: 'Resmi Telegram kanallarına ve GitHub deposuna erişin.',
+                card_settings_title: 'Ayarlar ve Tercihler',
+                lbl_lang: 'Dil',
+                card_community_title: 'Topluluk ve Bağlantılar',
+                title_tg_dev: 'Telegram Geliştirici İletişim',
+                title_tg_channel: 'Telegram Resmi Kanalı',
+                title_github: 'GitHub Deposu',
+                btn_contact: 'İletişim',
+                btn_join: 'Katıl',
+                btn_visit: 'Ziyaret Et'
+            },
+            zh: {
+                dir: 'ltr',
+                online_users: '在线用户',
+                tab_identity: '身份',
+                tab_profiles: '配置文件',
+                tab_keybox_update: 'Keybox 更新',
+                tab_security_patch: '安全补丁',
+                tab_settings: '设置',
+
+                id_guide_title: '💡 使用指南：身份与电话选项',
+                id_guide_1_title: '身份模板选择：',
+                id_guide_1_desc: '选择已认证的设备指纹以通过 Play Integrity 检测。',
+                id_guide_2_title: '随机 / 全部随机：',
+                id_guide_2_desc: '为所有指定字段生成即时随机数据。',
+                id_guide_3_title: '自动身份 (Pixel Beta)：',
+                id_guide_3_desc: '从 Google 服务器获取最新的设备指纹，避免封禁。',
+                id_guide_4_title: '定时自动身份：',
+                id_guide_4_desc: '开启每 24 小时自动同步获取新身份。',
+                id_guide_5_title: '内核身份：',
+                id_guide_5_desc: '修改内核变量 (sysname / release) 以隐藏自定义内核。',
+                id_guide_6_title: '电话与硬件：',
+                id_guide_6_desc: '伪造 IMEI、IMSI、ICCID、电话号码及序列号。',
+
+                card_id_title: '身份管理器',
+                card_id_desc: '选择用于配置的目标应用程序的认证身份。',
+                btn_random: '随机',
+                lbl_device: '设备名称',
+                lbl_manufacturer: '制造商',
+                lbl_template_fp: '模板指纹',
+                btn_copy: '复制',
+                btn_rand_all_id: '随机所有标识符',
+                btn_auto_id: '自动身份 (Pixel Beta)',
+                btn_apply_id: '应用身份',
+                cron_title: '定时自动身份',
+                cron_desc: '每 24 小时自动获取并应用新的身份。',
+
+                summary_custom_temp: '自定义模板',
+                btn_save_custom_temp: '保存自定义模板',
+                summary_kernel_id: '内核身份',
+                lbl_preset_kernel: '预设内核版本',
+                opt_preset_kernel_default: '-- 选择预设内核版本 --',
+                btn_save_kernel_id: '保存内核身份',
+
+                card_telephony_title: '认证与电话标识符',
+                lbl_phone_num: '电话号码',
+                lbl_phone_num_2: '电话号码 2',
+                lbl_visible_sim_count: '可见 SIM 卡数量',
+                hint_visible_sim: '限制活跃订阅数。',
+                lbl_visible_cam_count: '可见摄像头数量',
+                hint_visible_cam: '限制摄像头 ID。',
+                lbl_serial: '序列号',
+                btn_rand_all: '全部随机',
+                btn_clear_all: '全部清除',
+
+                pf_guide_title: '💡 使用指南：配置文件管理',
+                pf_guide_1_title: '新建配置文件：',
+                pf_guide_1_desc: '为已安装的应用或通配符创建自定义配置。',
+                pf_guide_2_title: '导出：',
+                pf_guide_2_desc: '导出所有已保存的配置文件以供备份。',
+                pf_guide_3_title: '导入：',
+                pf_guide_3_desc: '直接导入并应用配置文件 JSON。',
+                card_profiles_title: '配置文件管理',
+                card_profiles_desc: '以应用为中心进行配置。分配安装的应用，选择隐私、身份和 keybox 覆盖。',
+                btn_new_profile: '新建配置文件',
+                btn_export: '导出',
+                btn_import: '导入',
+
+                kb_guide_title: '💡 使用指南：Keybox 管理',
+                kb_guide_1_title: '手动 Keybox 安装器：',
+                kb_guide_1_desc: '从受保护的存储库直接下载 Keybox 到 TrickyStore 目录。',
+                kb_guide_2_title: '删除旧 Keybox：',
+                kb_guide_2_desc: '手动删除 keybox.xml 及备份文件。',
+                card_kb_title: 'Keybox 自动获取与安装器',
+                card_kb_desc: '直接在 TrickyStore 目录 (/data/adb/tricky_store/) 中下载或删除 Keybox。',
+                lbl_kb_url: '官方 KEYBOX 源 URL (受保护)',
+                btn_dl_kb: '📥 下载并安装 Keybox',
+                btn_del_kb: '🗑️ 删除当前 Keybox 及备份',
+
+                sp_guide_title: '💡 使用指南：安全补丁与日期',
+                sp_guide_1_title: '自动安全补丁：',
+                sp_guide_1_desc: '开启安全补丁日期的自动同步。',
+                sp_guide_2_title: '陈旧 ROM 阈值：',
+                sp_guide_2_desc: '定义旧 ROM 更新的最大月数。',
+                sp_guide_3_title: '要解析的包：',
+                sp_guide_3_desc: '通过选择包名来检查特定应用。',
+                card_sp_title: '安全补丁',
+                title_auto_sp: '自动安全补丁',
+                desc_auto_sp: '对 System、Vendor 和 Boot 使用自动模式。',
+                lbl_stale_rom: '陈旧 ROM 阈值 (月)',
+                btn_save_sp: '保存安全补丁设置',
+                card_resolve_title: '解析应用',
+                card_resolve_desc: '从已安装列表中选择应用或输入包名。',
+                lbl_select_app: '选择已安装的应用',
+                btn_refresh_apps: '🔄 刷新列表',
+                lbl_pkg_resolve: '要解析的包名',
+                btn_resolve: '解析',
+
+                st_guide_title: '💡 使用指南：应用设置与支持',
+                st_guide_1_title: '语言：',
+                st_guide_1_desc: '切换工具界面语言。',
+                st_guide_2_title: '社区与官方链接：',
+                st_guide_2_desc: '直接访问官方 Telegram 频道和 GitHub 仓库。',
+                card_settings_title: '设置与偏好',
+                lbl_lang: '语言',
+                card_community_title: '社区与官方链接',
+                title_tg_dev: 'Telegram 开发者联系方式',
+                title_tg_channel: 'Telegram 官方频道',
+                title_github: 'GitHub 官方仓库',
+                btn_contact: '联系',
+                btn_join: '加入',
+                btn_visit: '访问'
+            },
+            ru: {
+                dir: 'ltr',
+                online_users: 'Онлайн пользователи',
+                tab_identity: 'Идентификация',
+                tab_profiles: 'Профили',
+                tab_keybox_update: 'Обновление Keybox',
+                tab_security_patch: 'Патч безопасности',
+                tab_settings: 'Настройки',
+
+                id_guide_title: '💡 Руководство: Параметры идентификации',
+                id_guide_1_title: 'Выбор шаблона:',
+                id_guide_1_desc: 'Выберите отпечаток устройства для прохождения Play Integrity.',
+                id_guide_2_title: 'Случайно / Случайно всё:',
+                id_guide_2_desc: 'Генерация случайных данных для всех полей.',
+                id_guide_3_title: 'Авто-идентификация (Pixel Beta):',
+                id_guide_3_desc: 'Загрузка свежих отпечатков с серверов Google.',
+                id_guide_4_title: 'Авто-обновление каждые 24ч:',
+                id_guide_4_desc: 'Автоматическое обновление отпечатка каждые 24 часа.',
+                id_guide_5_title: 'Идентификация ядра:',
+                id_guide_5_desc: 'Изменение sysname / release для скрытия кастомного ядра.',
+                id_guide_6_title: 'Связь и оборудование:',
+                id_guide_6_desc: 'Подмена IMEI, IMSI, ICCID, номеров телефонов и Serial.',
+
+                card_id_title: 'Менеджер идентификации',
+                card_id_desc: 'Выберите отпечаток устройства для целевых приложений.',
+                btn_random: 'Случайно',
+                lbl_device: 'УСТРОЙСТВО',
+                lbl_manufacturer: 'ПРОИЗВОДИТЕЛЬ',
+                lbl_template_fp: 'ОТПЕЧАТОК ШАБЛОНА',
+                btn_copy: 'Копировать',
+                btn_rand_all_id: 'Сгенерировать все идентификаторы',
+                btn_auto_id: 'Авто-идентификация (Pixel Beta)',
+                btn_apply_id: 'Применить',
+                cron_title: 'Авто-обновление каждые 24ч',
+                cron_desc: 'Получает и применяет новый отпечаток каждые 24 часа.',
+
+                summary_custom_temp: 'Пользовательские шаблоны',
+                btn_save_custom_temp: 'Сохранить шаблоны',
+                summary_kernel_id: 'Идентификация ядра',
+                lbl_preset_kernel: 'ГОТОВЫЕ ВЕРСИИ ЯДРА',
+                opt_preset_kernel_default: '-- Выберите версию ядра --',
+                btn_save_kernel_id: 'Сохранить параметры ядра',
+
+                card_telephony_title: 'Идентификаторы связи и оборудования',
+                lbl_phone_num: 'Номер телефона',
+                lbl_phone_num_2: 'Номер телефона 2',
+                lbl_visible_sim_count: 'Количество SIM-карт',
+                hint_visible_sim: 'Ограничивает активные подписки.',
+                lbl_visible_cam_count: 'Количество камер',
+                hint_visible_cam: 'Ограничивает ID камер.',
+                lbl_serial: 'Серийный номер',
+                btn_rand_all: 'Сгенерировать всё',
+                btn_clear_all: 'Очистить всё',
+
+                pf_guide_title: '💡 Руководство: Управление профилями',
+                pf_guide_1_title: 'Новый профиль:',
+                pf_guide_1_desc: 'Создание настроек для установленных приложений.',
+                pf_guide_2_title: 'Экспорт:',
+                pf_guide_2_desc: 'Экспорт сохраненных профилей для резервного копирования.',
+                pf_guide_3_title: 'Импорт:',
+                pf_guide_3_desc: 'Импорт готовых файлов JSON профилей.',
+                card_profiles_title: 'Управление профилями',
+                card_profiles_desc: 'Настройка приложений. Настройте приватность, отпечатки и Keybox.',
+                btn_new_profile: 'Новый профиль',
+                btn_export: 'Экспорт',
+                btn_import: 'Импорт',
+
+                kb_guide_title: '💡 Руководство: Обновление Keybox',
+                kb_guide_1_title: 'Установка Keybox:',
+                kb_guide_1_desc: 'Загрузка Keybox напрямую в папку TrickyStore.',
+                kb_guide_2_title: 'Удалить старый Keybox:',
+                kb_guide_2_desc: 'Удаление keybox.xml и резервных копий.',
+                card_kb_title: 'Автоматический установщик Keybox',
+                card_kb_desc: 'Управление файлами Keybox в директории TrickyStore (/data/adb/tricky_store/).',
+                lbl_kb_url: 'ОФИЦИАЛЬНЫЙ URL KEYBOX (ЗАЩИЩЕН)',
+                btn_dl_kb: '📥 Скачать и установить Keybox',
+                btn_del_kb: '🗑️ Удалить текущий Keybox и Bak',
+
+                sp_guide_title: '💡 Руководство: Патч безопасности',
+                sp_guide_1_title: 'Автоматический патч:',
+                sp_guide_1_desc: 'Включение авто-синхронизации дат безопасности.',
+                sp_guide_2_title: 'Порог старого ROM:',
+                sp_guide_2_desc: 'Максимальный срок устаревания ROM в месяцах.',
+                sp_guide_3_title: 'Анализ пакета:',
+                sp_guide_3_desc: 'Проверка параметров выбранного приложения.',
+                card_sp_title: 'Патч безопасности',
+                title_auto_sp: 'Автоматический патч безопасности',
+                desc_auto_sp: 'Авто-режим для System, Vendor и Boot.',
+                lbl_stale_rom: 'Порог старого ROM (в месяцах)',
+                btn_save_sp: 'Сохранить настройки',
+                card_resolve_title: 'Анализ приложения',
+                card_resolve_desc: 'Выберите приложение из списка или введите имя пакета.',
+                lbl_select_app: 'ВЫБЕРИТЕ УСТАНОВЛЕННОЕ ПРИЛОЖЕНИЕ',
+                btn_refresh_apps: '🔄 Обновить',
+                lbl_pkg_resolve: 'ИМЯ ПАКЕТА',
+                btn_resolve: 'Проверить',
+
+                st_guide_title: '💡 Руководство: Настройки',
+                st_guide_1_title: 'Язык:',
+                st_guide_1_desc: 'Переключение языка интерфейса.',
+                st_guide_2_title: 'Сообщество и ссылки:',
+                st_guide_2_desc: 'Прямой доступ к Telegram и GitHub.',
+                card_settings_title: 'Настройки и параметры',
+                lbl_lang: 'Язык',
+                card_community_title: 'Сообщество и ссылки',
+                title_tg_dev: 'Связь с разработчиком',
+                title_tg_channel: 'Официальный Telegram канал',
+                title_github: 'Репозиторий GitHub',
+                btn_contact: 'Написать',
+                btn_join: 'Вступить',
+                btn_visit: 'Перейти'
+            }
+        };
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            document.getElementById(`btn_${tabId}`).classList.add('active');
+            document.getElementById(`panel_${tabId}`).classList.add('active');
+        }
+
+        // دالة تغيير اللغة الشاملة
+        function changeLanguage(lang) {
+            const dict = translations[lang] || translations['en'];
+            document.documentElement.dir = dict.dir || (lang === 'ar' ? 'rtl' : 'ltr');
+            document.documentElement.lang = lang;
+            localStorage.setItem('falcon_lang', lang);
+
+            // تحديث كافة النصوص التي تمتلك وسم data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(elem => {
+                const key = elem.getAttribute('data-i18n');
+                if (dict[key]) {
+                    elem.textContent = dict[key];
+                }
             });
         }
 
-        refreshLiveStatus();
-        setInterval(refreshLiveStatus, 10000);
-
-        function checkZygiskAndBootloader() {
-            const currentLang = localStorage.getItem('falcon_lang') || 'en';
-            const zygiskEl = document.getElementById('zygisk-status');
-            const blEl = document.getElementById('bl-status');
-            
-            if (!zygiskEl || !blEl) return;
-
-            // Real-time Root Shell Check for Keybox Validity & Zygisk Injection
-            const checkCmd = [
-                "if [ -s '/data/adb/tricky_store/keybox.xml' ] && grep -qi 'Keybox' '/data/adb/tricky_store/keybox.xml' 2>/dev/null; then echo 'BL_OK'; else echo 'BL_FAIL'; fi",
-                "if [ -p /dev/socket/zygisk ] || pgrep -f 'zygisk' >/dev/null 2>&1 || [ -d '/data/adb/modules/zygisk_next' ]; then echo 'ZY_OK'; else echo 'ZY_FAIL'; fi"
-            ].join(" && ");
-
-            if (window.ksu && window.ksu.exec) {
-                window.ksu.exec(checkCmd, (res) => {
-                    // 1. Process Bootloader Status
-                    if (res && res.includes('BL_OK')) {
-                        blEl.innerText = translations[currentLang].spoofed_safe || "Spoofed (Safe)";
-                        blEl.className = "status-value badge-green";
-                    } else {
-                        blEl.innerText = translations[currentLang].unspoofed_open || "Unlocked (Unspoofed)";
-                        blEl.className = "status-value badge-red";
-                    }
-
-                    // 2. Process Zygisk Status
-                    if (res && res.includes('ZY_OK')) {
-                        zygiskEl.innerText = translations[currentLang].active || "Active";
-                        zygiskEl.className = "status-value badge-green";
-                    } else {
-                        zygiskEl.innerText = translations[currentLang].inactive || "Inactive";
-                        zygiskEl.className = "status-value badge-red";
-                    }
-                });
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('falcon_lang') || 'ar';
+            const langSelect = document.getElementById('appLanguageSelect');
+            if (langSelect) {
+                langSelect.value = savedLang;
             }
-        }
+            changeLanguage(savedLang);
 
-        setInterval(checkZygiskAndBootloader, 5000);
-        checkZygiskAndBootloader();
-
-        function executeTask(message) {
-            const container = document.getElementById('notification-container');
-            const toast = document.createElement('div');
-            toast.className = 'falcon-toast';
-            toast.innerHTML = `🛡️ ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 3000);
-        }
-
-        function updateKeybox() {
-            executeTask('⏳ Fetching Keybox file from GitHub...');
-            const url = "https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml";
-            const target = "/data/adb/tricky_store/keybox.xml";
-            
-            const cmd = [
-                `mkdir -p /data/adb/tricky_store`,
-                `curl -L -s -o ${target}.tmp ${url} || wget -q ${url} -O ${target}.tmp`,
-                `if [ -f ${target}.tmp ] && grep -qi "Keybox" ${target}.tmp; then mv -f ${target}.tmp ${target} && chmod 644 ${target} && chown root:root ${target}; fi`
-            ].join(" && ");
-
-            if (window.ksu && window.ksu.exec) {
-                window.ksu.exec(cmd, (res) => {
-                    executeTask('✅ Keybox file updated successfully!');
-                    checkZygiskAndBootloader();
-                });
-            } else {
-                executeTask('❌ Error: KernelSU environment not detected');
-            }
-        }
-
-        function updateKeyboxPriority() {
-            executeTask('⏳ Updating Keybox Priority Hierarchy...');
-
-            const priorityPayload = {
-                priority_strategy: "CUSTOM_ORDER",
-                fallback_enabled: true,
-                keybox_priority_list: [
-                    {
-                        keybox_id: "kb_strongbox_main",
-                        priority: 1,
-                        security_level: "STRONGBOX",
-                        enforce_for: ["com.google.android.gms", "com.whatsapp"]
-                    },
-                    {
-                        keybox_id: "kb_tee_fallback",
-                        priority: 2,
-                        security_level: "TRUSTED_ENVIRONMENT",
-                        enforce_for: ["DEFAULT"]
-                    }
-                ],
-                selection_criteria: {
-                    prefer_valid_attestation: true,
-                    auto_rotate_expired: true
-                }
-            };
-
-            const jsonString = JSON.stringify(priorityPayload, null, 2);
-            const target = "/data/adb/tricky_store/priority.json";
-
-            const cmd = `mkdir -p /data/adb/tricky_store && cat << 'EOF' > ${target}\n${jsonString}\nEOF\nchmod 644 ${target} && chown root:root ${target}`;
-
-            if (window.ksu && window.ksu.exec) {
-                window.ksu.exec(cmd, (res) => {
-                    executeTask('✅ Keybox Priority Updated Successfully!');
-                });
-            } else {
-                executeTask('❌ Error: KernelSU environment not detected');
-            }
-        }
-
-        function smartCacheAndReboot() {
-            executeTask('🧹 Clearing Cache & System Logs...');
-
-            const cmds = [
-                "rm -rf /data/system/package_cache/*",
-                "rm -rf /data/dalvik-cache/*",
-                "rm -rf /cache/*",
-                "pkill -f com.google.android.gms",
-                "pkill -f com.google.android.gms.unstable"
-            ].join(" && ");
-
-            if (window.ksu && window.ksu.exec) {
-                window.ksu.exec(cmds, (res) => {
-                    executeTask('⚡ Cache Cleared! Rebooting in 5s...');
-                    setTimeout(() => {
-                        window.ksu.exec("reboot", () => {});
-                    }, 5000);
-                });
-            } else {
-                executeTask('⚠️ Clearing simulated cache. Reboot skipped (No Root).');
-            }
-        }
-
-        function jumpToTelegram(username) {
-            const url = `https://t.me/${username}`;
-            jumpToExternalUrl(url);
-        }
-
-        function jumpToExternalUrl(url) {
-            if (window.ksu && window.ksu.exec) {
-                window.ksu.exec(`am start -a android.intent.action.VIEW -d "${url}"`, () => {});
-            } else {
-                window.open(url, '_blank');
-            }
-        }
+            refreshLiveStatus();
+        });
     </script>
 </body>
 </html>

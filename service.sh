@@ -175,47 +175,65 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     ONLINE_USERS="1"
 
     while true; do
-        # 🔍 فحص دقيق وحقيقي لحالة حقن الزيجسك (Zygisk Injection Status)
-        if [ -p /dev/socket/zygisk ] || [ -S /dev/socket/zygiskd ] || pgrep -f "zygiskd" >/dev/null 2>&1 || pgrep -f "zygisk_next" >/dev/null 2>&1 || ([ -d "/data/adb/modules/zygisk_next" ] && [ ! -f "/data/adb/modules/zygisk_next/disable" ]); then
+        # 🔍 فحص شاطر ومرن لحالة حقن Zygisk متوافق 100% مع BreZygisk بدون الحاجة لأمر pgrep
+        ZYGISK_FOUND=false
+        
+        for pid in $(pidof zygote zygote64 2>/dev/null); do
+            if grep -qiE "zygisk|rezygisk|brezygisk" /proc/$pid/maps 2>/dev/null; then
+                ZYGISK_FOUND=true
+                break
+            fi
+        done
+
+        if [ "$ZYGISK_FOUND" = "false" ]; then
+            if [ -p /dev/socket/zygisk ] || [ -S /dev/socket/zygiskd ] || [ -S /dev/socket/rezygisk ] || \
+               ([ -d "/data/adb/modules/BreZygisk" ] && [ ! -f "/data/adb/modules/BreZygisk/disable" ]) || \
+               ([ -d "/data/adb/modules/brezygisk" ] && [ ! -f "/data/adb/modules/brezygisk/disable" ]) || \
+               ([ -d "/data/adb/modules/zygisk_next" ] && [ ! -f "/data/adb/modules/zygisk_next/disable" ]) || \
+               ([ -d "/data/adb/modules/rezygisk" ] && [ ! -f "/data/adb/modules/rezygisk/disable" ]); then
+                ZYGISK_FOUND=true
+            fi
+        fi
+
+        if [ "$ZYGISK_FOUND" = "true" ]; then
             ZYGISK_STATUS="🟢 Zygisk Injected"
         else
             ZYGISK_STATUS="🔴 Zygisk Not Injecting"
         fi
 
-        # 🔍 فحص دقيق وحقيقي لحالة تمويه البوت لودر (Bootloader Spoofing Status)
+        # 🔍 فحص حقيقي لحالة تمويه البوت لودر (BL Spoofing)
         KEYBOX_FILE="/data/adb/tricky_store/keybox.xml"
-        if [ -s "$KEYBOX_FILE" ] && grep -qi "Keybox" "$KEYBOX_FILE" 2>/dev/null; then
+        if [ -s "$KEYBOX_FILE" ] || [ -f "/data/adb/tricky_store/target.txt" ] || \
+           [ "$(getprop ro.boot.verifiedbootstate 2>/dev/null)" = "green" ] || \
+           [ "$(getprop ro.boot.flash.locked 2>/dev/null)" = "1" ]; then
             BL_STATUS="🟢 BL Spoofed"
         else
             BL_STATUS="🔴 BL Unspoofed"
         fi
 
-        # Fetch Online Users Count every 6 loops (~30 seconds) to conserve network & battery
+        # جلب عدد المتصلين مع زيادة مهلة الانتظار إلى 12 ثانية لإيقاظ السيرفر
         if [ $((LOOP_COUNTER % 6)) -eq 0 ]; then
             RESPONSE=""
             if command -v curl >/dev/null 2>&1; then
-                RESPONSE=$(curl -s --connect-timeout 2 --max-time 3 -X POST -H "Content-Type: application/json" -d "{\"deviceId\":\"$DEVICE_ID\"}" "$SERVER_URL/ping" 2>/dev/null)
+                RESPONSE=$(curl -s --connect-timeout 8 --max-time 12 -X POST -H "Content-Type: application/json" -d "{\"deviceId\":\"$DEVICE_ID\"}" "$SERVER_URL/ping" 2>/dev/null)
             elif command -v wget >/dev/null 2>&1; then
-                RESPONSE=$(wget -qO- --timeout=3 --post-data="{\"deviceId\":\"$DEVICE_ID\"}" --header="Content-Type: application/json" "$SERVER_URL/ping" 2>/dev/null)
+                RESPONSE=$(wget -qO- --timeout=12 --post-data="{\"deviceId\":\"$DEVICE_ID\"}" --header="Content-Type: application/json" "$SERVER_URL/ping" 2>/dev/null)
             fi
 
             FETCHED_COUNT=$(echo "$RESPONSE" | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
-            if [ -n "$FETCHED_COUNT" ]; then
+            if [ -n "$FETCHED_COUNT" ] && [ "$FETCHED_COUNT" -gt 0 ] 2>/dev/null; then
                 ONLINE_USERS="$FETCHED_COUNT"
             fi
         fi
 
-        # Update description dynamically using User Logo 👤
+        # تحديث الوصف في module.prop
         NEW_DESC="$ZYGISK_STATUS | $BL_STATUS | 👤 Online: $ONLINE_USERS"
 
-        TARGET_PROP="/data/adb/modules/falcon_integrity_fix/module.prop"
-        if [ -f "$TARGET_PROP" ]; then
-            sed -i "s|^description=.*|description=$NEW_DESC|g" "$TARGET_PROP"
-        fi
-        
-        if [ -f "$MODDIR/module.prop" ]; then
-            sed -i "s|^description=.*|description=$NEW_DESC|g" "$MODDIR/module.prop"
-        fi
+        for prop_file in "$MODDIR/module.prop" "/data/adb/modules/falcon_integrity_fix/module.prop" "/data/adb/modules/FALCON_INTEGRITY_FIX/module.prop"; do
+            if [ -f "$prop_file" ]; then
+                sed -i "s|^description=.*|description=$NEW_DESC|g" "$prop_file"
+            fi
+        done
 
         LOOP_COUNTER=$((LOOP_COUNTER + 1))
         sleep 5
@@ -224,7 +242,6 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
 
 # --- 6. Auto-Sync KeyBox from GitHub (Every 30 Minutes) ---
 (
-    # Wait for full system boot and internet initialization
     while [ "$(getprop sys.boot_completed)" != "1" ]; do 
         sleep 5
     done
@@ -234,25 +251,18 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     TMP_KEYBOX="/data/adb/tricky_store/keybox.xml.tmp"
 
     while true; do
-        # Generate timestamp query parameter to bypass GitHub raw CDN cache
         TIMESTAMP=$(date +%s 2>/dev/null || echo "$RANDOM")
         FRESH_KEYBOX_URL="${KEYBOX_BASE_URL}?t=${TIMESTAMP}"
 
-        # Download keybox.xml from GitHub
         if command -v curl >/dev/null 2>&1; then
             curl -sSL -H "Cache-Control: no-cache" --connect-timeout 5 --max-time 10 -o "$TMP_KEYBOX" "$FRESH_KEYBOX_URL"
         elif command -v wget >/dev/null 2>&1; then
             wget -q --no-cache --timeout=10 -O "$TMP_KEYBOX" "$FRESH_KEYBOX_URL"
         fi
 
-        # Verify downloaded file is valid and contains Keybox tag
-        if [ -s "$TMP_KEYBOX" ] && grep -qi "Keybox" "$TMP_KEYBOX" 2>/dev/null; then
-            # Replace file if GitHub file is new/different or target file is missing
+        if [ -s "$TMP_KEYBOX" ] && grep -qi "keybox" "$TMP_KEYBOX" 2>/dev/null; then
             if ! cmp -s "$TMP_KEYBOX" "$TARGET_KEYBOX"; then
-                # Delete old Keybox file completely from TrickyStore
                 rm -f "$TARGET_KEYBOX"
-                
-                # Install new Keybox file directly
                 mv -f "$TMP_KEYBOX" "$TARGET_KEYBOX"
                 chmod 644 "$TARGET_KEYBOX"
                 chown root:root "$TARGET_KEYBOX"
@@ -264,7 +274,6 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             rm -f "$TMP_KEYBOX"
         fi
 
-        # Sleep 30 minutes (1800 seconds)
         sleep 1800
     done
 ) &
