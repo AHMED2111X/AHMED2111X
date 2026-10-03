@@ -1,9 +1,13 @@
 #!/system/bin/sh
-# FALCON KERNEL FIX - INTEGRATED POST-FS-DATA SCRIPT
+
+# ==============================================================================
+# إصلاح فحص الحماية FALCON INTEGRITY FIX - سكربت الإقلاع المبكر (POST-FS-DATA)
+# المطور: ABUFARID | تليجرام: @FALCON_KERNEL
+# ==============================================================================
 
 MODPATH="${0%/*}"
 
-# --- Early SELinux Policy & Context Initialization ---
+# --- تطبيق سياسات وأحكام SELinux والسياق المبكر ---
 if [ -f "$MODPATH/sepolicy.rule" ]; then
     magisk policy --live --file "$MODPATH/sepolicy.rule" 2>/dev/null || true
 fi
@@ -11,12 +15,12 @@ fi
 chcon u:object_r:system_file:s0 "$MODPATH/post-fs-data.sh" 2>/dev/null || true
 chmod 755 "$MODPATH/post-fs-data.sh" 2>/dev/null || true
 
-# Load common functions if available
+# تحميل الدوال المشتركة إن وجدت
 if [ -f "$MODPATH/common_func.sh" ]; then
     . "$MODPATH/common_func.sh"
 fi
 
-# Fallback helper functions if missing
+# دوال مساعدة احتياطية في حال عدم توفرها
 if ! command -v resetprop_if_diff >/dev/null 2>&1; then
     resetprop_if_diff() {
         local PROP="$1"
@@ -35,16 +39,16 @@ if ! command -v delprop_if_exist >/dev/null 2>&1; then
     }
 fi
 
-# --- 1. Magisk DenyList, Zygisk & Shamiko Compatibility ---
+# --- 1. التوافق مع Magisk DenyList و Zygisk و Shamiko ---
 if [ -d "$MODPATH/zygisk" ]; then
-    # Zygisk mode: remove Play Services and Store from DenyList so Zygisk can inject
+    # وضع Zygisk: إزالة خدمات جوجل ومتجر بلاي من قائمة العزل ليتمكن Zygisk من الحقن
     if magisk --denylist status >/dev/null 2>&1; then
         magisk --denylist rm com.google.android.gms >/dev/null 2>&1
         magisk --denylist rm com.android.vending >/dev/null 2>&1
     fi
     [ -f "$MODPATH/common_setup.sh" ] && . "$MODPATH/common_setup.sh"
 else
-    # Scripts-only mode / Shamiko fallback
+    # وضع السكربتات فقط / التوافق مع Shamiko
     if magisk --denylist status >/dev/null 2>&1; then
         magisk --denylist add com.google.android.gms com.google.android.gms.unstable >/dev/null 2>&1
         magisk --denylist add com.android.vending com.android.vending >/dev/null 2>&1
@@ -55,29 +59,29 @@ else
     fi
 fi
 
-# --- 2. Early Sensitive Properties & OEM Spoofing ---
+# --- 2. تزوير خصائص الأمان والحماية المبكرة للشركات (OEM Spoofing) ---
 
-# Samsung Warranty Bit Fixes
+# إصلاح مؤشر الضمان لهواتف سامسونج (Samsung Knox / Warranty Bit)
 resetprop_if_diff ro.boot.warranty_bit 0
 resetprop_if_diff ro.vendor.boot.warranty_bit 0
 resetprop_if_diff ro.vendor.warranty_bit 0
 resetprop_if_diff ro.warranty_bit 0
 
-# Realme Boot State Fix
+# إصلاح حالة الإقلاع لهواتف ريلمي (Realme)
 resetprop_if_diff ro.boot.realmebootstate green
 
-# OnePlus Orange State Warning Fix
+# إصلاح تحذير الشاشة البرتقالية لهواتف ون بلس (OnePlus)
 resetprop_if_diff ro.is_ever_orange 0
 
-# Cleanup Play Integrity Pihooks
+# تنظيف خصائص خطافات Play Integrity القديمة
 resetprop --delete persist.sys.pihooks.first_api_level 2>/dev/null
 
-# Set System Build Tags to release-keys
+# تعيين وسم بناء النظام إلى release-keys
 for PROP in $(resetprop | grep -oE 'ro.*.build.tags'); do
     resetprop_if_diff "$PROP" release-keys
 done
 
-# Set System Build Types to user and disable debugging
+# تعيين نوع بناء النظام إلى user وإغلاق وضع التصحيح
 for PROP in $(resetprop | grep -oE 'ro.*.build.type'); do
     resetprop_if_diff "$PROP" user
 done
@@ -88,13 +92,13 @@ resetprop_if_diff ro.force.debuggable 0
 resetprop_if_diff ro.secure 1
 resetprop_if_diff ro.boot.veritymode.managed yes
 
-# Delete verification error flags if allowed
+# حذف أعلام أخطاء التحقق إن وجد
 if [ "$SKIPDELPROP" != "true" ]; then
     delprop_if_exist ro.boot.verifiedbooterror
     delprop_if_exist ro.boot.verifyerrorpart
 fi
 
-# Custom ROM Conflicts Fixes (AOSPA, PixelPropsUtils, LeafOS)
+# حل تعارضات الرومات المخصصة (AOSPA و PixelPropsUtils و LeafOS)
 if [ -n "$(getprop ro.aospa.version)" ]; then
     for PROP in persist.sys.pihooks.first_api_level persist.sys.pihooks.security_patch; do
         resetprop | grep -q "\[$PROP\]" || resetprop -n -p "$PROP" ""
@@ -111,7 +115,7 @@ if [ -f /data/system/gms_certified_props.json ] && [ "$(getprop persist.sys.spoo
     resetprop persist.sys.spoof.gms false
 fi
 
-# --- 3. Keybox Directory Setup (Tricky Store Integration) ---
+# --- 3. تهيئة مجلد Keybox الخاص بـ Tricky Store ---
 KEYBOX_URL="https://github.com/AHMED2111X/AHMED2111X/raw/main/keybox.xml"
 TARGET_DIR="/data/adb/tricky_store"
 TARGET_FILE="$TARGET_DIR/keybox.xml"
@@ -123,8 +127,9 @@ if [ ! -d "$TARGET_DIR" ]; then
     chown root:root "$TARGET_DIR"
 fi
 
-# --- 4. Background Keybox Online Updater ---
+# --- 4. التحديث التلقائي لملف Keybox من الإنترنت في الخلفية ---
 (
+    # الانتظار حتى يكتمل إقلاع النظام
     while [ "$(getprop sys.boot_completed)" != "1" ]; do 
         sleep 5
     done
@@ -133,6 +138,7 @@ fi
 
     DOWNLOAD_SUCCESS=0
     
+    # محاولة التحميل عبر curl أو wget
     if command -v curl >/dev/null 2>&1; then
         curl -s -L --connect-timeout 10 --max-time 30 -o "$TARGET_FILE.tmp" "$KEYBOX_URL"
         [ $? -eq 0 ] && DOWNLOAD_SUCCESS=1
@@ -141,14 +147,15 @@ fi
         [ $? -eq 0 ] && DOWNLOAD_SUCCESS=1
     fi
 
+    # التحقق من نجاح التحميل وصحة حجم الملف ثم استبداله وتطبيق الصلاحيات
     if [ "$DOWNLOAD_SUCCESS" -eq 1 ] && [ -f "$TARGET_FILE.tmp" ] && [ $(stat -c%s "$TARGET_FILE.tmp") -gt 100 ]; then
         mv "$TARGET_FILE.tmp" "$TARGET_FILE"
         chmod 644 "$TARGET_FILE"
         chown root:root "$TARGET_FILE"
         chcon u:object_r:system_file:s0 "$TARGET_FILE" 2>/dev/null
-        log -t "$LOG_TAG" "Keybox updated successfully and SELinux context applied."
+        log -t "$LOG_TAG" "تم تحديث Keybox بنجاح وتطبيق سياق SELinux."
     else
         rm -f "$TARGET_FILE.tmp"
-        log -t "$LOG_TAG" "Keybox update failed or file invalid."
+        log -t "$LOG_TAG" "فشل تحديث Keybox أو أن الملف غير صالح."
     fi
 ) &

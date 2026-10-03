@@ -1,12 +1,18 @@
-# Remove any definitely conflicting modules that are installed
+# ==============================================================================
+# إصلاح فحص الحماية FALCON INTEGRITY FIX - سكربت الإعداد والتوافقية المشترك
+# المطور: ABUFARID | تليجرام: @FALCON_KERNEL
+# ==============================================================================
+
+# إزالة وحذف الإضافات المباشرة التي تسبب تعارضاً مؤكداً
 if [ -d /data/adb/modules/safetynet-fix ]; then
     touch /data/adb/modules/safetynet-fix/remove
-    ui_print "! Universal SafetyNet Fix (USNF) module will be removed on next reboot"
+    ui_print "! سيتم إزالة موديول Universal SafetyNet Fix (USNF) عند إعادة التشغيل القادمة"
 fi
 
-# Replace/hide conflicting custom ROM injection app folders/files to disable them
+# استبدال وإخفاء ملفات ومجلدات تطبيقات الحقن بالرومات المخصصة لإلغاء تفعيلها
 LIST=$MODPATH/example.app_replace.list
 [ -f "$MODPATH/custom.app_replace.list" ] && LIST=$MODPATH/custom.app_replace.list
+
 for APP in $(grep -v '^#' $LIST); do
     if [ -e "$APP" ]; then
         case $APP in
@@ -53,20 +59,20 @@ for APP in $(grep -v '^#' $LIST); do
             ;;
         esac
         if [[ -d "$APP" || "$APP" = *".apk" ]]; then
-            ui_print "! $(basename $APP .apk) ROM app disabled, please uninstall any user app versions/updates after next reboot"
-            [ "$HIDECFG" ] && ui_print "!  + $PKGNAME entry commented out in copied overlay config"
+            ui_print "! تم تعطيل تطبيق الروم المخصص $(basename $APP .apk)، يرجى إلغاء تثبيت تحديثات التطبيق بعد إعادة التشغيل"
+            [ "$HIDECFG" ] && ui_print "!  + تم تعليق وإلغاء إدخال $PKGNAME في ملف إعدادات overlay المنسوخ"
         fi
     fi
 done
 
-# Work around custom ROM PropImitationHooks conflict when their persist props don't exist
+# حل تعارضات خطافات التمويه (PropImitationHooks) بالرومات المخصصة في حال عدم وجود الخصائص الدائمة
 if [ -n "$(resetprop ro.aospa.version)" -o -n "$(resetprop net.pixelos.version)" -o -n "$(resetprop ro.afterlife.version)" -o -f /data/system/gms_certified_props.json ]; then
     for PROP in persist.sys.pihooks.first_api_level persist.sys.pihooks.security_patch; do
         resetprop | grep -q "\[$PROP\]" || persistprop "$PROP" ""
     done
 fi
 
-# Work around supported custom ROM PropImitationHooks/PixelPropsUtils (and hybrids) conflict when spoofProvider is disabled
+# تعطيل محركات التمويه المدمجة بالرومات المخصصة لمنع التضارب مع تمويه الموديول
 if resetprop | grep -qE "persist.sys.pihooks|persist.sys.entryhooks|persist.sys.spoof|persist.sys.pixelprops" || [ -f /data/system/gms_certified_props.json ]; then
     persistprop persist.sys.pihooks.disable.gms_props true
     persistprop persist.sys.pihooks.disable.gms_key_attestation_block true

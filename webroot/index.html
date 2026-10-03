@@ -50,6 +50,7 @@
             column-gap: 28px;
             padding-top: 28px;
             padding-bottom: 50px;
+            align-items: start;
         }
 
         .header-title {
@@ -83,8 +84,37 @@
             border: 1px solid var(--panel-border);
             border-radius: var(--radius-lg);
             padding: 14px;
-            height: fit-content;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            position: sticky;
+            top: 28px;
+            max-height: calc(100vh - 56px);
+            overflow-y: auto;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 850px) {
+            body {
+                grid-template-columns: 1fr;
+                row-gap: 20px;
+            }
+            .sidebar {
+                position: static;
+                max-height: none;
+                overflow-y: visible;
+            }
         }
 
         .online-badge {
@@ -817,7 +847,7 @@
                         <div class="social-title" data-i18n="title_github">GitHub Repository</div>
                         <div class="social-sub">AHMED2111X / Source</div>
                     </div>
-                    <a href="https://github.com/AHMED2111X/AHMED2111X" target="_blank" class="btn btn-primary" data-i18n="btn_visit">Visit</a>
+                    <a href="https://github.com/AHMED2111X" target="_blank" class="btn btn-primary" data-i18n="btn_visit">Visit</a>
                 </div>
             </div>
         </div>
@@ -852,7 +882,6 @@
             .catch(() => {});
         }
 
-        // كائن الترجمات الشامل لكافة الأجزاء والأوصاف والعناوين
         const translations = {
             ar: {
                 dir: 'rtl',
@@ -1409,7 +1438,7 @@
                 card_community_title: 'Сообщество и ссылки',
                 title_tg_dev: 'Связь с разработчиком',
                 title_tg_channel: 'Официальный Telegram канал',
-                title_github: 'Репозиторий GitHub',
+                title_github: 'Репозитории GitHub',
                 btn_contact: 'Написать',
                 btn_join: 'Вступить',
                 btn_visit: 'Перейти'
@@ -1420,18 +1449,24 @@
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
 
-            document.getElementById(`btn_${tabId}`).classList.add('active');
-            document.getElementById(`panel_${tabId}`).classList.add('active');
+            const btnEl = document.getElementById(`btn_${tabId}`);
+            const panelEl = document.getElementById(`panel_${tabId}`);
+
+            if (btnEl) btnEl.classList.add('active');
+            if (panelEl) panelEl.classList.add('active');
+
+            // استدعاء جلب التطبيقات تلقائياً عند فتح تبويب Security Patch
+            if (tabId === 'security_patch' && typeof window.loadInstalledApps === 'function') {
+                window.loadInstalledApps();
+            }
         }
 
-        // دالة تغيير اللغة الشاملة
-        function changeLanguage(lang) {
+        function applyUiTranslations(lang) {
             const dict = translations[lang] || translations['en'];
             document.documentElement.dir = dict.dir || (lang === 'ar' ? 'rtl' : 'ltr');
             document.documentElement.lang = lang;
             localStorage.setItem('falcon_lang', lang);
 
-            // تحديث كافة النصوص التي تمتلك وسم data-i18n
             document.querySelectorAll('[data-i18n]').forEach(elem => {
                 const key = elem.getAttribute('data-i18n');
                 if (dict[key]) {
@@ -1440,13 +1475,19 @@
             });
         }
 
+        window.applyUiTranslations = applyUiTranslations;
+
+        function changeLanguage(lang) {
+            applyUiTranslations(lang);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const savedLang = localStorage.getItem('falcon_lang') || 'ar';
             const langSelect = document.getElementById('appLanguageSelect');
             if (langSelect) {
                 langSelect.value = savedLang;
             }
-            changeLanguage(savedLang);
+            applyUiTranslations(savedLang);
 
             refreshLiveStatus();
         });

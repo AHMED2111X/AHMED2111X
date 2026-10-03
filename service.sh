@@ -1,22 +1,25 @@
 #!/system/bin/sh
 
 # ==============================================================================
-# FALCON INTEGRITY FIX - SERVICE SCRIPT
-# Developer: ABUFARID | Telegram: @FALCON_KERNEL
+# إصلاح فحص الحماية FALCON INTEGRITY FIX - سكربت الخدمة
+# المطور: ABUFARID | تليجرام: @FALCON_KERNEL
 # ==============================================================================
 
+# تحديد مسار الموديول الحالي
 MODPATH="${0%/*}"
 MODDIR="$MODPATH"
 
-# --- SELinux Policy Rules Application ---
+# --- تطبيق سياسات وأحكام SELinux ---
 if [ -f "$MODPATH/sepolicy.rule" ]; then
+    # تطبيق قواعد SELinux المخصصة بشكل مباشر في الذاكرة
     magisk policy --live --file "$MODPATH/sepolicy.rule" 2>/dev/null || true
 fi
 
+# تعيين سياق وصلاحيات التشغيل لملف الخدمة
 chcon u:object_r:system_file:s0 "$MODPATH/service.sh" 2>/dev/null || true
 chmod 755 "$MODPATH/service.sh" 2>/dev/null || true
 
-# --- Auxiliary Functions for Safe Property Spoofing ---
+# --- دالة مساعدة: تغيير قيمة الخاصية إذا كانت مختلفة عن المتوقع ---
 resetprop_if_diff() {
     local PROP="$1"
     local EXPECTED="$2"
@@ -26,6 +29,7 @@ resetprop_if_diff() {
     fi
 }
 
+# --- دالة مساعدة: تغيير قيمة الخاصية إذا كانت تطابق قيمة معينة ---
 resetprop_if_match() {
     local PROP="$1"
     local MATCH="$2"
@@ -36,48 +40,69 @@ resetprop_if_match() {
     fi
 }
 
+# --- دالة مساعدة: حذف الخاصية إذا كانت موجودة في النظام ---
 delprop_if_exist() {
     local NAME="$1"
     [ -n "$(getprop "$NAME")" ] && resetprop --delete "$NAME" 2>/dev/null
 }
 
-# --- Security Patches & Sensitive Props (Early Stage) ---
-novo_patch="2026-03-05"
+# --- حساب وتحديث تاريخ الرقعة الأمنية تلقائياً وبشكل ذكي (Smart Auto-Patch) ---
+# 1. جلب السنة والشهر الحاليين تلقائياً من التاريخ الداخلي للجهاز
+CURRENT_YEAR_MONTH=$(date +%Y-%m 2>/dev/null)
+
+# 2. إنشاء تاريخ الرقعة الأمنية المتوافق مع معايير جوجل (اليوم 05 من الشهر الحالي)
+if [ -n "$CURRENT_YEAR_MONTH" ]; then
+    novo_patch="${CURRENT_YEAR_MONTH}-05"
+else
+    # تاريخ احتياطي آمن في حال تعذر جلب الوقت عند بدايه الإقلاع
+    novo_patch="2026-10-05"
+fi
+
+# 3. تطبيق التاريخ الذكي على خصائص النظام
 resetprop -n ro.build.version.security_patch "$novo_patch"
 resetprop -n ro.vendor.build.security_patch "$novo_patch"
 
-# Magisk Recovery Mode Protection
+# 4. إنشاء المجلد الأساسي وتحديث ملف security_patch.txt تلقائياً لأداة Tricky Store
+mkdir -p /data/adb/tricky_store
+chmod 755 /data/adb/tricky_store
+chown root:root /data/adb/tricky_store
+
+TRICKY_PATCH_FILE="/data/adb/tricky_store/security_patch.txt"
+echo "all=$novo_patch" > "$TRICKY_PATCH_FILE"
+chmod 644 "$TRICKY_PATCH_FILE" 2>/dev/null
+chown root:root "$TRICKY_PATCH_FILE" 2>/dev/null
+
+# --- إخفاء الوضعيات الحساسة وإعدادات SELinux ---
+# إخفاء وضع الريكفري لمنع التطبيقات من اكتشافه
 resetprop_if_match ro.boot.mode recovery unknown
 resetprop_if_match ro.bootmode recovery unknown
 resetprop_if_match vendor.boot.mode recovery unknown
 
-# SELinux Protection
+# فرض حالة SELinux كـ enforcing (محمي) وإخفاء الخصائص المريبة
 resetprop_if_diff ro.boot.selinux enforcing
 if [ "$SKIPDELPROP" != "true" ]; then
     delprop_if_exist ro.build.selinux
 fi
 
+# تأمين صلاحيات ملفات SELinux في النواة
 if [ -f /sys/fs/selinux/enforce ] && [ "$(toybox cat /sys/fs/selinux/enforce 2>/dev/null)" = "0" ]; then
     chmod 640 /sys/fs/selinux/enforce 2>/dev/null
     chmod 440 /sys/fs/selinux/policy 2>/dev/null
 fi
 
-# --- 1. Enable Injection Engine ---
+# --- 1. تشغيل محرك الحقن ---
 if [ -f "$MODDIR/inject" ]; then
     chmod 755 "$MODDIR/inject"
     "$MODDIR/inject" &
 fi
 
-# Create base security path
-mkdir -p /data/adb/tricky_store
-chmod 755 /data/adb/tricky_store
-chown root:root /data/adb/tricky_store
-
-# --- 2. Manage and Clean Keybox Files ---
+# --- 2. تنظيف وإدارة ملفات Keybox ---
+# حذف الملفات المؤقتة والنسخ الاحتياطية القديمة
 rm -f /data/adb/tricky_store/keybox.xml.bak 2>/dev/null
 rm -f /data/adb/tricky_store/*.bak 2>/dev/null
 rm -f /data/adb/tricky_store/*.tmp 2>/dev/null
 
+# البحث عن ملف keybox.xml المرفق ونسخه للمسار المطلوب
 KEYBOX_SRC=""
 if [ -f "$MODDIR/keybox.xml" ]; then
     KEYBOX_SRC="$MODDIR/keybox.xml"
@@ -92,13 +117,9 @@ if [ -n "$KEYBOX_SRC" ]; then
     chcon u:object_r:system_file:s0 /data/adb/tricky_store/keybox.xml 2>/dev/null
 fi
 
-# --- 3. Enable Performance Options ---
-settings put system min_refresh_rate 165.0 2>/dev/null
-settings put system peak_refresh_rate 165.0 2>/dev/null
-setprop windowsmgr.max_events_per_sec 300 2>/dev/null
-
-# --- 4. Auto-Hide Newly Installed Packages & Clean Backup Files ---
+# --- 3. الإخفاء التلقائي للتطبيقات المثبتة حديثاً وتنظيف الملفات ---
 (
+    # الانتظار حتى يكتمل إقلاع النظام بالكامل
     while [ "$(getprop sys.boot_completed)" != "1" ]; do 
         sleep 3
     done
@@ -106,11 +127,11 @@ setprop windowsmgr.max_events_per_sec 300 2>/dev/null
     TARGET_FILE="/data/adb/tricky_store/target.txt"
     touch "$TARGET_FILE"
 
-    # Cache current package list
+    # جلب قائمة الحزم والتطبيقات المثبتة حالياً وتخزينها
     KNOWN_PACKAGES_FILE="/data/adb/falcon_known_packages.txt"
     pm list packages | cut -d':' -f2 | sort -u > "$KNOWN_PACKAGES_FILE"
 
-    # Add all current packages to target.txt once at boot if missing safely
+    # إضافة كافة التطبيقات الحالية إلى ملف target.txt وإزالة التكرار
     cat "$KNOWN_PACKAGES_FILE" >> "$TARGET_FILE"
     sort -u "$TARGET_FILE" > "$TARGET_FILE.tmp" 2>/dev/null
     if [ -s "$TARGET_FILE.tmp" ]; then
@@ -119,35 +140,36 @@ setprop windowsmgr.max_events_per_sec 300 2>/dev/null
         rm -f "$TARGET_FILE.tmp" 2>/dev/null
     fi
 
+    # حلقة مراقبة مستمرة للتطبيقات الجديدة
     while true; do
         sleep 10
 
-        # Cleanup any .bak or .tmp files created by TrickyStore automatically
+        # تنظيف أي ملفات مؤقتة تُنشأ بواسطة TrickyStore
         rm -f /data/adb/tricky_store/*.bak 2>/dev/null
         rm -f /data/adb/tricky_store/*.tmp 2>/dev/null
 
-        # Fetch latest packages
+        # جلب قائمة التطبيقات الحالية ومقارنتها بالقائمة السابقة
         CURRENT_PACKAGES=$(pm list packages | cut -d':' -f2 | sort -u)
-        
-        # Check for new packages installed
         NEW_PACKAGES=$(comm -13 "$KNOWN_PACKAGES_FILE" <(echo "$CURRENT_PACKAGES"))
 
+        # إذا تم كشف تطبيق جديد، يُضاف تلقائياً لملف التمويه target.txt
         if [ -n "$NEW_PACKAGES" ]; then
             for pkg in $NEW_PACKAGES; do
                 if ! grep -q "^$pkg$" "$TARGET_FILE"; then
                     echo "$pkg" >> "$TARGET_FILE"
                 fi
             done
-            # Refresh known packages list
+            # تحديث قائمة التطبيقات المعروفة
             echo "$CURRENT_PACKAGES" > "$KNOWN_PACKAGES_FILE"
             chmod 644 "$TARGET_FILE" 2>/dev/null
         fi
     done
 ) &
 
-# --- 5. Real-time Status, Bootloader & Online Users Checker ---
+# --- 4. فحص حالة النظام والتمويه وعدد المستخدمين النشطين ---
 SERVER_URL="https://falcon-counter-server.onrender.com"
 
+# إنشاء معرّف فريد للجهاز لإحصائيات الاتصال
 DEVICE_ID_FILE="/data/adb/falcon_device_id"
 if [ ! -f "$DEVICE_ID_FILE" ]; then
     cat /proc/sys/kernel/random/uuid > "$DEVICE_ID_FILE" 2>/dev/null || echo "dev_$RANDOM" > "$DEVICE_ID_FILE"
@@ -155,12 +177,12 @@ fi
 DEVICE_ID=$(cat "$DEVICE_ID_FILE")
 
 (
-    # Wait for full system boot
+    # الانتظار لحين اكتمال الإقلاع
     while [ "$(getprop sys.boot_completed)" != "1" ]; do 
         sleep 2
     done
 
-    # --- OEM Specific Fixes (SafetyNet / Play Integrity / Fingerprint Fixes) ---
+    # إصلاح وتزييف خصائص البوتلودر لجميع الشركات (OEMS) لتظهر كأنها مقفلة آمنة
     resetprop_if_diff ro.secureboot.lockstate locked
     resetprop_if_diff ro.boot.flash.locked 1
     resetprop_if_diff ro.boot.realme.lockstate 1
@@ -175,7 +197,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     ONLINE_USERS="1"
 
     while true; do
-        # 🔍 فحص شاطر ومرن لحالة حقن Zygisk متوافق 100% مع BreZygisk بدون الحاجة لأمر pgrep
+        # فحص محرك حقن Zygisk في الذاكرة وعبر المقابس
         ZYGISK_FOUND=false
         
         for pid in $(pidof zygote zygote64 2>/dev/null); do
@@ -195,13 +217,14 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             fi
         fi
 
+        # تعيين نص حالة الحقن
         if [ "$ZYGISK_FOUND" = "true" ]; then
             ZYGISK_STATUS="🟢 Zygisk Injected"
         else
             ZYGISK_STATUS="🔴 Zygisk Not Injecting"
         fi
 
-        # 🔍 فحص حقيقي لحالة تمويه البوت لودر (BL Spoofing)
+        # فحص حالة تمويه البوت لودر (BL Spoofing)
         KEYBOX_FILE="/data/adb/tricky_store/keybox.xml"
         if [ -s "$KEYBOX_FILE" ] || [ -f "/data/adb/tricky_store/target.txt" ] || \
            [ "$(getprop ro.boot.verifiedbootstate 2>/dev/null)" = "green" ] || \
@@ -211,7 +234,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             BL_STATUS="🔴 BL Unspoofed"
         fi
 
-        # جلب عدد المتصلين مع زيادة مهلة الانتظار إلى 12 ثانية لإيقاظ السيرفر
+        # جلب عدد المتصلين بالسيرفر كل 30 ثانية
         if [ $((LOOP_COUNTER % 6)) -eq 0 ]; then
             RESPONSE=""
             if command -v curl >/dev/null 2>&1; then
@@ -226,7 +249,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             fi
         fi
 
-        # تحديث الوصف في module.prop
+        # تحديث الوصف التفاعلي في ملف module.prop
         NEW_DESC="$ZYGISK_STATUS | $BL_STATUS | 👤 Online: $ONLINE_USERS"
 
         for prop_file in "$MODDIR/module.prop" "/data/adb/modules/falcon_integrity_fix/module.prop" "/data/adb/modules/FALCON_INTEGRITY_FIX/module.prop"; do
@@ -240,7 +263,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     done
 ) &
 
-# --- 6. Auto-Sync KeyBox from GitHub (Every 30 Minutes) ---
+# --- 5. المزامنة التلقائية لملف KeyBox من GitHub كل 30 دقيقة ---
 (
     while [ "$(getprop sys.boot_completed)" != "1" ]; do 
         sleep 5
@@ -251,6 +274,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     TMP_KEYBOX="/data/adb/tricky_store/keybox.xml.tmp"
 
     while true; do
+        # تحميل أحدث ملف keybox وتجاوز التخزين المؤقت (Cache)
         TIMESTAMP=$(date +%s 2>/dev/null || echo "$RANDOM")
         FRESH_KEYBOX_URL="${KEYBOX_BASE_URL}?t=${TIMESTAMP}"
 
@@ -260,6 +284,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             wget -q --no-cache --timeout=10 -O "$TMP_KEYBOX" "$FRESH_KEYBOX_URL"
         fi
 
+        # التحقق من صحة الملف المستلم واستبداله إذا كان متغيراً
         if [ -s "$TMP_KEYBOX" ] && grep -qi "keybox" "$TMP_KEYBOX" 2>/dev/null; then
             if ! cmp -s "$TMP_KEYBOX" "$TARGET_KEYBOX"; then
                 rm -f "$TARGET_KEYBOX"
@@ -274,6 +299,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             rm -f "$TMP_KEYBOX"
         fi
 
+        # الانتظار لمدة 30 دقيقة قبل الفحص التالي
         sleep 1800
     done
 ) &

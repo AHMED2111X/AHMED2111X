@@ -1,12 +1,12 @@
-// Rename to custom.pif.json once completed
+// قم بإعادة تسمية هذا الملف إلى custom.pif.json بعد الانتهاء من تعبئة البيانات
 //
-// These are the current suggested defaults but you may add as many other fields/properties as needed
+// هذه هي القيم الافتراضية المقترحة حالياً، ويمكنك إضافة المزيد من الحقول والخصائص حسب الحاجة
 //
-// See android.os.Build source for all fields and field values' corresponding properties:
+// يمكنك مراجعة المصدر android.os.Build للإطلاع على كافة الحقول والخصائص المقابلة لها:
 // https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/os/Build.java
 
 {
-  // Build Fields
+  // حقول البناء (Build Fields)
     "MANUFACTURER": "",
     "MODEL": "",
     "FINGERPRINT": "",
@@ -21,12 +21,12 @@
     "SECURITY_PATCH": "",
     "DEVICE_INITIAL_SDK_INT": "",
 
-  // System Properties
-    "*.build.id": "",        // for ro.build.id
-    "*.security_patch": "",  // for ro.build.version.security_patch
-    "*api_level": "",        // for ro.board.api_level, ro.board.first_api_level, ro.product.first_api_level and ro.vendor.api_level
+  // خصائص النظام (System Properties)
+    "*.build.id": "",        // المقابلة للخاصية ro.build.id
+    "*.security_patch": "",  // المقابلة للخاصية ro.build.version.security_patch
+    "*api_level": "",        // المقابلة للخصائص ro.board.api_level و ro.board.first_api_level و ro.product.first_api_level و ro.vendor.api_level
 
-  // Advanced Settings
+  // الإعدادات المتقدمة (Advanced Settings)
     "spoofBuild": "1",
     "spoofProps": "1",
     "spoofProvider": "1",

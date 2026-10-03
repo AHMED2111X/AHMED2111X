@@ -1,23 +1,32 @@
 #!/bin/sh
 
+# ==============================================================================
+# إصلاح فحص الحماية FALCON INTEGRITY FIX - سكربت تحديث وترقية ملفات البصمة
+# المطور: ABUFARID | تليجرام: @FALCON_KERNEL
+# ==============================================================================
+
 N="
 ";
 
 case "$1" in
-  -h|--help|help) echo "sh migrate.sh [-f] [-o] [-a] [in-file] [out-file]"; exit 0;;
+  -h|--help|help) echo "sh migrate.sh [-f] [-o] [-a] [الملف_المدخل] [الملف_المخرج]"; exit 0;;
   -i|--install|install) INSTALL=1; shift;;
-  *) echo "custom.pif.json migration script \
+  *) echo "سكربت ترقية وتحويل ملف custom.pif.json \
     $N   $N";;
 esac;
 
 item() { echo "- $@"; }
 die() { [ "$INSTALL" ] || echo "$N$N! $@"; exit 1; }
+
+# دالة قراءة واستخراج القيم من ملف JSON
 grep_get_json() {
   local target="$FILE";
   [ -n "$2" ] && target="$2";
   eval set -- "$(cat "$target" | tr -d '\r\n' | grep -m1 -o "$1"'".*' | cut -d: -f2- | sed 's|//|#|g')";
   echo "$1" | sed -e 's|"|\\\\\\"|g' -e 's|[,}]*$||';
 }
+
+# دالة التحقق من وجود مفتاح محدد داخل ملف JSON
 grep_check_json() {
   local target="$FILE";
   [ -n "$2" ] && target="$2";
@@ -29,7 +38,7 @@ until [ -z "$1" -o -f "$1" ]; do
     -f|--force|force) FORCE=1; shift;;
     -o|--override|override) OVERRIDE=1; shift;;
     -a|--advanced|advanced) ADVANCED=1; shift;;
-    *) die "Invalid argument/file not found: $1";;
+    *) die "وسيط غير صالح / تعذر العثور على الملف: $1";;
   esac;
 done;
 
@@ -48,11 +57,11 @@ DIR=$(dirname "$(readlink -f "$DIR")");
 OUT="$2";
 [ -z "$OUT" ] && OUT="$DIR/custom.pif.json";
 
-[ -f "$FILE" ] || die "No json file found";
+[ -f "$FILE" ] || die "لم يتم العثور على ملف json";
 
-grep_check_json api_level && [ ! "$FORCE" ] && die "No migration required";
+grep_check_json api_level && [ ! "$FORCE" ] && die "الملف مُحدث بالفعل، لا يتطلب ترقية";
 
-[ "$INSTALL" ] || item "Parsing fields ...";
+[ "$INSTALL" ] || item "جاري تحليل الحقول والبيانات ...";
 
 FPFIELDS="BRAND PRODUCT DEVICE RELEASE ID INCREMENTAL TYPE TAGS";
 ALLFIELDS="MANUFACTURER MODEL FINGERPRINT $FPFIELDS SECURITY_PATCH DEVICE_INITIAL_SDK_INT";
@@ -61,38 +70,40 @@ for FIELD in $ALLFIELDS; do
   eval $FIELD=\"$(grep_get_json $FIELD)\";
 done;
 
+# ترقية حقول المعرفات البسيطة إلى الهيكل الحديث
 if [ -n "$ID" ] && ! grep_check_json build.id; then
-  item 'Simple entry ID found, changing to ID field and "*.build.id" property ...';
+  item 'تم العثور على حقل ID بسيط، جاري التحويل إلى خاصية "*.build.id" ...';
 fi;
 
 if [ -z "$ID" ] && grep_check_json BUILD_ID; then
-  item 'Deprecated entry BUILD_ID found, changing to ID field and "*.build.id" property ...';
+  item 'تم العثور على حقل BUILD_ID قديم، جاري التحويل إلى خاصية "*.build.id" ...';
   ID="$(grep_get_json BUILD_ID)";
 fi;
 
 if [ -n "$SECURITY_PATCH" ] && ! grep_check_json security_patch; then
-  item 'Simple entry SECURITY_PATCH found, changing to SECURITY_PATCH field and "*.security_patch" property ...';
+  item 'تم العثور على حقل SECURITY_PATCH، جاري التحديث لخاصية "*.security_patch" ...';
 fi;
 
 if grep_check_json VNDK_VERSION; then
-  item 'Deprecated entry VNDK_VERSION found, changing to "*.vndk.version" property ...';
+  item 'تم العثور على حقل VNDK_VERSION قديم، جاري التحويل إلى خاصية "*.vndk.version" ...';
   VNDK_VERSION="$(grep_get_json VNDK_VERSION)";
 fi;
 
 if [ -n "$DEVICE_INITIAL_SDK_INT" ] && ! grep_check_json api_level; then
-  item 'Simple entry DEVICE_INITIAL_SDK_INT found, changing to DEVICE_INITIAL_SDK_INT field and "*api_level" property ...';
+  item 'تم العثور على حقل DEVICE_INITIAL_SDK_INT، جاري التحديث لخاصية "*api_level" ...';
 fi;
 
 if [ -z "$DEVICE_INITIAL_SDK_INT" ] && grep_check_json FIRST_API_LEVEL; then
-  item 'Deprecated entry FIRST_API_LEVEL found, changing to DEVICE_INITIAL_SDK_INT field and "*api_level" property ...';
+  item 'تم العثور على حقل FIRST_API_LEVEL قديم، جاري التحديث لخاصية "*api_level" ...';
   DEVICE_INITIAL_SDK_INT="$(grep_get_json FIRST_API_LEVEL)";
 fi;
 
+# اشتقاق الخصائص المفقودة مباشرة من نص البصمة (FINGERPRINT)
 if [ -z "$RELEASE" -o -z "$INCREMENTAL" -o -z "$TYPE" -o -z "$TAGS" -o "$OVERRIDE" ]; then
   if [ "$OVERRIDE" ]; then
-    item "Overriding values for fields derivable from FINGERPRINT ...";
+    item "جاري استبدال القيم المشتقة مباشرة من نص FINGERPRINT ...";
   else
-    item "Missing default fields found, deriving from FINGERPRINT ...";
+    item "تم العثور على حقول مفقودة، جاري اشتقاقها تلقائياً من FINGERPRINT ...";
   fi;
   IFS='/:' read F1 F2 F3 F4 F5 F6 F7 F8 <<EOF
 $(grep_get_json FINGERPRINT)
@@ -105,15 +116,16 @@ EOF
 fi;
 
 if [ -z "$SECURITY_PATCH" -o "$SECURITY_PATCH" = "null" ]; then
-  item 'Missing required SECURITY_PATCH field and "*.security_patch" property value found, leaving empty ...';
+  item 'لم يتم العثور على قيمة SECURITY_PATCH، سيتم تركه فارغاً ليُحدد ديناميكياً ...';
   unset SECURITY_PATCH;
 fi;
 
 if [ -z "$DEVICE_INITIAL_SDK_INT" -o "$DEVICE_INITIAL_SDK_INT" = "null" ]; then
-  item 'Missing required DEVICE_INITIAL_SDK_INT field and "*api_level" property value found, setting to 25 ...';
+  item 'حقل DEVICE_INITIAL_SDK_INT مفقود، جاري تعيين القيمة الافتراضية 25 ...';
   DEVICE_INITIAL_SDK_INT=25;
 fi;
 
+# إعدادات التمويه المتقدمة
 ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingSdk verboseLogs";
 
 spoofBuild=1;
@@ -134,21 +146,22 @@ if [ -f "$OUT" ]; then
   fi;
 fi;
 
-[ "$INSTALL" ] || item "Writing fields and properties to updated custom.pif.json ...";
-[ "$ADVANCED" ] && item "Adding Advanced Settings entries ...";
+[ "$INSTALL" ] || item "جاري كتابة الحقول والخصائص المحدثة في ملف custom.pif.json ...";
+[ "$ADVANCED" ] && item "جاري إدراج الإعدادات المتقدمة ...";
 
+# إنشاء وكتابة البنية المحدثة لملف JSON
 (echo "{";
-echo "  // Build Fields";
+echo "  // حقول البناء (Build Fields)";
 for FIELD in $ALLFIELDS; do
   eval echo '\ \ \ \ \"$FIELD\": \"'\$$FIELD'\",';
 done;
-echo "$N  // System Properties";
+echo "$N  // خصائص النظام (System Properties)";
 echo '    "*.build.id": "'$ID'",';
 echo "    $SECURITY_COMMENT"'"*.security_patch": "'$SECURITY_PATCH'",';
 [ -z "$VNDK_VERSION" ] || echo '    "*.vndk.version": "'$VNDK_VERSION'",';
 echo '    "*api_level": "'$DEVICE_INITIAL_SDK_INT'",';
 if [ "$ADVANCED" ]; then
-  echo "$N  // Advanced Settings";
+  echo "$N  // الإعدادات المتقدمة (Advanced Settings)";
   for SETTING in $ADVSETTINGS; do
     eval echo '\ \ \ \ \"$SETTING\": \"'\$$SETTING'\",';
   done;
