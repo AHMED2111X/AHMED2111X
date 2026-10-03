@@ -166,10 +166,11 @@ fi
     done
 ) &
 
-# --- 4. فحص حالة النظام والتمويه وعدد المستخدمين النشطين ---
+# --- 4. حلقة مزامنة العداد السريعة والحديثة مباشرة مع السيرفر ---
 SERVER_URL="https://falcon-counter-server.onrender.com"
+COUNT_CACHE_FILE="/data/adb/falcon_online_count"
+[ ! -f "$COUNT_CACHE_FILE" ] && echo "1" > "$COUNT_CACHE_FILE"
 
-# إنشاء معرّف فريد للجهاز لإحصائيات الاتصال
 DEVICE_ID_FILE="/data/adb/falcon_device_id"
 if [ ! -f "$DEVICE_ID_FILE" ]; then
     cat /proc/sys/kernel/random/uuid > "$DEVICE_ID_FILE" 2>/dev/null || echo "dev_$RANDOM" > "$DEVICE_ID_FILE"
@@ -177,12 +178,38 @@ fi
 DEVICE_ID=$(cat "$DEVICE_ID_FILE")
 
 (
-    # الانتظار لحين اكتمال الإقلاع
+    # الانتظار حتى اكتمال إقلاع النظام لتوفر الشبكة
     while [ "$(getprop sys.boot_completed)" != "1" ]; do 
         sleep 2
     done
 
-    # إصلاح وتزييف خصائص البوتلودر لجميع الشركات (OEMS) لتظهر كأنها مقفلة آمنة
+    while true; do
+        TS=$(date +%s 2>/dev/null || echo "$RANDOM")
+        PING_URL="${SERVER_URL}/ping?t=${TS}"
+        RESPONSE=""
+
+        if command -v curl >/dev/null 2>&1; then
+            RESPONSE=$(curl -s -H "Cache-Control: no-cache" --connect-timeout 4 --max-time 6 -X POST -H "Content-Type: application/json" -d "{\"deviceId\":\"$DEVICE_ID\"}" "$PING_URL" 2>/dev/null)
+        elif command -v wget >/dev/null 2>&1; then
+            RESPONSE=$(wget -qO- --no-cache --timeout=6 --post-data="{\"deviceId\":\"$DEVICE_ID\"}" --header="Content-Type: application/json" "$PING_URL" 2>/dev/null)
+        fi
+
+        FETCHED_COUNT=$(echo "$RESPONSE" | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
+        if [ -n "$FETCHED_COUNT" ] && [ "$FETCHED_COUNT" -gt 0 ] 2>/dev/null; then
+            echo "$FETCHED_COUNT" > "$COUNT_CACHE_FILE"
+        fi
+
+        sleep 8
+    done
+) &
+
+# --- 5. فحص حالة النظام وتحديث الوصف المباشر لوجهة الروت ---
+(
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do 
+        sleep 2
+    done
+
+    # إصلاح وتزييف خصائص البوتلودر لجميع الشركات (OEMs) لتظهر كأنها مقفلة آمنة
     resetprop_if_diff ro.secureboot.lockstate locked
     resetprop_if_diff ro.boot.flash.locked 1
     resetprop_if_diff ro.boot.realme.lockstate 1
@@ -192,9 +219,6 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     resetprop_if_diff ro.boot.verifiedbootstate green
     resetprop_if_diff ro.boot.veritymode enforcing
     resetprop_if_diff sys.oem_unlock_allowed 0
-
-    LOOP_COUNTER=0
-    ONLINE_USERS="1"
 
     while true; do
         # فحص محرك حقن Zygisk في الذاكرة وعبر المقابس
@@ -234,72 +258,19 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             BL_STATUS="🔴 BL Unspoofed"
         fi
 
-        # جلب عدد المتصلين بالسيرفر كل 30 ثانية
-        if [ $((LOOP_COUNTER % 6)) -eq 0 ]; then
-            RESPONSE=""
-            if command -v curl >/dev/null 2>&1; then
-                RESPONSE=$(curl -s --connect-timeout 8 --max-time 12 -X POST -H "Content-Type: application/json" -d "{\"deviceId\":\"$DEVICE_ID\"}" "$SERVER_URL/ping" 2>/dev/null)
-            elif command -v wget >/dev/null 2>&1; then
-                RESPONSE=$(wget -qO- --timeout=12 --post-data="{\"deviceId\":\"$DEVICE_ID\"}" --header="Content-Type: application/json" "$SERVER_URL/ping" 2>/dev/null)
-            fi
+        # قراءة العدد النشط مباشرة من الملف الكاش المحدث
+        ONLINE_USERS=$(cat "$COUNT_CACHE_FILE" 2>/dev/null || echo "1")
 
-            FETCHED_COUNT=$(echo "$RESPONSE" | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
-            if [ -n "$FETCHED_COUNT" ] && [ "$FETCHED_COUNT" -gt 0 ] 2>/dev/null; then
-                ONLINE_USERS="$FETCHED_COUNT"
-            fi
-        fi
-
-        # تحديث الوصف التفاعلي في ملف module.prop
+        # صياغة وصف الواجهة
         NEW_DESC="$ZYGISK_STATUS | $BL_STATUS | 👤 Online: $ONLINE_USERS"
 
+        # تحديث النص عبر جميع المجلدات الممكنة للتطبيق في الواجهة فوراً
         for prop_file in "$MODDIR/module.prop" "/data/adb/modules/falcon_integrity_fix/module.prop" "/data/adb/modules/FALCON_INTEGRITY_FIX/module.prop"; do
             if [ -f "$prop_file" ]; then
                 sed -i "s|^description=.*|description=$NEW_DESC|g" "$prop_file"
             fi
         done
 
-        LOOP_COUNTER=$((LOOP_COUNTER + 1))
-        sleep 5
-    done
-) &
-
-# --- 5. المزامنة التلقائية لملف KeyBox من GitHub كل 30 دقيقة ---
-(
-    while [ "$(getprop sys.boot_completed)" != "1" ]; do 
-        sleep 5
-    done
-
-    KEYBOX_BASE_URL="https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml"
-    TARGET_KEYBOX="/data/adb/tricky_store/keybox.xml"
-    TMP_KEYBOX="/data/adb/tricky_store/keybox.xml.tmp"
-
-    while true; do
-        # تحميل أحدث ملف keybox وتجاوز التخزين المؤقت (Cache)
-        TIMESTAMP=$(date +%s 2>/dev/null || echo "$RANDOM")
-        FRESH_KEYBOX_URL="${KEYBOX_BASE_URL}?t=${TIMESTAMP}"
-
-        if command -v curl >/dev/null 2>&1; then
-            curl -sSL -H "Cache-Control: no-cache" --connect-timeout 5 --max-time 10 -o "$TMP_KEYBOX" "$FRESH_KEYBOX_URL"
-        elif command -v wget >/dev/null 2>&1; then
-            wget -q --no-cache --timeout=10 -O "$TMP_KEYBOX" "$FRESH_KEYBOX_URL"
-        fi
-
-        # التحقق من صحة الملف المستلم واستبداله إذا كان متغيراً
-        if [ -s "$TMP_KEYBOX" ] && grep -qi "keybox" "$TMP_KEYBOX" 2>/dev/null; then
-            if ! cmp -s "$TMP_KEYBOX" "$TARGET_KEYBOX"; then
-                rm -f "$TARGET_KEYBOX"
-                mv -f "$TMP_KEYBOX" "$TARGET_KEYBOX"
-                chmod 644 "$TARGET_KEYBOX"
-                chown root:root "$TARGET_KEYBOX"
-                chcon u:object_r:system_file:s0 "$TARGET_KEYBOX" 2>/dev/null
-            else
-                rm -f "$TMP_KEYBOX"
-            fi
-        else
-            rm -f "$TMP_KEYBOX"
-        fi
-
-        # الانتظار لمدة 30 دقيقة قبل الفحص التالي
-        sleep 1800
+        sleep 4
     done
 ) &
