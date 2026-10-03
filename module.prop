@@ -1,7 +1,7 @@
 id=falcon_integrity_fix
 name=FALCON INTEGRITY FIX
-version=v2.60
-versionCode=62
+version=v2.61
+versionCode=63
 author=ABUFARID
 description=🟢 Zygisk Injected | 🟢 BL Spoofed | 👤 Online: 10
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
