@@ -1,22 +1,16 @@
-# 🦅 FALCON INTEGRITY FIX V2.55
+🚀 تحديث جديد | New Update
 
-> **Status:** Passed 3/3 Integrity Checks (BASIC, DEVICE, STRONG) 🟢🟢🟢
+✨ تم إطلاق التحديث الجديد مع واجهة مستخدم احترافية (Web UI) وأدوات متقدمة!
 
-## 📋 About The Release
-Version 2.48 addresses recent Play Integrity API changes, restoring full device compliance and bypassing strong integrity detections without breaking system features.
+حرصنا في هذا الإصدار على تقديم تجربة استخدام متكاملة وأكثر سلاسة عبر دمج واجهة مستخدم خفيفة وسريعة تُسهّل التحكم بكافة الخصائص والإعدادات بنقرة زر.
 
-## ✨ Key Features
-- **Full Integrity Pass:** Successfully passes `MEETS_BASIC_INTEGRITY`, `MEETS_DEVICE_INTEGRITY`, and `MEETS_STRONG_INTEGRITY`.
-- **Zygisk Integration:** Updated native libraries (`arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`) for seamless hooking.
-- **Keybox & Fingerprint Updater:** Integrated automated keybox and security patch management.
-- **Universal Support:** Compatible with Magisk, KernelSU, KernelSU-Next, and APatch.
+🔥 أبرز الإضافات والمميزات:
 
-## 🛠️ Installation Instructions
-1. Download `FALCONINTEGITY_FIX_V2.55.zip` from the Releases section.
-2. Flash the module via **Magisk Manager / KernelSU / APatch**.
-3. Reboot your device.
-4. Clear data for **Google Play Services** (`com.google.android.gms`) and **Google Play Store** (`com.android.vending`).
-5. Verify status using Play Integrity Checker.
+• 🎨 واجهة مستخدم احترافية (Web UI): تصميم حديث ومنظم يمنحك تحكماً كاملاً بالوحدة من مكان واحد.
+• 🛠️ حزمة أدوات مهمة: إضافة أدوات جديدة لإدارة الإعدادات والتكوينات بسرعة وكفاءة عالية.
+• ⚡ تحسين الأداء والاستقرار: تسريع استجابة السكريبتات وتقليل استهلاك الموارد على النظام.
+• 🛡️ توافقية كاملة: دعم شامل لمختلف البيئات والمعماريات (arm64-v8a, x86_64, armeabi-v7a, x86).
 
-## ⚠️ Notes
-- Ensure **Zygisk** is enabled in your root manager before flashing.
+📥 التحميل والتواصل:
+• تجدون الملف المحدث مرفقاً بالأسفل، أو عبر زيارة المستودع الرسمي على GitHub.
+• للتواصل والدعم الفني عبر تلجرام: @FALCON_KERNEL
