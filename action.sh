@@ -162,7 +162,7 @@ if ! echo -e "A\nB" | grep -m1 -A1 "A" | grep -q "B"; then
   fi
 fi
 
-# --- 1. تنظيف ملفات Keybox القديمة والنسخ الاحتياطية وتنزيل الملف الجديد مباشرة ---
+# --- 1. تنظيف ملفات Keybox القديمة وتثبيت الملف المحلي مباشرة ---
 step_item "جاري تنظيف ملفات Keybox القديمة والنسخ الاحتياطية (.bak/.tmp)..."
 
 TARGET_DIR="/data/adb/tricky_store"
@@ -176,46 +176,24 @@ rm -f "$TARGET_DIR"/*.bak 2>/dev/null
 rm -f "$TARGET_DIR"/*.tmp 2>/dev/null
 step_success "تم تنظيف ملفات Tricky Store القديمة"
 
-step_item "جاري جلب وتنزيل ملف Keybox الحديث مباشرة من GitHub..."
-KEYBOX_URL="https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml"
+step_item "جاري تطبيق ملف Keybox المحلي المرفق داخل الإضافة..."
 TARGET_KEYBOX="$TARGET_DIR/keybox.xml"
-TMP_KEYBOX="$TARGET_DIR/keybox_download.tmp"
 
-TIMESTAMP=$(date +%s 2>/dev/null || echo $RANDOM)
-DOWNLOAD_SUCCESS=0
-
-if command -v curl >/dev/null 2>&1; then
-    curl -sSL -H "Cache-Control: no-cache" --connect-timeout 8 --max-time 15 -o "$TMP_KEYBOX" "${KEYBOX_URL}?t=${TIMESTAMP}"
-    [ $? -eq 0 ] && DOWNLOAD_SUCCESS=1
-elif command -v wget >/dev/null 2>&1; then
-    wget -q --no-cache --timeout=15 -O "$TMP_KEYBOX" "${KEYBOX_URL}?t=${TIMESTAMP}"
-    [ $? -eq 0 ] && DOWNLOAD_SUCCESS=1
+KEYBOX_SRC=""
+if [ -f "$MODDIR/keybox.xml" ]; then
+    KEYBOX_SRC="$MODDIR/keybox.xml"
+elif [ -f "$MODDIR/zygisk/keybox.xml" ]; then
+    KEYBOX_SRC="$MODDIR/zygisk/keybox.xml"
 fi
 
-if [ "$DOWNLOAD_SUCCESS" -eq 1 ] && [ -s "$TMP_KEYBOX" ] && grep -qi "keybox" "$TMP_KEYBOX" 2>/dev/null; then
-    mv -f "$TMP_KEYBOX" "$TARGET_KEYBOX"
+if [ -n "$KEYBOX_SRC" ]; then
+    cp -f "$KEYBOX_SRC" "$TARGET_KEYBOX"
     chmod 644 "$TARGET_KEYBOX"
     chown root:root "$TARGET_KEYBOX"
     chcon u:object_r:system_file:s0 "$TARGET_KEYBOX" 2>/dev/null
-    step_success "تم تنزيل ونقل ملف Keybox الجديد بنجاح إلى Tricky Store"
+    step_success "تم تطبيق ونقل ملف Keybox المحلي بنجاح"
 else
-    rm -f "$TMP_KEYBOX" 2>/dev/null
-    step_info "تعذر التنزيل عبر الشبكة، جاري استخدام النسخة المحلية الاحتياطية..."
-    
-    KEYBOX_SRC=""
-    if [ -f "$MODDIR/keybox.xml" ]; then
-        KEYBOX_SRC="$MODDIR/keybox.xml"
-    elif [ -f "$MODDIR/zygisk/keybox.xml" ]; then
-        KEYBOX_SRC="$MODDIR/zygisk/keybox.xml"
-    fi
-
-    if [ -n "$KEYBOX_SRC" ]; then
-        cp -f "$KEYBOX_SRC" "$TARGET_KEYBOX"
-        chmod 644 "$TARGET_KEYBOX"
-        chown root:root "$TARGET_KEYBOX"
-        chcon u:object_r:system_file:s0 "$TARGET_KEYBOX" 2>/dev/null
-        step_success "تم تطبيق ملف Keybox المحلي"
-    fi
+    step_info "لم يتم العثور على ملف keybox.xml محلي داخل الإضافة"
 fi
 
 # --- 2. التنقيب وجلب بصمات أجهزة Pixel Beta ---

@@ -1,5 +1,8 @@
 #!/system/bin/sh
 
+# تعطيل وضع الانهيار التلقائي (لمنع فشل التثبيت في KernelSU و Magisk)
+set +e
+
 # ==============================================================================
 # إصلاح فحص الحماية FALCON INTEGRITY FIX - سكربت التثبيت والتخصيص
 # المطور: ABUFARID | تليجرام: @FALCON_KERNEL
@@ -8,13 +11,12 @@
 # --- إعداد قواعد SELinux وسياق تنفيذ الملفات ---
 if [ -f "$MODPATH/sepolicy.rule" ]; then
     ui_print "- 🛡️ جاري تطبيق قواعد SELinux المخصصة..."
-    magisk policy --live --file "$MODPATH/sepolicy.rule" 2>/dev/null || true
+    magisk policy --live --file "$MODPATH/sepolicy.rule" 2>/dev/null
 fi
 
-chcon -R u:object_r:system_file:s0 "$MODPATH" 2>/dev/null || true
-chmod -R 755 "$MODPATH" 2>/dev/null || true
+chcon -R u:object_r:system_file:s0 "$MODPATH" 2>/dev/null
+chmod -R 755 "$MODPATH" 2>/dev/null
 
-# دالة مساعدة لإضافة مهلة زمنية بسيطة لتنسيق المخرجات
 delay() {
     sleep 0.3
 }
@@ -27,29 +29,54 @@ ui_print "  #        تليجرام: @FALCON_KERNEL     #" ; delay
 ui_print "  ######################################" ; delay
 ui_print " " ; delay
 
-ui_print "- 🔍 جاري تهيئة بيئة Zygisk Next..." ; delay
+# فحص شامل عن إضافات Zygisk النشطة
+ui_print "- 🔍 جاري البحث عن بيئة Zygisk النشطة..." ; delay
+FOUND_ZYGISK_MOD=""
+for mod in /data/adb/modules/*zygisk*; do
+    if [ -d "$mod" ] && [ ! -f "$mod/disable" ]; then
+        FOUND_ZYGISK_MOD="$(basename "$mod")"
+        break
+    fi
+done
 
-# الفحص والتحقق من توافق إصدار الأندرويد
-if [ "$API" -lt 25 ]; then
+if [ -n "$FOUND_ZYGISK_MOD" ]; then
+    ui_print "- 🟢 تم العثور على بيئة Zygisk: [$FOUND_ZYGISK_MOD]" ; delay
+else
+    ui_print "- 🟡 جاري الاعتماد على بيئة Zygisk المدمجة أو الافتراضية..." ; delay
+fi
+
+# الفحص والتحقق من توافق إصدار الأندرويد بطريقة آمنة
+API_LEVEL=$(getprop ro.build.version.sdk 2>/dev/null)
+if [ -n "$API_LEVEL" ] && [ "$API_LEVEL" -lt 25 ] 2>/dev/null; then
     abort " 🚫 خطأ: إصدار الأندرويد الخاص بهاتفك غير مدعوم ✋"
 fi
 
-# جلب عدد المستخدمين النشطين مباشرة أثناء التثبيت
+# --- 1. جلب عدد المستخدمين النشطين مباشرة أثناء التثبيت ---
 SERVER_URL="https://falcon-counter-server.onrender.com"
 ONLINE_USERS=""
 
 if command -v curl >/dev/null 2>&1; then
-    ONLINE_USERS=$(curl -s --connect-timeout 5 --max-time 5 -X POST -H "Content-Type: application/json" -d '{"deviceId":"install_check"}' "$SERVER_URL/ping" 2>/dev/null | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
+    RESPONSE=$(curl -s -H "Cache-Control: no-cache" --connect-timeout 8 --max-time 15 -X POST -H "Content-Type: application/json" -d '{"deviceId":"install_check"}' "$SERVER_URL/ping" 2>/dev/null)
 elif command -v wget >/dev/null 2>&1; then
-    ONLINE_USERS=$(wget -qO- --timeout=5 --post-data='{"deviceId":"install_check"}' --header='Content-Type: application/json' "$SERVER_URL/ping" 2>/dev/null | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
+    RESPONSE=$(wget -qO- --no-cache --timeout=15 --post-data='{"deviceId":"install_check"}' --header='Content-Type: application/json' "$SERVER_URL/ping" 2>/dev/null)
 fi
 
-if [ -n "$ONLINE_USERS" ] && [ -f "$MODPATH/module.prop" ]; then
+if [ -n "$RESPONSE" ]; then
+    ONLINE_USERS=$(echo "$RESPONSE" | tr -d ' ' | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2 2>/dev/null)
+fi
+
+# التحقق من أن العدد المستلم هو رقم صحيح بطريقة متوافقة مع أندرويد
+if [ -n "$ONLINE_USERS" ] && [ "$ONLINE_USERS" -gt 0 ] 2>/dev/null; then
     ui_print "- 👥 عدد المستخدمين النشطين الآن: $ONLINE_USERS" ; delay
-    sed -i -E "s/Online Users: [0-9]+/Online Users: $ONLINE_USERS/g" "$MODPATH/module.prop"
+    echo "$ONLINE_USERS" > /data/adb/falcon_online_count 2>/dev/null
+    
+    if [ -f "$MODPATH/module.prop" ]; then
+        sed -i "s/Online: \.\.\./Online: $ONLINE_USERS/g" "$MODPATH/module.prop" 2>/dev/null
+        sed -i "s/Online: [0-9][0-9]*/Online: $ONLINE_USERS/g" "$MODPATH/module.prop" 2>/dev/null
+    fi
 fi
 
-# 1. تعيين الصلاحيات القياسية وحماية سكربتات تشغيل النظام
+# 2. تعيين الصلاحيات القياسية
 set_perm_recursive $MODPATH 0 0 0755 0644
 if [ -d "$MODPATH/zygisk" ]; then
     set_perm_recursive $MODPATH/zygisk 0 0 0755 0755
@@ -57,7 +84,7 @@ fi
 [ -f "$MODPATH/service.sh" ] && set_perm $MODPATH/service.sh 0 0 0755
 [ -f "$MODPATH/post-fs-data.sh" ] && set_perm $MODPATH/post-fs-data.sh 0 0 0755
 
-# 2. نشر ملفات التمويه والـ Keybox (إصلاح TEE Attestation)
+# 3. نشر ملفات التمويه والـ Keybox
 ui_print "- 🎭 جاري نشر مكونات PIF و Tricky Store..." ; delay
 mkdir -p /data/adb/tricky_store 2>/dev/null
 
@@ -66,17 +93,18 @@ if [ -f "$MODPATH/pif.json" ]; then
     cp -f "$MODPATH/pif.json" /data/adb/pif.json
 fi
 
-# نشر ملف keybox.xml سواءً كان في مجلد zygisk أو في الجذر
+rm -f /data/adb/tricky_store/keybox.xml 2>/dev/null
+rm -f /data/adb/tricky_store/*.bak 2>/dev/null
+rm -f /data/adb/tricky_store/*.tmp 2>/dev/null
+
 if [ -f "$MODPATH/zygisk/keybox.xml" ]; then
     cp -f "$MODPATH/zygisk/keybox.xml" /data/adb/tricky_store/keybox.xml
 elif [ -f "$MODPATH/keybox.xml" ]; then
     cp -f "$MODPATH/keybox.xml" /data/adb/tricky_store/keybox.xml
 fi
 
-# --- الحفاظ على الخيارات السابقة في target.txt ودمجها بآمان بدون تكرار ---
 if [ -f "$MODPATH/target.txt" ]; then
     if [ -f "/data/adb/tricky_store/target.txt" ]; then
-        # إدراج التطبيقات المستهدفة الجديدة وتصفية التكرار عبر ملف مؤقت
         cat "$MODPATH/target.txt" >> /data/adb/tricky_store/target.txt
         sort -u /data/adb/tricky_store/target.txt > /data/adb/tricky_store/target.tmp 2>/dev/null
         if [ -s "/data/adb/tricky_store/target.tmp" ]; then
@@ -91,11 +119,10 @@ fi
 
 [ -f "$MODPATH/security_patch.txt" ] && cp -f "$MODPATH/security_patch.txt" /data/adb/tricky_store/
 
-# ضبط وتأمين الصلاحيات لمجلد tricky_store
 chmod 755 /data/adb/tricky_store 2>/dev/null
 chmod 644 /data/adb/tricky_store/* 2>/dev/null
 
-# 3. إدراج التطبيقات الأساسية في قائمة العزل (Magisk DenyList)
+# 4. إدراج التطبيقات الأساسية في قائمة العزل
 ui_print "- 🛡️ جاري تطبيق قائمة العزل التلقائية للتطبيقات والتطبيقات البنكية..." ; delay
 DENY_LIST_APPS="
 com.google.android.gms com.google.android.gms:snet
@@ -122,7 +149,7 @@ if command -v magisk >/dev/null 2>&1 && magisk --denylist status >/dev/null 2>&1
     done
 fi
 
-# 4. تنظيف ذاكرة التخزين المؤقت لخدمات متجر بلاي
+# 5. تنظيف ذاكرة التخزين المؤقت لخدمات متجر بلاي
 ui_print "- 🧹 جاري مسح ذاكرة التخزين المؤقت لـ Google Play..." ; delay
 rm -rf /data/data/com.android.vending/code_cache/* 2>/dev/null
 rm -rf /data/data/com.android.vending/cache/* 2>/dev/null
