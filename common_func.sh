@@ -81,14 +81,22 @@ resetprop_if_diff() {
     [ -z "$CURRENT" ] || [ "$CURRENT" = "$EXPECTED" ] || $RESETPROP "$NAME" "$EXPECTED"
 }
 
-# دالة التعديل الشرطي عند تطابق النص
+# دالة التعديل الشرطي عند تطابق النص (باستخدام بنية case الآمنة في POSIX sh)
 resetprop_if_match() {
     local NAME="$1"
     local CONTAINS="$2"
     local VALUE="$3"
+    local CURRENT
 
-    [[ "$(resetprop "$NAME")" = *"$CONTAINS"* ]] && $RESETPROP "$NAME" "$VALUE"
+    CURRENT="$(resetprop "$NAME" 2>/dev/null)"
+
+    case "$CURRENT" in
+        *"$CONTAINS"*)
+            $RESETPROP "$NAME" "$VALUE"
+            ;;
+    esac
 }
 
 # دالة وهمية لمنع حدوث أخطاء الطباعة أثناء مرحلة الإقلاع المبكرة
 ui_print() { return; }
+```[cite: 11, 12]

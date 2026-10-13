@@ -41,8 +41,8 @@ for APP in $(grep -v '^#' $LIST); do
                 if [ -f "$CFG" ]; then
                     if [ -d "$APP" ]; then
                         APK=$(readlink -f $APP/*.apk);
-                    elif [[ "$APP" = *".apk" ]]; then
-                        APK=$(readlink -f $APP);
+                    elif [ "${APP##*.}" = "apk" ]; then
+                        APK=$(readlink -f "$APP")
                     fi
                     if [ -s "$APK" ]; then
                         PKGNAME=$(unzip -p $APK AndroidManifest.xml | tr -d '\0' | grep -oE 'android.*overlay' | strings | tr -d '\n' | sed -e 's/^android//' -e 's/application//' -e 's;*http.*res/android;;' -e 's/manifest//' -e 's/overlay$//' | grep -oE '[[:alnum:].-_].*overlay' | cut -d\  -f2)
@@ -58,9 +58,9 @@ for APP in $(grep -v '^#' $LIST); do
                 fi
             ;;
         esac
-        if [[ -d "$APP" || "$APP" = *".apk" ]]; then
-            ui_print "! تم تعطيل تطبيق الروم المخصص $(basename $APP .apk)، يرجى إلغاء تثبيت تحديثات التطبيق بعد إعادة التشغيل"
-            [ "$HIDECFG" ] && ui_print "!  + تم تعليق وإلغاء إدخال $PKGNAME في ملف إعدادات overlay المنسوخ"
+        if [ -d "$APP" ] || [ "${APP##*.}" = "apk" ]; then
+            ui_print "! تم تعطيل تطبيق الروم المخصص $(basename "$APP" .apk)، يرجى إلغاء تثبيت تحديثات التطبيق بعد إعادة التشغيل"
+            [ -n "$HIDECFG" ] && ui_print "!  + تم تعليق وإلغاء إدخال $PKGNAME في ملف إعدادات overlay المنسوخ"
         fi
     fi
 done

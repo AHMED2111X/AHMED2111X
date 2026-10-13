@@ -10,4 +10,4 @@ allow untrusted_app system_file file { read execute open }
 allow platform_app system_file file { read execute open }
 
 # 3. السماح لتطبيق خدمات جوجل (Google Play Services) بقراءة وتشغيل ملفات الإضافة لتمرير التمويه
-allow gm_app system_file file { read execute open }
+allow gmscore_app system_file file { read execute open }

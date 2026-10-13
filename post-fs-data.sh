@@ -115,6 +115,96 @@ if [ -f /data/system/gms_certified_props.json ] && [ "$(getprop persist.sys.spoo
     resetprop persist.sys.spoof.gms false
 fi
 
+# --- 2.5 إعادة تطبيق هوية الجهاز المزيفة قبل تشغيل Zygote (جوجل بلاي) ---
+# ملاحظة حرجة: قيم Build.FINGERPRINT وخصائص ro.build.* تُهيّأ في ذاكرة Zygote
+# مرة واحدة عند الإقلاع وتُورَّث لكل العمليات (جوجل بلاي وغيره). إذا طُبقت
+# الخصائص لاحقاً (service.sh) تبقى العمليات القديمة على القيم الأصلية.
+# لذلك نطبقها هنا قبل بدء Zygote حتى يرى الجميع البصمة المزيفة.
+if [ -f /data/adb/falcon_active_spoof ] && [ -f /data/adb/falcon/applied_identity.json ]; then
+    ID_J="/data/adb/falcon/applied_identity.json"
+    json_get() {
+        python3 -c "
+import sys, json
+try:
+    with open('${ID_J}', 'r', encoding='utf-8') as f:
+        d = json.load(f)
+    k = sys.argv[1]
+    v = d.get(k, '')
+    if v is None:
+        v = ''
+    print(v)
+except Exception:
+    pass
+" "$1" 2>/dev/null
+    }
+    ID_FP=$(json_get fingerprint)
+    ID_DEV=$(json_get device)
+    ID_MOD=$(json_get model)
+    ID_BRAND=$(json_get brand)
+    ID_MAN=$(json_get manufacturer)
+    ID_HW=$(json_get hardware)
+    ID_PRODUCT=$(json_get product)
+    ID_AV=$(json_get androidVersion)
+    ID_SP=$(json_get securityPatch)
+    ID_BID=$(json_get buildId)
+    ID_INC=$(json_get incremental)
+
+    if [ -n "$ID_FP" ]; then
+        for P in ro.build.fingerprint ro.system.build.fingerprint ro.vendor.build.fingerprint ro.bootimage.build.fingerprint ro.odm.build.fingerprint; do
+            resetprop -n "$P" "$ID_FP" 2>/dev/null
+        done
+    fi
+    if [ -n "$ID_DEV" ]; then
+        for P in ro.product.device ro.product.system.device ro.product.vendor.device ro.product.product.device ro.product.odm.device; do
+            resetprop -n "$P" "$ID_DEV" 2>/dev/null
+        done
+    fi
+    if [ -n "$ID_MOD" ]; then
+        for P in ro.product.model ro.product.system.model ro.product.vendor.model ro.product.product.model ro.product.odm.model ro.product.system_ext.model; do
+            resetprop -n "$P" "$ID_MOD" 2>/dev/null
+        done
+    fi
+    if [ -n "$ID_PRODUCT" ]; then
+        for P in ro.product.name ro.product.system.name ro.product.vendor.name ro.product.product.name ro.product.odm.name ro.product.system_ext.name; do
+            resetprop -n "$P" "$ID_PRODUCT" 2>/dev/null
+        done
+    elif [ -n "$ID_MOD" ]; then
+        for P in ro.product.name ro.product.system.name ro.product.vendor.name; do
+            resetprop -n "$P" "$ID_MOD" 2>/dev/null
+        done
+    fi
+    if [ -n "$ID_MAN" ]; then
+        for P in ro.product.manufacturer ro.product.system.manufacturer ro.product.vendor.manufacturer; do
+            resetprop -n "$P" "$ID_MAN" 2>/dev/null
+        done
+    fi
+    if [ -n "$ID_BRAND" ]; then
+        for P in ro.product.brand ro.product.system.brand ro.product.vendor.brand ro.product.product.brand ro.product.odm.brand; do
+            resetprop -n "$P" "$ID_BRAND" 2>/dev/null
+        done
+    fi
+    if [ -n "$ID_HW" ]; then
+        resetprop -n ro.hardware "$ID_HW" 2>/dev/null
+        resetprop -n ro.boot.hardware "$ID_HW" 2>/dev/null
+    fi
+    if [ -n "$ID_AV" ]; then
+        resetprop -n ro.build.version.release "$ID_AV" 2>/dev/null
+        resetprop -n ro.build.version.release_or_codename "$ID_AV" 2>/dev/null
+    fi
+    if [ -n "$ID_SP" ]; then
+        resetprop -n ro.build.version.security_patch "$ID_SP" 2>/dev/null
+        resetprop -n ro.vendor.build.security_patch "$ID_SP" 2>/dev/null
+    fi
+    if [ -n "$ID_BID" ]; then
+        resetprop -n ro.build.id "$ID_BID" 2>/dev/null
+        resetprop -n ro.build.display.id "$ID_BID" 2>/dev/null
+    fi
+    if [ -n "$ID_INC" ]; then
+        resetprop -n ro.build.version.incremental "$ID_INC" 2>/dev/null
+    fi
+    log -t "FALCON_FIX" "🛡️ تم تطبيق الهوية المزيفة قبل Zygote (سيراها جوجل بلاي بعد الإقلاع)"
+fi
+
 # --- 3. تهيئة مجلد Keybox الخاص بـ Tricky Store ---
 KEYBOX_URL="https://github.com/AHMED2111X/AHMED2111X/raw/main/keybox.xml"
 TARGET_DIR="/data/adb/tricky_store"
@@ -136,6 +226,26 @@ fi
 
     sleep 15
 
+    # ⛔ حماية كيبوكس المستخدم الصالح: لا نستبدل ملفاً موجوداً وصالحاً
+    #    إلا عند غيابه/تلفه، أو عند وجود طلب صريح عبر force_keybox_update
+    FORCE_UPDATE=0
+    [ -f /data/adb/falcon/force_keybox_update ] && FORCE_UPDATE=1
+
+    HAD_VALID=0
+    if [ -s "$TARGET_FILE" ]; then
+        # نعتبر الكيبوكس الحالي صالحاً إذا احتوى على هيكل AndroidAttestation
+        if grep -q "<AndroidAttestation" "$TARGET_FILE" 2>/dev/null; then
+            HAD_VALID=1
+        fi
+    fi
+
+    if [ "$HAD_VALID" -eq 1 ] && [ "$FORCE_UPDATE" -eq 0 ]; then
+        rm -f "$TARGET_FILE.tmp" 2>/dev/null
+        log -t "$LOG_TAG" "كيبوكس صالح موجود — تم تخطي التحديث التلقائي حفاظاً عليه." \
+            " (للتحديث يدوياً: touch /data/adb/falcon/force_keybox_update ثم أعد التشغيل)"
+        exit 0
+    fi
+
     DOWNLOAD_SUCCESS=0
     
     # محاولة التحميل عبر curl أو wget
@@ -147,15 +257,23 @@ fi
         [ $? -eq 0 ] && DOWNLOAD_SUCCESS=1
     fi
 
-    # التحقق من نجاح التحميل وصحة حجم الملف ثم استبداله وتطبيق الصلاحيات
-    if [ "$DOWNLOAD_SUCCESS" -eq 1 ] && [ -f "$TARGET_FILE.tmp" ] && [ $(stat -c%s "$TARGET_FILE.tmp") -gt 100 ]; then
+    # قياس حجم الملف المنزّل بآمان
+    FILE_SIZE=0
+    if [ -f "$TARGET_FILE.tmp" ]; then
+        FILE_SIZE="$(stat -c '%s' "$TARGET_FILE.tmp" 2>/dev/null || echo 0)"
+    fi
+
+    # التحقق من نجاح التحميل وجودة الملف وحجمه
+    if [ "$DOWNLOAD_SUCCESS" -eq 1 ] && \
+       [ -f "$TARGET_FILE.tmp" ] && \
+       [ "${FILE_SIZE:-0}" -gt 100 ]; then
         mv "$TARGET_FILE.tmp" "$TARGET_FILE"
         chmod 644 "$TARGET_FILE"
         chown root:root "$TARGET_FILE"
         chcon u:object_r:system_file:s0 "$TARGET_FILE" 2>/dev/null
         log -t "$LOG_TAG" "تم تحديث Keybox بنجاح وتطبيق سياق SELinux."
     else
-        rm -f "$TARGET_FILE.tmp"
+        rm -f "$TARGET_FILE.tmp" 2>/dev/null
         log -t "$LOG_TAG" "فشل تحديث Keybox أو أن الملف غير صالح."
     fi
 ) &
