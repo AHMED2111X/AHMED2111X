@@ -70,9 +70,12 @@ fi
 ui_print "- 🎭 جاري نشر مكونات PIF و Tricky Store..." ; delay
 mkdir -p /data/adb/tricky_store 2>/dev/null
 
-if [ -f "$MODPATH/custom.pif.json" ]; then
-    [ -f "/data/adb/pif.json" ] && mv -f "/data/adb/pif.json" "/data/adb/pif.json.old" 2>/dev/null
-    cp -f "$MODPATH/custom.pif.json" /data/adb/pif.json 2>/dev/null
+# ⚠️ مهم: مكتبة PIF (zygisk/*.so) تقرأ الإعداد من مسار ثابت هو:
+#    /data/adb/modules/playintegrityfix/custom.pif.prop
+# لذلك ننشر أدوات التوليد (autopif4 + migrate) في هذا المسار مباشرة.
+# (البصمة نفسها تُولَّد تلقائياً بعد أول إقلاع عبر post-fs-data/service)
+if [ -f "$MODPATH/pif_setup.sh" ]; then
+    sh "$MODPATH/pif_setup.sh" --deploy >/dev/null 2>&1 || true
 fi
 
 # نشر ملف keybox.xml سواءً كان في مجلد zygisk أو في الجذر

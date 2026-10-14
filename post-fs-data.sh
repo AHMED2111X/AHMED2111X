@@ -277,3 +277,16 @@ fi
         log -t "$LOG_TAG" "فشل تحديث Keybox أو أن الملف غير صالح."
     fi
 ) &
+
+# --- 5. توليد/تحديث بصمة Play Integrity المعتمدة (Pixel Canary) بعد الإقلاع ---
+# مهم: المكتبة تقرأ من /data/adb/modules/playintegrityfix/custom.pif.prop
+# نُولِّدها تلقائياً عند أول إقلاع إذا كانت غير موجودة (يحتاج إنترنت + busybox).
+(
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do
+        sleep 5
+    done
+    sleep 25
+    if [ -f "$MODPATH/pif_setup.sh" ]; then
+        sh "$MODPATH/pif_setup.sh" >/dev/null 2>&1 || true
+    fi
+) &

@@ -501,3 +501,16 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
         sleep 4
     done
 ) &
+
+# --- 6. ضمان وجود بصمة Play Integrity المعتمدة في مسار المكتبة الصحيح ---
+# المكتبة تقرأ من /data/adb/modules/playintegrityfix/custom.pif.prop
+# (شبكة أمان إضافية إن لم تُولَّد بعد؛ لن تفعل شيئاً إن كانت موجودة وصالحة)
+(
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do
+        sleep 5
+    done
+    sleep 60
+    if [ -f "$MODDIR/pif_setup.sh" ]; then
+        sh "$MODDIR/pif_setup.sh" >/dev/null 2>&1 || true
+    fi
+) &

@@ -45,6 +45,23 @@ until [ -z "$1" ]; do
   esac
 done
 
+# --- أوضاع إضافية عبر الوسائط: تقرير تشخيصي / إصلاح اعتماد الجهاز ---
+FALCON_SELF_DIR="$(dirname "$(readlink -f "$0")" 2>/dev/null)"
+[ -d /data/adb/modules/falcon_integrity_fix ] && FALCON_SELF_DIR=/data/adb/modules/falcon_integrity_fix
+
+case "$1" in
+    --diag|-d|diag)
+        if [ -f "$FALCON_SELF_DIR/falcon_diag.sh" ]; then
+            exec sh "$FALCON_SELF_DIR/falcon_diag.sh"
+        fi
+        ;;
+    --fix-cert|--fixcert|-c|fixcert)
+        if [ -f "$FALCON_SELF_DIR/falcon_cert_fix.sh" ]; then
+            exec sh "$FALCON_SELF_DIR/falcon_cert_fix.sh" "$2"
+        fi
+        ;;
+esac
+
 # --- واجهة المستخدم والدوال التفاعلية ---
 draw_banner() {
     clear
@@ -171,29 +188,46 @@ else
     step_info "تنبيه: لم يتم العثور على ملف keybox.xml محلياً في الموديول."
 fi
 
-# --- 2. سحب وإعادة استخدام البصمة والخصائص الحقيقية للجهاز الفعلي ---
-step_item "جاري قراءة واستخراج الخصائص والبصمة الحقيقية للجهاز..."
+# --- 2. توليد بصمة Pixel Canary المعتمدة (Play Integrity) عبر autopif4 ---
+# ملاحظة مهمة: مكتبة PIF تقرأ الإعداد حصراً من:
+#   /data/adb/modules/playintegrityfix/custom.pif.prop
+# لذلك نولّد بصمة Pixel معتمدة (وليست بصمة الجهاز الحقيقية) ونضعها في المسار الصحيح.
+PIF_DIR="/data/adb/modules/playintegrityfix"
+step_item "جاري توليد بصمة Pixel معتمدة حديثة عبر autopif4..."
+
+if [ -f "$MODDIR/pif_setup.sh" ]; then
+    FALCON_PIF_VERBOSE=1 sh "$MODDIR/pif_setup.sh" --force || true
+fi
+
+FINGERPRINT=""
+if [ -s "$PIF_DIR/custom.pif.prop" ]; then
+    FINGERPRINT="$(grep -m1 '^FINGERPRINT=' "$PIF_DIR/custom.pif.prop" | cut -d= -f2- | cut -d\# -f1 | sed 's/[[:space:]]*$//')"
+elif [ -s "$PIF_DIR/custom.pif.json" ]; then
+    FINGERPRINT="$(grep -m1 '"FINGERPRINT"' "$PIF_DIR/custom.pif.json" | cut -d\" -f4)"
+fi
 
 MODEL="$(getprop ro.product.model)"
-DEVICE="$(getprop ro.product.device)"
-PRODUCT="$(getprop ro.product.name)"
-MANUFACTURER="$(getprop ro.product.manufacturer)"
-FINGERPRINT="$(getprop ro.build.fingerprint)"
 SECURITY_PATCH="$(getprop ro.build.version.security_patch)"
-SDK_INT="$(getprop ro.build.version.sdk)"
-
-[ -z "$FINGERPRINT" ] && FINGERPRINT="$(getprop ro.vendor.build.fingerprint)"
 [ -z "$SECURITY_PATCH" ] && SECURITY_PATCH="$(date +%Y-%m-%d)"
-[ -z "$SDK_INT" ] && SDK_INT="34"
 
-step_info "الطراز الحقيقي    : $MODEL"
-step_info "المنتج الحقيقي    : $PRODUCT"
-step_info "البصمة الحقيقية  : $FINGERPRINT"
-step_info "الرقعة الأمنية    : $SECURITY_PATCH"
-step_success "تم استخراج خصائص الجهاز الحقيقي بنجاح"
+if [ -n "$FINGERPRINT" ]; then
+    step_success "تم توليد بصمة Pixel المعتمدة بنجاح"
+    step_info "الطراز المُموَّه : $MODEL"
+    step_info "نص البصمة       : $FINGERPRINT"
+    step_info "الرقعة الأمنية  : $SECURITY_PATCH"
+else
+    # --- 2b. احتياطي: استخدام بصمة الجهاز الحقيقية عند تعذّر الإنترنت ---
+    step_info "تعذّر جلب بصمة Pixel (تحقّق من الإنترنت) — سيتم استخدام بصمة الجهاز الحقيقية."
+    DEVICE="$(getprop ro.product.device)"
+    PRODUCT="$(getprop ro.product.name)"
+    MANUFACTURER="$(getprop ro.product.manufacturer)"
+    FINGERPRINT="$(getprop ro.build.fingerprint)"
+    [ -z "$FINGERPRINT" ] && FINGERPRINT="$(getprop ro.vendor.build.fingerprint)"
+    SDK_INT="$(getprop ro.build.version.sdk)"
+    [ -z "$SDK_INT" ] && SDK_INT="34"
 
-step_item "جاري كتابة الإعدادات والخصائص الحقيقية لملف pif.json..."
-cat <<EOF > pif.json
+    mkdir -p "$PIF_DIR" 2>/dev/null
+    cat <<EOF > "$PIF_DIR/custom.pif.json"
 {
   "MANUFACTURER": "$MANUFACTURER",
   "MODEL": "$MODEL",
@@ -204,51 +238,9 @@ cat <<EOF > pif.json
   "DEVICE_INITIAL_SDK_INT": "$SDK_INT"
 }
 EOF
-step_success "تم إنشاء ملف pif.json بالبصمة الحقيقية للجهاز"
-
-# --- 3. الترقية والمزامنة ---
-MIGRATE_SCRIPT=""
-for m in "$MODDIR/migrate.sh" "$DIR/migrate.sh"; do
-  if [ -f "$m" ]; then
-    MIGRATE_SCRIPT="$m"
-    break
-  fi
-done
-
-if [ -n "$MIGRATE_SCRIPT" ]; then
-  step_item "جاري التحويل إلى custom.pif.json عبر migrate.sh..."
-  OLDJSON="$MODDIR/custom.pif.json"
-  if [ -f "$OLDJSON" ]; then
-    grep -q '//"\*.security_patch"' "$OLDJSON" && PATCH_COMMENT=1
-    grep -qE "verboseLogs|VERBOSE_LOGS" "$OLDJSON" && ARGS="-a"
-  fi
-  [ -f /data/adb/tricky_store/security_patch.txt ] && unset PATCH_COMMENT
-
-  rm -f custom.pif.json
-  sh "$MIGRATE_SCRIPT" -i $ARGS pif.json >/dev/null 2>&1
-  
-  if [ -n "$ARGS" ]; then
-    grep_json() { [ -f "$2" ] && grep -m1 "$1" "$2" | cut -d\" -f4; }
-    verboseLogs=$(grep_json "VERBOSE_LOGS" "$OLDJSON")
-    ADVSETTINGS="spoofBuild spoofProps spoofProvider spoofSignature spoofVendingSdk verboseLogs"
-    for SETTING in $ADVSETTINGS; do
-      eval [ -z \"\$$SETTING\" ] \&\& $SETTING=$(grep_json "$SETTING" "$OLDJSON")
-      eval TMPVAL=\$$SETTING
-      [ -n "$TMPVAL" ] && sed -i "s;\($SETTING\": \"\).;\1$TMPVAL;" custom.pif.json
-    done
-  fi
-  
-  [ "$PATCH_COMMENT" = "1" ] && sed -i 's;"\*.security_patch";//"\*.security_patch";' custom.pif.json
-
-  if [ -f "custom.pif.json" ]; then
-    cp -f custom.pif.json "$MODDIR/custom.pif.json" 2>/dev/null
-    cp -f custom.pif.json /data/adb/pif.json 2>/dev/null
-  fi
-  step_success "تمت ترقية خصائص PIF بنجاح"
-else
-  cp -f pif.json "$MODDIR/pif.json" 2>/dev/null
-  cp -f pif.json /data/adb/pif.json 2>/dev/null
-  step_success "تم تطبيق pif.json القياسي"
+    cp -f "$PIF_DIR/custom.pif.json" /data/adb/pif.json 2>/dev/null
+    chmod 644 "$PIF_DIR"/* 2>/dev/null
+    step_success "تم إنشاء custom.pif.json بالبصمة الحقيقية للجهاز"
 fi
 
 # --- 4. مزامنة أداة Tricky Store ---
@@ -294,6 +286,13 @@ sleep 0.1
 printf "  • نص البصمة      : %s\n" "$FINGERPRINT"
 sleep 0.1
 printf "  • الرقعة الأمنية : %s\n" "$SECURITY_PATCH"
+sleep 0.1
+printf "----------------------------------------------------\n"
+sleep 0.1
+printf "  لفحص الحالة الكاملة (تقرير تشخيصي):\n"
+printf "      sh action.sh --diag\n"
+printf "  لإصلاح اعتماد الجهاز في متجر جوجل:\n"
+printf "      sh action.sh --fix-cert\n"
 sleep 0.1
 printf "----------------------------------------------------\n"
 sleep 0.1
