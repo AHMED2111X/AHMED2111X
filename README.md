@@ -1,16 +1,51 @@
-🚀 تحديث جديد | New Update
+# 🚀 Release v1.5.2
 
-✨ تم إطلاق التحديث الجديد مع واجهة مستخدم احترافية (Web UI) وأدوات متقدمة!
+> ⚠️ **IMPORTANT NOTICE**
+> 
+> All users are **strongly encouraged** to update immediately to this release to maintain full compatibility with the latest ZygiskNext release.
 
-حرصنا في هذا الإصدار على تقديم تجربة استخدام متكاملة وأكثر سلاسة عبر دمج واجهة مستخدم خفيفة وسريعة تُسهّل التحكم بكافة الخصائص والإعدادات بنقرة زر.
+---
 
-🔥 أبرز الإضافات والمميزات:
+### 📑 Changes & Improvements
 
-• 🎨 واجهة مستخدم احترافية (Web UI): تصميم حديث ومنظم يمنحك تحكماً كاملاً بالوحدة من مكان واحد.
-• 🛠️ حزمة أدوات مهمة: إضافة أدوات جديدة لإدارة الإعدادات والتكوينات بسرعة وكفاءة عالية.
-• ⚡ تحسين الأداء والاستقرار: تسريع استجابة السكريبتات وتقليل استهلاك الموارد على النظام.
-• 🛡️ توافقية كاملة: دعم شامل لمختلف البيئات والمعماريات (arm64-v8a, x86_64, armeabi-v7a, x86).
+* ⚙️ **ZygiskNext Support**
+  Updated the module to fully support the latest **ZygiskNext 1.5.2** release.
 
-📥 التحميل والتواصل:
-• تجدون الملف المحدث مرفقاً بالأسفل، أو عبر زيارة المستودع الرسمي على GitHub.
-• للتواصل والدعم الفني عبر تلجرام: @FALCON_KERNEL
+<br>
+
+* 🧹 **WebUI Cleanup**
+  Removed unnecessary menus and redundant elements from the WebUI for a cleaner, faster, and more streamlined user experience.
+
+---
+
+### 🔗 Links & Support
+
+* 📢 **Telegram Channel:** https://t.me/FALCON_KERNEL_PRO
+
+* 💬 **Developer Contact:** https://t.me/FALCON_KERNEL
+
+# 🚀 الإصدار v1.5.2
+
+> ⚠️ **تنبيه هام**
+>
+> نوصي جميع المستخدمين **بشدة** بالتحديث الفوري إلى هذا الإصدار لضمان التوافق الكامل مع أحدث إصدار من ZygiskNext.
+
+---
+
+### 📑 التغييرات والتحسينات
+
+* ⚙️ **دعم ZygiskNext**
+تم تحديث الوحدة البرمجية (Module) لدعم أحدث إصدار من **ZygiskNext 1.5.2** بشكل كامل.
+
+<br>
+
+* 🧹 **تنظيف واجهة الويب (WebUI)**
+تمت إزالة القوائم غير الضرورية والعناصر المكررة من واجهة الويب لتوفير تجربة مستخدم أكثر سلاسة وسرعة ونظافة.
+
+---
+
+### 🔗 الروابط والدعم
+
+* 📢 **قناة تيليجرام:** https://t.me/FALCON_KERNEL_PRO
+
+* 💬 **التواصل مع المطور:** https://t.me/FALCON_KERNEL
