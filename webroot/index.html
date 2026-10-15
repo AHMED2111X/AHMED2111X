@@ -194,6 +194,7 @@
                 <ul class="guide-list">
                     <li><strong>جلب من الإنترنت:</strong> يحذف keybox.xml والنسخ الاحتياطية (.bak/.backup/.old/.tmp) ثم ينزل الجديد.</li>
                     <li><strong>جلب من الجهاز مباشرةً:</strong> يبحث عن keybox.xml في الذاكرة الداخلية/الخارجية ويقوم بتثبيته مع حذف الملف القديم والنسخ الاحتياطية تلقائياً.</li>
+                    <li><strong>🔴 تنبيه Red Magic (تحديث جوجل 2026):</strong> جوجل فرضت شهادات RKP الجديدة RSA-4096 فأجهزة ريد ماجيك تتجاهل ملف الكيبوكس المسروق — الحل ليس كيبوكس جديد بل إعادة تزوير مفاتيح الجهاز نفسه من زر (إصلاح مفاتيح RKP) بالأسفل، وهو يُنفَّذ تلقائياً مرة واحدة بعد التثبيت.</li>
                 </ul>
             </details>
             <div class="card">
@@ -206,6 +207,41 @@
                 <div class="action-bar" style="margin-top:20px; display: flex; gap: 12px; flex-wrap: wrap;">
                     <button class="btn btn-primary" onclick="fetchKeybox()">📥 جلب وتثبيت Keybox (الإنترنت)</button>
                     <button class="btn btn-apply-accent" onclick="installLocalKeyboxDevice()">📁 جلب وتثبيت Keybox.xml من الجهاز مباشرةً</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">🩺 إصلاح مفاتيح التحقق RKP (أجهزة Red Magic / ZTE)</div>
+                <div class="card-desc">
+                    يعالج حالة <strong>«مفاتيح التحقق تالفة»</strong> (تظهر عند فشل الأمر <code>cmd remote_provisioning certify default</code>، وغالباً بعد استعادة نسخة EDL) — فيعيد الجهاز طلب شهادات أصلية من جوجل عبر مفتاح TEE الخاص به.<br>
+                    <strong>تنبيه مهم:</strong> إذا كان الفحص يعرض <em>«TEE قادر على إصدار الشهادات»</em> فمعنى ذلك أن مفاتيحك <u>سليمة أصلاً</u>، وأن سبب المشكلة مختلف: جوجل ترفض شهادة الجهاز بسبب <strong>فتح البوت لودر</strong> (نصّ جوجل الرسمي: Lock bootloader to fix issue). في هذه الحالة استخدم زر <strong>إعادة تشغيل خدمات جوجل</strong> ثم تأكد من تفعيل تزوير حالة البوت لودر والكيبوكس.
+                </div>
+                <div class="action-bar" style="margin-top: 6px;">
+                    <button class="btn btn-primary" onclick="rkpDiagnose()">🔍 فحص حالة مفاتيح RKP</button>
+                    <button class="btn btn-apply-accent" onclick="fullRepair()">🚀 الإصلاح الكامل (RKP + إعادة تشغيل)</button>
+                    <button class="btn" onclick="rkpRepair()">🛠️ إعادة تزوير RKP فقط</button>
+                    <button class="btn" onclick="resetGoogle()">🔄 إعادة تشغيل خدمات جوجل (لتصبح Certified)</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎭 ملف البصمة (PIF Fingerprint) — custom.pif.prop</div>
+                <div class="card-desc">
+                    البصمة المستخدمة في تزييف الجهاز (PIF). محرك الموديول يقرأ ملف البصمة من <code>/data/adb/modules/playintegrityfix/</code> وهو مجلد الموديول نفسه الآن. زرّ «تطبيق البصمة» يتحقّق من وجود بصمة صالحة، ويحوّل <code>custom.pif.prop</code> إلى JSON عند الحاجة، وينسخ <code>classes.dex</code> المطلوب (تتطلب إعادة تشغيل بعده).<br>
+                    <span style="opacity:.75">الملف المضمّن: بصمة Pixel 6a صالحة حتى 2026-10-28 — لا يُمسّ ملف بصمة صالح موجود لديك.</span>
+                </div>
+                <div class="action-bar" style="margin-top:6px;">
+                    <button class="btn btn-primary" onclick="applyPif()">🎭 تطبيق البصمة الآن (تتطلب إعادة التشغيل)</button>
+                    <button class="btn" onclick="checkPif()">🔎 فحص ملف البصمة الحالي</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">🧠 محرك تزوير التعتيد (Tricky Store OSS) — تشخيص</div>
+                <div class="card-desc">
+                    هذا هو المحرك المسؤول عن إخفاء <strong>فتح البوت لودر</strong> عن جوجل (تزوير شهادات <code>keystore2</code> باستخدام الكيبوكس).<br>
+                    إن لم يكن حياً → ستبقى جوجل ترى البوت لودر مفتوحاً وتظهر <em>«غير معتمد»</em>.<br>
+                    <span style="opacity:.75">اضغط الزر وأرسل الناتج للمطوّر — سيكشف السبب فوراً.</span>
+                </div>
+                <div class="action-bar" style="margin-top:6px;">
+                    <button class="btn btn-primary" onclick="daemonDiagnose()">🩺 فحص محرك التعتيد (مهم)</button>
                 </div>
             </div>
             <div class="card">
@@ -256,9 +292,9 @@
                 <div class="social-link-card">
                     <div class="social-info">
                         <div class="social-title">Telegram Developer Contact</div>
-                        <div class="social-sub">@FALCON_KERNEL</div>
+                        <div class="social-sub">@falcon_kernel</div>
                     </div>
-                    <a href="https://t.me/FALCON_KERNEL" target="_blank" class="btn btn-primary">Contact</a>
+                    <a href="https://t.me/falcon_kernel" target="_blank" class="btn btn-primary">Contact</a>
                 </div>
                 <div class="social-link-card">
                     <div class="social-info">
@@ -280,6 +316,46 @@
     <script src="bridge.js"></script>
     <script>
         const SERVER_URL = "https://falcon-counter-server.onrender.com";
+
+        // ============================================================
+        // مشغّل أوامر الروت الموحّد (يعمل مع كل بيئات WebUI)
+        // يحاول: shell() ثم ksu.exec ثم kernelsu.exec ثم API الداخلي
+        // ============================================================
+        function falconRun(cmd, done) {
+            try {
+                if (typeof shell === 'function') {
+                    return shell(cmd, { root: true }, function(r) { done(r); });
+                }
+            } catch (e) {}
+            try {
+                if (typeof ksu !== 'undefined' && ksu && typeof ksu.exec === 'function') {
+                    return ksu.exec(cmd, '{}', function(ec, out, err) {
+                        done((out || '') + (err ? ('\n' + err) : ''));
+                    });
+                }
+            } catch (e) {}
+            try {
+                if (typeof kernelsu !== 'undefined' && kernelsu && typeof kernelsu.exec === 'function') {
+                    return kernelsu.exec(cmd, function(ec, out, err) {
+                        done((out || '') + (err ? ('\n' + err) : ''));
+                    });
+                }
+            } catch (e) {}
+            try {
+                if (typeof exec === 'function') {
+                    return exec(cmd, function(ec, out, err) {
+                        done((out || '') + (err ? ('\n' + err) : ''));
+                    });
+                }
+            } catch (e) {}
+            try {
+                if (window.API && typeof API.runRaw === 'function') {
+                    return API.runRaw(cmd, function(r) { done(r); });
+                }
+            } catch (e) {}
+            done('__NO_SHELL__');
+        }
+
         let deviceId = localStorage.getItem('falcon_device_id');
         if (!deviceId) {
             deviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
@@ -347,6 +423,159 @@
             } else {
                 addLog('خطأ: API.installLocalKeyboxDevice غير متوفر');
             }
+        }
+        function rkpDiagnose() {
+            addLog('🔍 جاري فحص حالة مفاتيح التحقق RKP...');
+            const cmds = [];
+            cmds.push('echo "=== وحدات Remote Key Provisioning المتوفرة ==="');
+            cmds.push('cmd remote_provisioning list 2>&1');
+            cmds.push('echo "=== فحص إصدار شهادة التحقق من TEE ==="');
+            cmds.push('cmd remote_provisioning certify default 2>&1 | head -c 600');
+            cmds.push('echo ""');
+            cmds.push('echo "=== وجود أداة ZTE لإصلاح المفاتيح ==="');
+            cmds.push('ls -l /vendor/bin/KmInstallKeybox 2>&1');
+            const full = cmds.join('; ');
+            falconRun(full, function(r) {
+                if (r === '__NO_SHELL__') {
+                    addLog('✖ لا تتوفر واجهة أوامر root في بيئة WebUI هذه. افتح الطرفية (Termux/ADB) ونفّذ:');
+                    addLog('   su -c sh /data/adb/modules/playintegrityfix/rkp_fix.sh manual');
+                    return;
+                }
+                addLog(r || 'لم يتم إرجاع أي نتيجة من الفحص');
+                addLog('— انتهى الفحص —');
+            });
+        }
+
+        function rkpRepair() {
+            if (!confirm('سيتم تنفيذ إعادة تزوير مفاتيح RKP من جهازك الآن.\n\n• لا يتم حذف أي بيانات أو ملف كيبوكس.\n• سيُوقف خدمة جوجل مؤقتاً حتى تعيد الالتقاء بالخادم.\n• أعد تشغيل الهاتف بعد الانتهاء للنتيجة الكاملة.\n\nهل تريد المتابعة؟')) {
+                return;
+            }
+            addLog('🛠️ جاري تنفيذ إعادة تزوير مفاتيح RKP (قد تستغرق دقيقة)...');
+            falconRun('sh /data/adb/modules/playintegrityfix/rkp_fix.sh manual 2>&1', function(r) {
+                if (r === '__NO_SHELL__') {
+                    addLog('✖ لا تتوفر واجهة أوامر root. نفّذ من الطرفية:');
+                    addLog('   su -c sh /data/adb/modules/playintegrityfix/rkp_fix.sh manual');
+                    return;
+                }
+                addLog(r || 'لم يتم إرجاع أي نتيجة من الإصلاح');
+                addLog('— انتهى الإصلاح — أعد التشغيل الآن ثم تحقق من Play Integrity —');
+                alert('تم تنفيذ الإصلاح. أعد تشغيل الهاتف الآن ثم تحقق من النتيجة.');
+            });
+        }
+
+        // الإصلاح الكامل: RKP + إعادة تشغيل خدمة جوجل + إعادة تشغيل تلقائية (بدون أي مسح بيانات)
+        function fullRepair() {
+            if (!confirm('الإصلاح الكامل (موصى به عند بقاء النتيجة حمراء):\n\n• إعادة تزوير مفاتيح RKP\n• إعادة تشغيل خدمة Google Play Services (بدون مسح أي بيانات)\n• إعادة تشغيل الهاتف تلقائياً\n\nملاحظة: لا يتم مسح أي بيانات ولا يُسجَّل خروجك من حساب جوجل إطلاقاً.\n\nهل تريد المتابعة؟')) {
+                return;
+            }
+            addLog('🚀 بدء الإصلاح الكامل (RKP + إعادة تشغيل)...');
+            falconRun('sh /data/adb/modules/playintegrityfix/rkp_fix.sh full 2>&1', function(r) {
+                if (r === '__NO_SHELL__') {
+                    addLog('✖ افتح الطرفية ونفّذ: su -c sh /data/adb/modules/playintegrityfix/rkp_fix.sh full');
+                    return;
+                }
+                addLog(r || 'جارٍ التنفيذ...');
+                addLog('— سيعيد الجهاز التشغيل تلقائياً خلال ثوانٍ —');
+            });
+        }
+
+        // ============================================================
+        // 🩺 تشخيص محرك التعتيد (Tricky Store OSS) — يجمع كل ما يحتاجه المطوّر
+        // ============================================================
+        function daemonDiagnose() {
+            addLog('🩺 جاري فحص محرك التعتيد (Tricky Store OSS)...');
+            const MOD = '/data/adb/modules/playintegrityfix';
+            const cmds = [];
+            cmds.push('echo "### [1] هل المحرك يعمل؟"');
+            cmds.push('TS=$(pidof TrickyStoreOSS 2>/dev/null); [ -n "$TS" ] && echo "TrickyStoreOSS يعمل pid=$TS" || echo "المحرك غير مشغّل"');
+            cmds.push('echo "### [2] سجل الإقلاع falcon_daemon.log"');
+            cmds.push('cat /data/adb/falcon_daemon.log 2>/dev/null || echo "لا يوجد سجل"');
+            cmds.push('echo "### [3] محاولة تشغيل المحرك يدوياً (15 ثانية)"');
+            cmds.push('cd ' + MOD + '/tricky 2>/dev/null && timeout 15 sh ./service.sh 2>&1 | head -60');
+            cmds.push('echo "### [4] ملفات محرك التعتيد"');
+            cmds.push('ls -l ' + MOD + '/tricky/ 2>&1');
+            cmds.push('ls -l ' + MOD + '/tricky/lib/arm64-v8a/ 2>&1');
+            cmds.push('echo "### [5] إعدادات Tricky Store"');
+            cmds.push('ls -la /data/adb/tricky_store/ 2>&1');
+            cmds.push('echo "--- target.txt ---"; cat /data/adb/tricky_store/target.txt 2>/dev/null | head -30');
+            cmds.push('echo "--- security_patch.txt ---"; cat /data/adb/tricky_store/security_patch.txt 2>/dev/null');
+            cmds.push('echo "--- رأس keybox.xml ---"; head -3 /data/adb/tricky_store/keybox.xml 2>/dev/null');
+            cmds.push('echo "### [6] وحدة tricky_store مستقلة (يجب ألا تكون مثبتة)"');
+            cmds.push('cat /data/adb/modules/tricky_store/module.prop 2>/dev/null || echo "غير مثبتة (صحيح)"');
+            cmds.push('echo "### [7] logcat (TrickyStore/keystore/attest)"');
+            cmds.push('logcat -d -t 1500 2>/dev/null | grep -iE "TrickyStore|keystore2|attestation|Injection" | tail -40');
+            cmds.push('echo "### [8] حالة البوت"');
+            cmds.push('getprop ro.boot.verifiedbootstate; getprop ro.boot.flash.locked');
+            const full = cmds.join('; ');
+            falconRun(full, function(r) {
+                if (r === '__NO_SHELL__') {
+                    addLog('✖ لا تتوفر واجهة أوامر root. نفّذ من الطرفية (Termux):');
+                    addLog('   su -c cat /data/adb/falcon_daemon.log');
+                    addLog('   su -c cd ' + MOD + '/tricky && sh ./service.sh');
+                    return;
+                }
+                addLog(r || 'لم يتم إرجاع أي نتيجة');
+                addLog('— انتهى التشخيص — انسخ هذا الناتج كاملاً وأرسله للمطوّر —');
+            });
+        }
+
+        // إعادة تشغيل خدمات جوجل فقط (لإعادة تسجيل الجهاز ليصبح Certified) — بدون مسح أي بيانات
+        function resetGoogle() {
+            if (!confirm('إعادة تشغيل خدمات جوجل:\n\n• Google Play Services\n• Google Play Store\n• Google Services Framework\n\nسيتم إعادة تشغيلها فقط ثم إعادة تشغيل الهاتف.\n✅ لا يُمسح أي بيانات إطلاقاً، ولن يُسجَّل خروجك من حساب جوجل.\n\nهل تريد المتابعة؟')) {
+                return;
+            }
+            addLog('🔄 جاري إعادة تشغيل خدمات جوجل وإعادة تسجيل الجهاز...');
+            falconRun('sh /data/adb/modules/playintegrityfix/rkp_fix.sh google 2>&1', function(r) {
+                if (r === '__NO_SHELL__') {
+                    addLog('✖ افتح الطرفية ونفّذ: su -c sh /data/adb/modules/playintegrityfix/rkp_fix.sh google');
+                    return;
+                }
+                addLog(r || 'جارٍ التنفيذ...');
+                addLog('— سيعيد الجهاز التشغيل تلقائياً. بعد الإقلاع انتظر 15-20 دقيقة قبل أي فحص —');
+            });
+        }
+
+        // تطبيق ملف البصمة (PIF) — يحوّل custom.pif.prop ويوزّعه على المسارات الصحيحة
+        function applyPif() {
+            if (!confirm('تطبيق ملف البصمة (PIF):\n\n• يحوّل custom.pif.prop إلى custom.pif.json\n• يثبّته في مسار المحرك: /data/adb/modules/playintegrityfix/custom.pif.json\n• ينسخ classes.dex المطلوب للمحرك\n• يوقف خدمات جوجل ليُعاد تحميل البصمة\n\n⚠️ لن يُمسّ أي ملف بصمة صالح موجود لديك مسبقاً.\n\nتتطلب إعادة تشغيل بعدها. هل تريد المتابعة؟')) {
+                return;
+            }
+            addLog('🎭 جاري تطبيق ملف البصمة...');
+            falconRun('sh /data/adb/modules/playintegrityfix/apply_pif.sh force 2>&1', function(r) {
+                if (r === '__NO_SHELL__') {
+                    addLog('✖ لا تتوفر واجهة أوامر root. نفّذ من الطرفية:');
+                    addLog('   su -c sh /data/adb/modules/playintegrityfix/apply_pif.sh force');
+                    return;
+                }
+                addLog(r || 'لم يتم إرجاع أي نتيجة');
+                addLog('— انتهى. أعد تشغيل الجهاز الآن —');
+                alert('تم تطبيق ملف البصمة. أعد تشغيل الجهاز الآن.');
+            });
+        }
+
+        // فحص ملف البصمة الحالي في كل المسارات
+        function checkPif() {
+            addLog('🔎 جاري فحص ملفات البصمة...');
+            const cmds = [
+                'echo "=== [المسار الحقيقي للمحرك] /data/adb/modules/playintegrityfix/ ==="',
+                'ls -l /data/adb/modules/playintegrityfix/ 2>&1',
+                'echo ""; echo "--- custom.pif.json (في مسار المحرك) ---"',
+                'head -c 700 /data/adb/modules/playintegrityfix/custom.pif.json 2>&1',
+                'echo ""; echo "=== /data/adb/pif.json (مسار احتياطي) ==="',
+                'cat /data/adb/pif.json 2>&1 | head -c 400',
+                'echo ""; echo "=== مجلد الموديول ==="',
+                'ls -l /data/adb/modules/playintegrityfix/custom.pif.* 2>&1',
+                'echo ""; echo "=== سجل تطبيق البصمة ==="',
+                'cat /data/adb/falcon_pif.log 2>&1 | tail -n 20'
+            ];
+            falconRun(cmds.join('; '), function(r) {
+                if (r === '__NO_SHELL__') {
+                    addLog('✖ لا تتوفر واجهة أوامر root في هذه البيئة.');
+                    return;
+                }
+                addLog(r || 'لم يتم إرجاع أي نتيجة من الفحص');
+                addLog('— انتهى الفحص —');
+            });
         }
     </script>
 </body>

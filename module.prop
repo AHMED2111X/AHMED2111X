@@ -1,9 +1,8 @@
-id=falcon_integrity_fix
+id=playintegrityfix
 name=FALCON INTEGRITY FIX
-version=v2.64
-versionCode=66
-author=ABUFARID
-telegram=@FALCON_KERNEL
-description=🟢 Zygisk Injected | 🟢 BL Spoofed | 👤 Online: 10
+version=v3.01
+versionCode=101
+author=ABUFARID | Telegram=@FALCON_KERNEL
+description=🟢 ZygiskNext Ready | 🎭 PIF + 🔐 Tricky Store OSS v3.1.0 | 🩺 RKP Auto-Fix | 🛡️ بلا مسح بيانات جوجل | 👤 Online: 10
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
 zygisk=true

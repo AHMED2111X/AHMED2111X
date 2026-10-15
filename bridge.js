@@ -59,5 +59,61 @@ const API = {
         shell(full, { root: true }, function(r) {
             if (callback) callback(r || {});
         });
+    },
+
+    rkpDiagnose: function(callback) {
+        const cmds = [];
+        cmds.push('echo "=== وحدات Remote Key Provisioning المتوفرة ==="');
+        cmds.push('cmd remote_provisioning list 2>&1');
+        cmds.push('echo "=== فحص إصدار شهادة التحقق من TEE ==="');
+        cmds.push('cmd remote_provisioning certify default 2>&1 | head -c 600');
+        cmds.push('echo ""');
+        cmds.push('echo "=== وجود أداة ZTE لإصلاح المفاتيح ==="');
+        cmds.push('ls -l /vendor/bin/KmInstallKeybox 2>&1');
+        const full = cmds.join('; ');
+        shell(full, { root: true }, function(r) {
+            if (callback) callback(r || {});
+        });
+    },
+
+    rkpRepair: function(callback) {
+        const cmds = [];
+        cmds.push('sh /data/adb/modules/playintegrityfix/rkp_fix.sh manual 2>&1');
+        const full = cmds.join('; ');
+        shell(full, { root: true }, function(r) {
+            if (callback) callback(r || {});
+        });
+    },
+
+    // تنفيذ أمر خام عبر جسر الصدفة (يُستخدم كخيار احتياطي من الواجهة)
+    runRaw: function(cmd, callback) {
+        shell(cmd, { root: true }, function(r) {
+            if (callback) callback(r || {});
+        });
+    },
+
+    // تصفير خدمات جوجل الثلاث ثم إعادة التشغيل (لتسجيل الجهاز ليصبح Certified)
+    gmsReset: function(callback) {
+        const cmds = [];
+        cmds.push('sh /data/adb/modules/playintegrityfix/rkp_fix.sh google 2>&1');
+        const full = cmds.join('; ');
+        shell(full, { root: true }, function(r) {
+            if (callback) callback(r || {});
+        });
+    },
+
+    // الإصلاح الكامل: RKP + تصفير GMS + إعادة تشغيل
+    fullRepair: function(callback) {
+        shell('sh /data/adb/modules/playintegrityfix/rkp_fix.sh full 2>&1', { root: true }, function(r) {
+            if (callback) callback(r || {});
+        });
+    },
+
+    // تطبيق ملف البصمة (PIF): يحوّل custom.pif.prop → custom.pif.json
+    // ويوزّعه على كل المسارات المحتملة (بعض الأجهزة لا تنقل الملف تلقائياً)
+    applyPif: function(callback) {
+        shell('sh /data/adb/modules/playintegrityfix/apply_pif.sh force 2>&1', { root: true }, function(r) {
+            if (callback) callback(r || {});
+        });
     }
 };

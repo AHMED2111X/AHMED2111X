@@ -1,6 +1,3 @@
-# ملف target.txt الخاص بموديول FALCONINTEGITY_FIX
-# التطبيقات التالية هي الأساسية لعمل الكيبوكس مع Play Integrity:
-# يجب أن تبقى هذه الإدخالات دائماً، أي إدخال آخر يُضاف بعدها بدون تكرار.
 com.google.android.gms
 com.google.android.gms.unstable
 com.android.vending

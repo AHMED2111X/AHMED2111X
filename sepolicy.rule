@@ -11,3 +11,14 @@ allow platform_app system_file file { read execute open }
 
 # 3. السماح لتطبيق خدمات جوجل (Google Play Services) بقراءة وتشغيل ملفات الإضافة لتمرير التمويه
 allow gmscore_app system_file file { read execute open }
+
+# ==============================================================================
+# 4. قواعد محرك التعتيد Tricky Store OSS (حقن keystore2)
+# ==============================================================================
+# الاتصال بين عملية حقن المحرك (بصلاحية الروت) وبين keystore2
+allow keystore system_file unix_dgram_socket *
+allow system_file keystore unix_dgram_socket *
+# وصول keystore2 إلى ملفات المحرك (classes.dex / libTrickyStoreOSS.so)
+allow keystore system_file file *
+# السماح لأداة إنهيار النظام بقراءة عملية keystore لأغراض الحقن
+allow crash_dump keystore process *

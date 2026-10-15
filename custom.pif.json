@@ -1,36 +1,25 @@
-// قم بإعادة تسمية هذا الملف إلى custom.pif.json بعد الانتهاء من تعبئة البيانات
-//
-// هذه هي القيم الافتراضية المقترحة حالياً، ويمكنك إضافة المزيد من الحقول والخصائص حسب الحاجة
-//
-// يمكنك مراجعة المصدر android.os.Build للإطلاع على كافة الحقول والخصائص المقابلة لها:
-// https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/os/Build.java
-
 {
-  // حقول البناء (Build Fields)
-    "MANUFACTURER": "",
-    "MODEL": "",
-    "FINGERPRINT": "",
-    "BRAND": "",
-    "PRODUCT": "",
-    "DEVICE": "",
-    "RELEASE": "",
-    "ID": "",
-    "INCREMENTAL": "",
-    "TYPE": "",
-    "TAGS": "",
-    "SECURITY_PATCH": "",
-    "DEVICE_INITIAL_SDK_INT": "",
-
-  // خصائص النظام (System Properties)
-    "*.build.id": "",        // المقابلة للخاصية ro.build.id
-    "*.security_patch": "",  // المقابلة للخاصية ro.build.version.security_patch
-    "*api_level": "",        // المقابلة للخصائص ro.board.api_level و ro.board.first_api_level و ro.product.first_api_level و ro.vendor.api_level
-
-  // الإعدادات المتقدمة (Advanced Settings)
+    "MANUFACTURER": "Google",
+    "MODEL": "Pixel 6a",
+    "FINGERPRINT": "google/bluejay_beta/bluejay:CANARY/ZP11.260821.010/16290768:user/release-keys",
+    "BRAND": "google",
+    "PRODUCT": "bluejay_beta",
+    "DEVICE": "bluejay",
+    "RELEASE": "CANARY",
+    "ID": "ZP11.260821.010",
+    "INCREMENTAL": "16290768",
+    "TYPE": "user",
+    "TAGS": "release-keys",
+    "SECURITY_PATCH": "2026-09-05",
+    "DEVICE_INITIAL_SDK_INT": "32",
+    "*.build.id": "ZP11.260821.010",
+    "*.security_patch": "2026-09-05",
+    "*api_level": "32",
     "spoofBuild": "1",
     "spoofProps": "1",
-    "spoofProvider": "1",
+    "spoofProvider": "0",
     "spoofSignature": "0",
+    "spoofVendingFinger": "0",
     "spoofVendingSdk": "0",
     "verboseLogs": "0"
 }

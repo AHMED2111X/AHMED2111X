@@ -1,0 +1,31 @@
+# Build Fields
+MANUFACTURER=Google
+MODEL=Pixel 6a
+FINGERPRINT=google/bluejay_beta/bluejay:CANARY/ZP11.260821.010/16290768:user/release-keys
+BRAND=google
+PRODUCT=bluejay_beta
+DEVICE=bluejay
+RELEASE=CANARY
+ID=ZP11.260821.010
+INCREMENTAL=16290768
+TYPE=user
+TAGS=release-keys
+SECURITY_PATCH=2026-09-05
+DEVICE_INITIAL_SDK_INT=32
+
+# System Properties
+*.build.id=ZP11.260821.010
+*.security_patch=2026-09-05
+*api_level=32
+
+# Advanced Settings
+spoofBuild=1
+spoofProps=1
+spoofProvider=0
+spoofSignature=0
+spoofVendingFinger=0
+spoofVendingSdk=0
+verboseLogs=0
+
+# Canary Released: 2026-09-16
+# Estimated Expiry: 2026-10-28

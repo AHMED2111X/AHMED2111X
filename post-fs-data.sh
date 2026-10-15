@@ -278,15 +278,10 @@ fi
     fi
 ) &
 
-# --- 5. توليد/تحديث بصمة Play Integrity المعتمدة (Pixel Canary) بعد الإقلاع ---
-# مهم: المكتبة تقرأ من /data/adb/falcon_pif/custom.pif.prop
-# نُولِّدها تلقائياً عند أول إقلاع إذا كانت غير موجودة (يحتاج إنترنت + busybox).
-(
-    while [ "$(getprop sys.boot_completed)" != "1" ]; do
-        sleep 5
-    done
-    sleep 25
-    if [ -f "$MODPATH/pif_setup.sh" ]; then
-        sh "$MODPATH/pif_setup.sh" >/dev/null 2>&1 || true
-    fi
-) &
+# --- 5. ضمان وجود ملف البصمة في مسار المحرك قبل بدء Zygote ---
+# المحرك (libplayintegrityfix.so) يقرأ ملف البصمة حصراً من
+#   /data/adb/modules/playintegrityfix/  وهو مسار موديولنا نفسه الآن.
+# نضمن هنا أن الملف موجود ومكتمل مبكراً قبل تشغيل Zygote (بلا إيقاف GMS).
+if [ -f "$MODPATH/apply_pif.sh" ]; then
+    sh "$MODPATH/apply_pif.sh" ensure >/dev/null 2>&1
+fi

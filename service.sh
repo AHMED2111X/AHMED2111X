@@ -46,16 +46,22 @@ delprop_if_exist() {
     [ -n "$(getprop "$NAME")" ] && resetprop --delete "$NAME" 2>/dev/null
 }
 
-# --- حساب وتحديث تاريخ الرقعة الأمنية تلقائياً وبشكل ذكي (Smart Auto-Patch) ---
-# 1. جلب السنة والشهر الحاليين تلقائياً من التاريخ الداخلي للجهاز
-CURRENT_YEAR_MONTH=$(date +%Y-%m 2>/dev/null)
-
-# 2. إنشاء تاريخ الرقعة الأمنية المتوافق مع معايير جوجل (اليوم 05 من الشهر الحالي)
-if [ -n "$CURRENT_YEAR_MONTH" ]; then
-    novo_patch="${CURRENT_YEAR_MONTH}-05"
-else
-    # تاريخ احتياطي آمن في حال تعذر جلب الوقت عند بدايه الإقلاع
-    novo_patch="2026-10-05"
+# --- حساب وتحديث تاريخ الرقعة الأمنية (متوافق مع بصمة PIF) ---
+# ⚠️ مهم جداً: يجب أن يتطابق تاريخ الرقعة الأمنية مع تاريخ البصمة في
+#    custom.pif.prop، وإلا رصدت جوجل تناقضاً بين شهادة التعتيد والخصائص.
+#    لذلك نقرأ التاريخ من ملف البصمة نفسه، ونرجع للتاريخ الديناميكي عند غيابه.
+novo_patch=""
+if [ -f "$MODPATH/custom.pif.prop" ]; then
+    novo_patch=$(awk -F= '/^SECURITY_PATCH=/{print $2; exit}' "$MODPATH/custom.pif.prop" 2>/dev/null | tr -d '\r ')
+fi
+if [ -z "$novo_patch" ]; then
+    CURRENT_YEAR_MONTH=$(date +%Y-%m 2>/dev/null)
+    if [ -n "$CURRENT_YEAR_MONTH" ]; then
+        novo_patch="${CURRENT_YEAR_MONTH}-05"
+    else
+        # تاريخ احتياطي آمن في حال تعذر جلب الوقت عند بدايه الإقلاع
+        novo_patch="2026-09-05"
+    fi
 fi
 
 # 3. تطبيق التاريخ الذكي على خصائص النظام
@@ -195,38 +201,58 @@ if [ -f "$FALCON_FLAG" ]; then
     fi
 fi
 
-# --- 1. تشغيل محرك الحقن والـ Daemon (السر في التغيير اللحظي) ---
+# --- 1. تشغيل محرك التعتيد المفتوح المصدر (Tricky Store OSS v3.1.0) ---
+# المحرك يُقلع عبر app_process (classes.dex) ثم يحقن libTrickyStoreOSS.so
+# داخل عملية keystore2 ليُصدر سلاسل شهادات موقّعة بالكيبوكس (TEE/RKP)
+# ⇒ تختفي رسالة "Bootloader Unlocked" ويُعتمد الجهاز في Google Play.
+TS_DIR="$MODDIR/tricky"
+ABI_M="$(getprop ro.product.cpu.abi 2>/dev/null)"
+[ -z "$ABI_M" ] && ABI_M="arm64-v8a"
 
-# أ. تشغيل الـ Daemon الأساسي
-if [ -f "$MODDIR/daemon" ]; then
-    chmod 755 "$MODDIR/daemon"
-    chown root:root "$MODDIR/daemon"
-    "$MODDIR/daemon" &
-    log -t "FALCON_FIX" "🚀 تم تشغيل Daemon التغيير اللحظي بنجاح."
+# --- أ. إصلاح ذاتي: ضمان وجود المكتبات في مسار المحرك عند كل إقلاع ---
+if [ -d "$TS_DIR/lib/$ABI_M" ]; then
+    [ -f "$TS_DIR/libTrickyStoreOSS.so" ] || cp -f "$TS_DIR/lib/$ABI_M/libTrickyStoreOSS.so" "$TS_DIR/libTrickyStoreOSS.so" 2>/dev/null
+    [ -f "$TS_DIR/inject" ] || cp -f "$TS_DIR/lib/$ABI_M/libinject.so" "$TS_DIR/inject" 2>/dev/null
+elif [ -d "$TS_DIR/lib/arm64-v8a" ]; then
+    [ -f "$TS_DIR/libTrickyStoreOSS.so" ] || cp -f "$TS_DIR/lib/arm64-v8a/libTrickyStoreOSS.so" "$TS_DIR/libTrickyStoreOSS.so" 2>/dev/null
+    [ -f "$TS_DIR/inject" ] || cp -f "$TS_DIR/lib/arm64-v8a/libinject.so" "$TS_DIR/inject" 2>/dev/null
 fi
+chmod 755 "$TS_DIR/daemon" "$TS_DIR/inject" 2>/dev/null
+chmod 644 "$TS_DIR/classes.dex" "$TS_DIR/libTrickyStoreOSS.so" 2>/dev/null
 
-# ب. تحديد وتشغيل ملف الـ Inject بناءً على معمارية الجهاز
-ARCH=$(getprop ro.product.cpu.abi)
-INJECT_PATH=""
-
-if [ "$ARCH" = "arm64-v8a" ] && [ -f "$MODDIR/lib/arm64-v8a/inject" ]; then
-    INJECT_PATH="$MODDIR/lib/arm64-v8a/inject"
-elif [ -f "$MODDIR/lib/inject" ]; then
-    INJECT_PATH="$MODDIR/lib/inject"
-elif [ -f "$MODDIR/inject" ]; then
-    INJECT_PATH="$MODDIR/inject"
+# --- ضمان وجود ملفات الإعداد قبل إقلاع المحرك (شرط عمله) ---
+mkdir -p /data/adb/tricky_store 2>/dev/null
+if [ ! -s /data/adb/tricky_store/keybox.xml ] && [ -s "$MODDIR/keybox.xml" ]; then
+    cp -f "$MODDIR/keybox.xml" /data/adb/tricky_store/keybox.xml 2>/dev/null
 fi
+if [ ! -s /data/adb/tricky_store/target.txt ] && [ -s "$MODDIR/target.txt" ]; then
+    cp -f "$MODDIR/target.txt" /data/adb/tricky_store/target.txt 2>/dev/null
+fi
+[ -s /data/adb/tricky_store/security_patch.txt ] || echo "all=$novo_patch" > /data/adb/tricky_store/security_patch.txt 2>/dev/null
+chmod 644 /data/adb/tricky_store/keybox.xml /data/adb/tricky_store/target.txt /data/adb/tricky_store/security_patch.txt 2>/dev/null
+chown root:root /data/adb/tricky_store/keybox.xml /data/adb/tricky_store/target.txt /data/adb/tricky_store/security_patch.txt 2>/dev/null
 
-if [ -n "$INJECT_PATH" ]; then
-    chmod 755 "$INJECT_PATH"
-    "$INJECT_PATH" &
-    log -t "FALCON_FIX" "🎯 تم تشغيل محرك الحقن (Inject) من المسار: $INJECT_PATH"
+# --- ب. تشغيل المحرك (مع تسجيل المخرجات للتشخيص) ---
+if [ -f "$TS_DIR/service.sh" ] && [ -f "$TS_DIR/daemon" ] && [ -f "$TS_DIR/classes.dex" ]; then
+    chown root:root "$TS_DIR/daemon" 2>/dev/null
+    : > /data/adb/falcon_daemon.log 2>/dev/null
+    sh "$TS_DIR/service.sh" >>/data/adb/falcon_daemon.log 2>&1 &
+    log -t "FALCON_FIX" "🚀 تم تشغيل محرك التعتيد Tricky Store OSS."
+    (
+        sleep 12
+        TS_PID=$(pidof TrickyStoreOSS 2>/dev/null)
+        if [ -n "$TS_PID" ]; then
+            echo "[$(date)] محرك Tricky Store OSS يعمل بنجاح (pid=$TS_PID)" >> /data/adb/falcon_daemon.log
+            log -t "FALCON_FIX" "✅ محرك التعتيد يعمل (pid=$TS_PID)"
+        else
+            echo "[$(date)] تحذير: محرك Tricky Store OSS لم يظهر — راجع المخرجات أعلاه" >> /data/adb/falcon_daemon.log
+            log -t "FALCON_FIX" "⚠️ محرك التعتيد لم يظهر بعد الإقلاع"
+        fi
+    ) &
 else
-    log -t "FALCON_FIX" "⚠️ تحذير: لم يتم العثور على ملف inject متوافق مع المعمارية $ARCH"
+    log -t "FALCON_FIX" "⚠️ محرك التعتيد غير جاهز: $TS_DIR/daemon أو classes.dex مفقود"
+    echo "[$(date)] محرك Tricky Store OSS مفقود في $TS_DIR" >> /data/adb/falcon_daemon.log 2>/dev/null
 fi
-
-# ج. خدمة APK المساعدة (service.apk) أُزيلت بناءً على طلب المستخدم
-#    (كانت تُظهر إشعاراً عند التثبيت/التشغيل ولا يحتاجها الموديول للعمل)
 
 # --- 2. تنظيف وإدارة ملفات Keybox ---
 # حذف النسخ الاحتياطية القديمة فقط — لا نمس target.txt إطلاقاً
@@ -248,64 +274,38 @@ if [ -n "$KEYBOX_SRC" ]; then
     chcon u:object_r:system_file:s0 /data/adb/tricky_store/keybox.xml 2>/dev/null
 fi
 
-# --- 2.5 حقن هوية الكيرنل في KernelSU Manager بعد اكتمال الإقلاع ---
+# --- 2.5 (أُزيل) حقن هوية الكيرنل في KernelSU Manager ---
+# كان هذا الإجراء يعتمد على ثنائيات محرك cleverestricky المدفوع
+# (inject + libcleverestricky.so) التي أُزيلت نهائياً لصالح محرك
+# Tricky Store OSS المفتوح المصدر، فأصبح هذا الجزء بلا وظيفة.
+# الهوية المزيفة للجهاز تُطبَّق بالكامل عبر resetprop في الأقسام 0 و5.
+
+# --- 2.7 إصلاح مفاتيح RKP التلقائي لأجهزة Red Magic / ZTE (مرة واحدة فقط) ---
+# عند فرض جوجل شهادات RKP الجديدة (فبراير 2026) تجاهلت أجهزة ريد ماجيك ملف
+# الكيبوكس المسروق، فنعيد للجهاز شهاداته الأصلية من جوجل عبر KmInstallKeybox.
+# يُنفَّذ مرة واحدة فقط بعد أول إقلاع ثم يتوقف عبر ملف العلامة rkp_fix_done.
 (
-    # انتظار اكتمال الإقلاع وتشغيل KernelSU Manager
     while [ "$(getprop sys.boot_completed)" != "1" ]; do
-        sleep 3
+        sleep 5
     done
-    sleep 10
-
-    # التحقق من وجود تزييف نشط
-    if [ ! -f /data/adb/falcon_active_spoof ]; then
-        exit 0
+    sleep 25
+    if [ -f "$MODDIR/rkp_fix.sh" ]; then
+        sh "$MODDIR/rkp_fix.sh" auto >/dev/null 2>&1
     fi
+) &
 
-    KERNEL_CONF="/data/adb/falcon/kernel_identity.conf"
-    if [ ! -f "$KERNEL_CONF" ]; then exit 0; fi
-
-    KERN_RELEASE=$(cut -d'|' -f2 "$KERNEL_CONF" 2>/dev/null)
-    KERN_VERSION=$(cut -d'|' -f3 "$KERNEL_CONF" 2>/dev/null)
-    [ -z "$KERN_RELEASE" ] && KERN_RELEASE=$(sed -n '2p' "$KERNEL_CONF" 2>/dev/null)
-    if [ -z "$KERN_RELEASE" ]; then exit 0; fi
-    [ -z "$KERN_VERSION" ] && KERN_VERSION="#1 SMP PREEMPT_DYNAMIC"
-
-    INJECT_BIN=""
-    LIB_BIN=""
-    for DIR in "$MODDIR" /data/adb/modules/*; do
-        if [ -f "$DIR/lib/arm64-v8a/inject" ] && [ -f "$DIR/lib/arm64-v8a/libcleverestricky.so" ]; then
-            INJECT_BIN="$DIR/lib/arm64-v8a/inject"
-            LIB_BIN="$DIR/lib/arm64-v8a/libcleverestricky.so"
-            break
-        fi
+# --- 2.8 ضمان وجود ملف البصمة (PIF) في المسار الصحيح عند كل إقلاع ---
+# السبب: بعض الأجهزة لا تنقل ملف البصمة تلقائياً إلى مسار PIF الصحيح،
+# فيفقد التزييف وتفشل DEVICE_INTEGRITY. هنا نتحقق عند الإقلاع:
+# إن كان الملف مفقوداً أو بصمته فارغة، نولّده تلقائياً من custom.pif.prop.
+# (لا نلمس أبداً بصمة صالحة موجودة — احتراماً لإعداد المستخدم.)
+(
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do
+        sleep 5
     done
-
-    if [ -z "$INJECT_BIN" ]; then exit 0; fi
-    chmod 755 "$INJECT_BIN" 2>/dev/null
-
-    # محاولة الحقن عدة مرات حتى يفتح المستخدم KernelSU Manager
-    # التنسيق الرسمي للسياق: "1|<release>|<version>" / entry أول مرة ثم resume للتحديث
-    KERN_CTX="1|${KERN_RELEASE}|${KERN_VERSION}"
-    ATTEMPT=0
-    while [ $ATTEMPT -lt 30 ]; do
-        KSU_PID=$(pidof com.rifsxd.ksunext 2>/dev/null || pidof me.weishu.kernelsu 2>/dev/null || pidof com.weishu.kernelsu 2>/dev/null)
-        if [ -n "$KSU_PID" ]; then
-            "$INJECT_BIN" "$KSU_PID" "$LIB_BIN" entry "$KERN_CTX" 2>/dev/null
-            RC=$?
-            if [ $RC -ne 0 ]; then
-                "$INJECT_BIN" "$KSU_PID" "$LIB_BIN" resume "$KERN_CTX" >/dev/null 2>&1
-                RC=$?
-            fi
-            if [ $RC -eq 0 ]; then
-                log -t "FALCON_FIX" "🎯 تم حقن هوية الكيرنل في KernelSU Manager (PID: $KSU_PID): $KERN_RELEASE"
-            else
-                log -t "FALCON_FIX" "⚠️ محاولة حقن كيرنل فاشلة (رمز: $RC)"
-            fi
-            break
-        fi
-        ATTEMPT=$((ATTEMPT + 1))
-        sleep 15
-    done
+    if [ -f "$MODDIR/apply_pif.sh" ]; then
+        sh "$MODDIR/apply_pif.sh" auto >/dev/null 2>&1
+    fi
 ) &
 
 # --- 3. الإخفاء التلقائي للتطبيقات المثبتة حديثاً وتنظيف الملفات ---
@@ -468,9 +468,15 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             fi
         fi
 
-        # تعيين نص حالة الحقن
+        # تعيين نص حالة الحقن (مع ذكر إصدار ZygiskNext عند توفره)
         if [ "$ZYGISK_FOUND" = "true" ]; then
             ZYGISK_STATUS="🟢 Zygisk Injected"
+            # عرض إصدار ZygiskNext المثبت (v1.5.2+) في وصف الموديول مباشرة
+            ZYNEXT_DIR="/data/adb/modules/zygisk_next"
+            if [ -d "$ZYNEXT_DIR" ] && [ ! -f "$ZYNEXT_DIR/disable" ] && [ -f "$ZYNEXT_DIR/module.prop" ]; then
+                ZYNEXT_VER=$(grep '^version=' "$ZYNEXT_DIR/module.prop" 2>/dev/null | head -1 | cut -d= -f2)
+                [ -n "$ZYNEXT_VER" ] && ZYGISK_STATUS="🟢 ZygiskNext $ZYNEXT_VER"
+            fi
         else
             ZYGISK_STATUS="🔴 Zygisk Not Injecting"
         fi
@@ -498,17 +504,4 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
 
         sleep 4
     done
-) &
-
-# --- 6. ضمان وجود بصمة Play Integrity المعتمدة في مسار المكتبة الصحيح ---
-# المكتبة تقرأ من /data/adb/falcon_pif/custom.pif.prop
-# (شبكة أمان إضافية إن لم تُولَّد بعد؛ لن تفعل شيئاً إن كانت موجودة وصالحة)
-(
-    while [ "$(getprop sys.boot_completed)" != "1" ]; do
-        sleep 5
-    done
-    sleep 60
-    if [ -f "$MODDIR/pif_setup.sh" ]; then
-        sh "$MODDIR/pif_setup.sh" >/dev/null 2>&1 || true
-    fi
 ) &
