@@ -190,9 +190,9 @@ fi
 
 # --- 2. توليد بصمة Pixel Canary المعتمدة (Play Integrity) عبر autopif4 ---
 # ملاحظة مهمة: مكتبة PIF تقرأ الإعداد حصراً من:
-#   /data/adb/modules/playintegrityfix/custom.pif.prop
+#   /data/adb/falcon_pif/custom.pif.prop
 # لذلك نولّد بصمة Pixel معتمدة (وليست بصمة الجهاز الحقيقية) ونضعها في المسار الصحيح.
-PIF_DIR="/data/adb/modules/playintegrityfix"
+PIF_DIR="/data/adb/falcon_pif"
 step_item "جاري توليد بصمة Pixel معتمدة حديثة عبر autopif4..."
 
 if [ -f "$MODDIR/pif_setup.sh" ]; then

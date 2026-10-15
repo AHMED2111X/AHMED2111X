@@ -71,7 +71,7 @@ ui_print "- 🎭 جاري نشر مكونات PIF و Tricky Store..." ; delay
 mkdir -p /data/adb/tricky_store 2>/dev/null
 
 # ⚠️ مهم: مكتبة PIF (zygisk/*.so) تقرأ الإعداد من مسار ثابت هو:
-#    /data/adb/modules/playintegrityfix/custom.pif.prop
+#    /data/adb/falcon_pif/custom.pif.prop
 # لذلك ننشر أدوات التوليد (autopif4 + migrate) في هذا المسار مباشرة.
 # (البصمة نفسها تُولَّد تلقائياً بعد أول إقلاع عبر post-fs-data/service)
 if [ -f "$MODPATH/pif_setup.sh" ]; then

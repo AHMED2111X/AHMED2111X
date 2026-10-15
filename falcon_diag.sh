@@ -74,34 +74,35 @@ P "مجلد Zygisk Next : $([ -d /data/adb/modules/zygisksu ] && echo موجود
 
 # ------------------------------------------------------------------ 3
 H "3) إعداد بصمة PIF (القلب)"
-if [ -d /data/adb/modules/playintegrityfix ]; then
+P "المجلد القديم /data/adb/modules/playintegrityfix : $([ -d /data/adb/modules/playintegrityfix ] && echo 'لا يزال موجوداً (سيُحذف تلقائياً)' || echo 'محذوف — جيد')"
+if [ -d /data/adb/falcon_pif ]; then
     P "المجلد موجود. المحتوى:"
-    ls -la /data/adb/modules/playintegrityfix 2>/dev/null
+    ls -la /data/adb/falcon_pif 2>/dev/null
 else
-    P "!!! المجلد /data/adb/modules/playintegrityfix غير موجود — المكتبة لن تقرأ أي إعداد !!!"
+    P "!!! المجلد /data/adb/falcon_pif غير موجود — المكتبة لن تقرأ أي إعداد !!!"
 fi
 
 P ""
 P "--- custom.pif.prop  (الملف المتوقّع) ---"
-cat /data/adb/modules/playintegrityfix/custom.pif.prop 2>/dev/null || P "(غير موجود)"
+cat /data/adb/falcon_pif/custom.pif.prop 2>/dev/null || P "(غير موجود)"
 
 P ""
 P "--- pif.prop  (إن وُجد قد يتقدّم على custom) ---"
-cat /data/adb/modules/playintegrityfix/pif.prop 2>/dev/null || P "(غير موجود - جيد)"
+cat /data/adb/falcon_pif/pif.prop 2>/dev/null || P "(غير موجود - جيد)"
 
 P ""
 P "--- custom.pif.json ---"
-cat /data/adb/modules/playintegrityfix/custom.pif.json 2>/dev/null || P "(غير موجود)"
+cat /data/adb/falcon_pif/custom.pif.json 2>/dev/null || P "(غير موجود)"
 
 P ""
 P "--- pif.json ---"
-cat /data/adb/modules/playintegrityfix/pif.json 2>/dev/null || P "(غير موجود)"
+cat /data/adb/falcon_pif/pif.json 2>/dev/null || P "(غير موجود)"
 
 P ""
 P "--- classes.dex (EntryPoint) ---"
-if [ -s /data/adb/modules/playintegrityfix/classes.dex ]; then
-    P "موجود، الحجم=$(stat -c '%s' /data/adb/modules/playintegrityfix/classes.dex 2>/dev/null)"
-    P "محتوى EntryPoint: $(grep -c 'EntryPoint' /data/adb/modules/playintegrityfix/classes.dex 2>/dev/null) تطابق"
+if [ -s /data/adb/falcon_pif/classes.dex ]; then
+    P "موجود، الحجم=$(stat -c '%s' /data/adb/falcon_pif/classes.dex 2>/dev/null)"
+    P "محتوى EntryPoint: $(grep -c 'EntryPoint' /data/adb/falcon_pif/classes.dex 2>/dev/null) تطابق"
 else
     P "(غير موجود!)"
 fi

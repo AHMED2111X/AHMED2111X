@@ -279,7 +279,7 @@ fi
 ) &
 
 # --- 5. توليد/تحديث بصمة Play Integrity المعتمدة (Pixel Canary) بعد الإقلاع ---
-# مهم: المكتبة تقرأ من /data/adb/modules/playintegrityfix/custom.pif.prop
+# مهم: المكتبة تقرأ من /data/adb/falcon_pif/custom.pif.prop
 # نُولِّدها تلقائياً عند أول إقلاع إذا كانت غير موجودة (يحتاج إنترنت + busybox).
 (
     while [ "$(getprop sys.boot_completed)" != "1" ]; do

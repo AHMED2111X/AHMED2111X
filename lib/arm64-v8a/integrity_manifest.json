@@ -52,11 +52,6 @@
             "type": "regular"
         },
         {
-            "path": "service.apk",
-            "sha256": "1aef19163476fd6a278e175b1cca78ea95b1892d29c6ca0103230277a0c1e99c",
-            "type": "regular"
-        },
-        {
             "path": "service.sh",
             "sha256": "5277ae24a546a0b7028cea60fcecc120cd07c88d3ca98a20383f251d740182af",
             "type": "executable"

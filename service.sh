@@ -225,10 +225,8 @@ else
     log -t "FALCON_FIX" "⚠️ تحذير: لم يتم العثور على ملف inject متوافق مع المعمارية $ARCH"
 fi
 
-# ج. ضمان جاهزية خدمة APK المساعدة
-if [ -f "$MODDIR/service.apk" ]; then
-    log -t "FALCON_FIX" "📦 خدمة service.apk موجودة وجاهزة للعمل."
-fi
+# ج. خدمة APK المساعدة (service.apk) أُزيلت بناءً على طلب المستخدم
+#    (كانت تُظهر إشعاراً عند التثبيت/التشغيل ولا يحتاجها الموديول للعمل)
 
 # --- 2. تنظيف وإدارة ملفات Keybox ---
 # حذف النسخ الاحتياطية القديمة فقط — لا نمس target.txt إطلاقاً
@@ -503,7 +501,7 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
 ) &
 
 # --- 6. ضمان وجود بصمة Play Integrity المعتمدة في مسار المكتبة الصحيح ---
-# المكتبة تقرأ من /data/adb/modules/playintegrityfix/custom.pif.prop
+# المكتبة تقرأ من /data/adb/falcon_pif/custom.pif.prop
 # (شبكة أمان إضافية إن لم تُولَّد بعد؛ لن تفعل شيئاً إن كانت موجودة وصالحة)
 (
     while [ "$(getprop sys.boot_completed)" != "1" ]; do
