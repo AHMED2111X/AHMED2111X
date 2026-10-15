@@ -6,7 +6,8 @@
 # إزالة وحذف الإضافات المباشرة التي تسبب تعارضاً مؤكداً
 if [ -d /data/adb/modules/safetynet-fix ]; then
     touch /data/adb/modules/safetynet-fix/remove
-    ui_print "! سيتم إزالة موديول Universal SafetyNet Fix (USNF) عند إعادة التشغيل القادمة"
+    command -v ui_print >/dev/null 2>&1 && \
+        ui_print "! سيتم إزالة موديول Universal SafetyNet Fix (USNF) عند إعادة التشغيل القادمة"
 fi
 
 # استبدال وإخفاء ملفات ومجلدات تطبيقات الحقن بالرومات المخصصة لإلغاء تفعيلها

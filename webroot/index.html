@@ -192,14 +192,16 @@
             <details class="guide-box" open>
                 <summary>💡 دليل التعليمات: إدارة ملف الكيبوكس</summary>
                 <ul class="guide-list">
-                    <li><strong>جلب من الإنترنت:</strong> يحذف keybox.xml والنسخ الاحتياطية (.bak/.backup/.old/.tmp) ثم ينزل الجديد.</li>
-                    <li><strong>جلب من الجهاز مباشرةً:</strong> يبحث عن keybox.xml في الذاكرة الداخلية/الخارجية ويقوم بتثبيته مع حذف الملف القديم والنسخ الاحتياطية تلقائياً.</li>
+                    <li><strong>📥 جلب من الإنترنت:</strong> ينزّل <code>keybox.xml</code> الأحدث من الرابط الرسمي ويثبّته فوراً.</li>
+                    <li><strong>📁 جلب من الجهاز مباشرةً:</strong> ابحث عن <code>keybox.xml</code> في الذاكرة الداخلية/الخارجية (مثلاً <code>/Download</code>) ثم ثبّته بزر واحد.</li>
+                    <li><strong>✅ تثبيت دائم (v3.04):</strong> الكيبوكس المثبَّت يُحفظ في <code>/data/adb/falcon/keybox.xml</code> و<u>لن يُستبدل</u> بعد إعادة التشغيل — يمكنك تركيب كيبوكس جديد خاص بك والاعتماد عليه (كان يُدمَّر عند كل إقلاع قبل هذه النسخة).</li>
                     <li><strong>🔴 تنبيه Red Magic (تحديث جوجل 2026):</strong> جوجل فرضت شهادات RKP الجديدة RSA-4096 فأجهزة ريد ماجيك تتجاهل ملف الكيبوكس المسروق — الحل ليس كيبوكس جديد بل إعادة تزوير مفاتيح الجهاز نفسه من زر (إصلاح مفاتيح RKP) بالأسفل، وهو يُنفَّذ تلقائياً مرة واحدة بعد التثبيت.</li>
+                    <li><strong>🧪 مهم جداً:</strong> إذا ظهر <em>واحد أخضر واثنان أحمر</em> (BASIC أخضر + DEVICE و STRONG أحمر) فالسبب هو ملف الكيبوكس نفسه (مرفوض من جوجل) وليس الإضافة — ثبّت كيبوكس جديداً بالأزرار أعلاه ثم أعد التشغيل وافحص <u>مرة واحدة فقط</u>.</li>
                 </ul>
             </details>
             <div class="card">
                 <div class="card-title">محدث ومثبت الكيبوكس التلقائي (Keybox Installer)</div>
-                <div class="card-desc">جلب وتثبيت ملف Keybox، يتم حذف الملف القديم والنسخ الاحتياطية (.bak .backup .old .tmp) تلقائياً عند الضغط على أي زر</div>
+                <div class="card-desc">جلب وتثبيت ملف Keybox بشكل <strong>دائم</strong> (لا يُحذف عند إعادة التشغيل). لا يُستبدل كيبوكس المستخدم الصالح بكيبوكس الإضافة المرفق.</div>
                 <div class="form-group">
                     <label>OFFICIAL KEYBOX SOURCE URL (PROTECTED)</label>
                     <input type="text" id="keyboxSourceUrl" readonly value="https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml">
@@ -238,6 +240,7 @@
                 <div class="card-desc">
                     هذا هو المحرك المسؤول عن إخفاء <strong>فتح البوت لودر</strong> عن جوجل (تزوير شهادات <code>keystore2</code> باستخدام الكيبوكس).<br>
                     إن لم يكن حياً → ستبقى جوجل ترى البوت لودر مفتوحاً وتظهر <em>«غير معتمد»</em>.<br>
+                    <strong style="color:#ff6b6b;">🛑 تنبيه:</strong> المحرك يُشغَّل <u>تلقائياً عند الإقلاع فقط</u> — تشغيله يدوياً مرتين يحقن <code>keystore2</code> مرتين ويُجمّد الجهاز بالكامل. إذا لم يكن يعمل: <strong>أعد تشغيل الجهاز فقط</strong>.<br>
                     <span style="opacity:.75">اضغط الزر وأرسل الناتج للمطوّر — سيكشف السبب فوراً.</span>
                 </div>
                 <div class="action-bar" style="margin-top:6px;">
@@ -321,39 +324,110 @@
         // مشغّل أوامر الروت الموحّد (يعمل مع كل بيئات WebUI)
         // يحاول: shell() ثم ksu.exec ثم kernelsu.exec ثم API الداخلي
         // ============================================================
-        function falconRun(cmd, done) {
+        // 🛡️ حماية إلزامية من تعليق الجهاز:
+        //  1) كل أمر يُغلَّف بـ `timeout` فلا يمكن أن يعلّق الجهاز للأبد.
+        //  2) قفل (falconBusy) يمنع تنفيذ أكثر من أمر في نفس الوقت.
+        //  3) مؤقّت مراقبة (watchdog) يحرّر الواجهة حتى لو لم يرجع الأمر.
+        const FALCON_TIMEOUT = 90; // ثانية
+        let falconBusy = false;
+
+        function falconBusyUI(on, label) {
+            try {
+                document.querySelectorAll('main button').forEach(function(b) {
+                    const oc = b.getAttribute('onclick') || '';
+                    if (oc.indexOf('clearLog') !== -1 || oc.indexOf('clearFalconLog') !== -1) return;
+                    b.disabled = !!on;
+                });
+            } catch (e) {}
+            if (on && label) addLog('⏳ جارٍ التنفيذ: ' + label + ' (مهلة ' + FALCON_TIMEOUT + ' ثانية)');
+        }
+
+        // تغليف آمن بـ timeout عبر /system/bin/sh -c مع تهريب علامة الاقتباس المفردة
+        function falconWrap(cmd, seconds) {
+            const t = seconds || FALCON_TIMEOUT;
+            const safe = String(cmd).replace(/'/g, "'\\''");
+            const inner = "sh -c '" + safe + "'";
+            return "if command -v timeout >/dev/null 2>&1; then timeout " + t + " " + inner + "; else " + inner + "; fi";
+        }
+
+        // حارس موحّد لعمليات جسر API (مثل أزرار الكيبوكس) — يمنع التنفيذ المتزامن
+        function falconApiGuarded(label, run) {
+            if (falconBusy) {
+                addLog('⚠️ هناك عملية قيد التنفيذ بالفعل — انتظر انتهاءها.');
+                return;
+            }
+            falconBusy = true;
+            falconBusyUI(true, label);
+            let done = false;
+            const release = function() {
+                if (done) return;
+                done = true;
+                falconBusy = false;
+                falconBusyUI(false);
+            };
+            setTimeout(release, FALCON_TIMEOUT * 1000 + 15000); // شبكة أمان
+            run(release);
+        }
+
+        function falconRun(cmd, done, opts) {
+            const secs = (opts && opts.timeout) || FALCON_TIMEOUT;
+            if (falconBusy) {
+                addLog('⚠️ هناك عملية قيد التنفيذ بالفعل — انتظر انتهاءها.');
+                return;
+            }
+            falconBusy = true;
+            const wrapped = falconWrap(cmd, secs);
+            let finished = false;
+            let watchdog = null;
+            const finish = function(r) {
+                if (finished) return;
+                finished = true;
+                if (watchdog) clearTimeout(watchdog);
+                falconBusy = false;
+                falconBusyUI(false);
+                done(r);
+            };
+            // شبكة أمان: حرّر الواجهة حتى لو تجمّد الجسر
+            watchdog = setTimeout(function() {
+                if (finished) return;
+                finished = true;
+                falconBusy = false;
+                falconBusyUI(false);
+                addLog('⚠️ انتهت المهلة (' + secs + 'ث) — تم تحرير الواجهة. الأمر قد يكون ما زال يعمل في الخلفية.');
+                done('__TIMEOUT__');
+            }, secs * 1000 + 15000);
             try {
                 if (typeof shell === 'function') {
-                    return shell(cmd, { root: true }, function(r) { done(r); });
+                    return shell(wrapped, { root: true }, function(r) { finish(r); });
                 }
             } catch (e) {}
             try {
                 if (typeof ksu !== 'undefined' && ksu && typeof ksu.exec === 'function') {
-                    return ksu.exec(cmd, '{}', function(ec, out, err) {
-                        done((out || '') + (err ? ('\n' + err) : ''));
+                    return ksu.exec(wrapped, '{}', function(ec, out, err) {
+                        finish((out || '') + (err ? ('\n' + err) : ''));
                     });
                 }
             } catch (e) {}
             try {
                 if (typeof kernelsu !== 'undefined' && kernelsu && typeof kernelsu.exec === 'function') {
-                    return kernelsu.exec(cmd, function(ec, out, err) {
-                        done((out || '') + (err ? ('\n' + err) : ''));
+                    return kernelsu.exec(wrapped, function(ec, out, err) {
+                        finish((out || '') + (err ? ('\n' + err) : ''));
                     });
                 }
             } catch (e) {}
             try {
                 if (typeof exec === 'function') {
-                    return exec(cmd, function(ec, out, err) {
-                        done((out || '') + (err ? ('\n' + err) : ''));
+                    return exec(wrapped, function(ec, out, err) {
+                        finish((out || '') + (err ? ('\n' + err) : ''));
                     });
                 }
             } catch (e) {}
             try {
                 if (window.API && typeof API.runRaw === 'function') {
-                    return API.runRaw(cmd, function(r) { done(r); });
+                    return API.runRaw(wrapped, function(r) { finish(r); });
                 }
             } catch (e) {}
-            done('__NO_SHELL__');
+            finish('__NO_SHELL__');
         }
 
         let deviceId = localStorage.getItem('falcon_device_id');
@@ -400,25 +474,31 @@
             }
         }
         function fetchKeybox() {
-            addLog('جاري حذف ملف keybox.xml القديم والنسخ الاحتياطية (.bak/.backup/.old/.tmp)...');
-            addLog('جاري جلب وتثبيت Keybox من الإنترنت...');
             if (window.API && API.fetchKeybox) {
-                API.fetchKeybox(function(){
-                    addLog('تم جلب وتثبيت Keybox بنجاح');
-                    alert('تم جلب وتثبيت Keybox من الإنترنت بنجاح');
+                falconApiGuarded('جلب Keybox من الإنترنت', function(release) {
+                    addLog('جاري حذف ملف keybox.xml القديم والنسخ الاحتياطية (.bak/.backup/.old/.tmp)...');
+                    addLog('⏳ جاري جلب وتثبيت Keybox من الإنترنت... (مهلة 90 ثانية)');
+                    API.fetchKeybox(function(r){
+                        if (r) addLog(String(r));
+                        addLog('تم جلب وتثبيت Keybox بنجاح');
+                        release();
+                        alert('تم جلب وتثبيت Keybox من الإنترنت بنجاح');
+                    });
                 });
             } else {
                 addLog('خطأ: API.fetchKeybox غير متوفر');
             }
         }
         function installLocalKeyboxDevice() {
-            addLog('جاري البحث عن keybox.xml في الجهاز...');
-            addLog('جاري حذف ملف keybox.xml القديم والنسخ الاحتياطية (.bak/.backup/.old/.tmp)...');
-            addLog('جاري تثبيت Keybox.xml من الجهاز...');
             if (window.API && API.installLocalKeyboxDevice) {
-                API.installLocalKeyboxDevice(function(){
-                    addLog('تم تثبيت Keybox.xml من الجهاز بنجاح');
-                    alert('تم تثبيت Keybox.xml من الجهاز بنجاح');
+                falconApiGuarded('تثبيت Keybox من الجهاز', function(release) {
+                    addLog('⏳ جاري البحث عن keybox.xml في الجهاز وتثبيته... (مهلة 60 ثانية)');
+                    API.installLocalKeyboxDevice(function(r){
+                        if (r) addLog(String(r));
+                        addLog('تم تثبيت Keybox.xml من الجهاز بنجاح');
+                        release();
+                        alert('تم تثبيت Keybox.xml من الجهاز بنجاح');
+                    });
                 });
             } else {
                 addLog('خطأ: API.installLocalKeyboxDevice غير متوفر');
@@ -428,9 +508,9 @@
             addLog('🔍 جاري فحص حالة مفاتيح التحقق RKP...');
             const cmds = [];
             cmds.push('echo "=== وحدات Remote Key Provisioning المتوفرة ==="');
-            cmds.push('cmd remote_provisioning list 2>&1');
+            cmds.push('timeout 20 cmd remote_provisioning list 2>&1');
             cmds.push('echo "=== فحص إصدار شهادة التحقق من TEE ==="');
-            cmds.push('cmd remote_provisioning certify default 2>&1 | head -c 600');
+            cmds.push('timeout 30 cmd remote_provisioning certify default 2>&1 | head -c 600');
             cmds.push('echo ""');
             cmds.push('echo "=== وجود أداة ZTE لإصلاح المفاتيح ==="');
             cmds.push('ls -l /vendor/bin/KmInstallKeybox 2>&1');
@@ -490,8 +570,9 @@
             cmds.push('TS=$(pidof TrickyStoreOSS 2>/dev/null); [ -n "$TS" ] && echo "TrickyStoreOSS يعمل pid=$TS" || echo "المحرك غير مشغّل"');
             cmds.push('echo "### [2] سجل الإقلاع falcon_daemon.log"');
             cmds.push('cat /data/adb/falcon_daemon.log 2>/dev/null || echo "لا يوجد سجل"');
-            cmds.push('echo "### [3] محاولة تشغيل المحرك يدوياً (15 ثانية)"');
-            cmds.push('cd ' + MOD + '/tricky 2>/dev/null && timeout 15 sh ./service.sh 2>&1 | head -60');
+            cmds.push('echo "### [3] المحرك يُشغَّل تلقائياً عند الإقلاع فقط — لا يُشغَّل يدوياً أبداً"');
+            cmds.push('echo "    (تم تعطيل التشغيل اليدوي نهائياً: تشغيله مرتين يحقن keystore2 مرتين ويجمّد الجهاز)"');
+            cmds.push('echo "    إن لم يكن يعمل: أعد تشغيل الجهاز — ولا تشغّله يدوياً."');
             cmds.push('echo "### [4] ملفات محرك التعتيد"');
             cmds.push('ls -l ' + MOD + '/tricky/ 2>&1');
             cmds.push('ls -l ' + MOD + '/tricky/lib/arm64-v8a/ 2>&1');
@@ -500,10 +581,12 @@
             cmds.push('echo "--- target.txt ---"; cat /data/adb/tricky_store/target.txt 2>/dev/null | head -30');
             cmds.push('echo "--- security_patch.txt ---"; cat /data/adb/tricky_store/security_patch.txt 2>/dev/null');
             cmds.push('echo "--- رأس keybox.xml ---"; head -3 /data/adb/tricky_store/keybox.xml 2>/dev/null');
-            cmds.push('echo "### [6] وحدة tricky_store مستقلة (يجب ألا تكون مثبتة)"');
-            cmds.push('cat /data/adb/modules/tricky_store/module.prop 2>/dev/null || echo "غير مثبتة (صحيح)"');
+            cmds.push('echo "### [6] وحدة tricky_store مستقلة (يجب ألا تكون مثبتة — تُحذف تلقائياً)"');
+            cmds.push('if [ -d /data/adb/modules/tricky_store ]; then if [ -f /data/adb/modules/tricky_store/remove ]; then echo \"معلّمة للحذف (ستُزال عند الإقلاع ✔)\"; else echo \"مثبتة (يجب حذفها ✖)\"; fi; else echo \"غير مثبتة (صحيح ✔)\"; fi');
+            cmds.push('echo "### [6.1] كل الوحدات المثبتة (للتأكد أن شيئاً لم يُحذف بلا سبب)"');
+            cmds.push('for d in /data/adb/modules/*/; do n=$(basename "$d"); s="مفعّلة ✔"; [ -f "$d/disable" ] && s="معطّلة ⏸️"; [ -f "$d/remove" ] && s="معلّمة للحذف ⚠️"; echo "   $n : $s"; done');
             cmds.push('echo "### [7] logcat (TrickyStore/keystore/attest)"');
-            cmds.push('logcat -d -t 1500 2>/dev/null | grep -iE "TrickyStore|keystore2|attestation|Injection" | tail -40');
+            cmds.push('timeout 20 logcat -d -t 1500 2>/dev/null | grep -iE "TrickyStore|keystore2|attestation|Injection" | tail -40');
             cmds.push('echo "### [8] حالة البوت"');
             cmds.push('getprop ro.boot.verifiedbootstate; getprop ro.boot.flash.locked');
             const full = cmds.join('; ');
@@ -511,9 +594,11 @@
                 if (r === '__NO_SHELL__') {
                     addLog('✖ لا تتوفر واجهة أوامر root. نفّذ من الطرفية (Termux):');
                     addLog('   su -c cat /data/adb/falcon_daemon.log');
-                    addLog('   su -c cd ' + MOD + '/tricky && sh ./service.sh');
+                    addLog('   su -c ls -l /data/adb/modules/playintegrityfix/tricky/');
+                    addLog('⚠️ لا تشغّل المحرك يدوياً أبداً — تشغيله مرتين يجمّد الجهاز. أعد التشغيل فقط.');
                     return;
                 }
+                if (r === '__TIMEOUT__') return;
                 addLog(r || 'لم يتم إرجاع أي نتيجة');
                 addLog('— انتهى التشخيص — انسخ هذا الناتج كاملاً وأرسله للمطوّر —');
             });
@@ -576,6 +661,61 @@
                 addLog(r || 'لم يتم إرجاع أي نتيجة من الفحص');
                 addLog('— انتهى الفحص —');
             });
+        }
+
+        // ============================================================
+        // أدوات صفحة الإعدادات — تشخيص آمن (قراءة فقط، بلا أي تعليق)
+        // ============================================================
+        function falconLogContent(msg) {
+            try {
+                const el = document.getElementById('logContent');
+                if (el) {
+                    const t = new Date().toLocaleTimeString('ar-SA');
+                    el.textContent += t + ' - ' + msg + '\n';
+                    el.scrollTop = el.scrollHeight;
+                }
+            } catch (e) {}
+            addLog(msg);
+        }
+
+        function testRootBridge() {
+            falconLogContent('🔐 جاري فحص اتصال جسر الأوامر (Root Bridge)...');
+            falconRun('id -u; echo "المستخدم: $(id -un 2>/dev/null)"; echo "المسار: $PATH"', function(r) {
+                if (r === '__NO_SHELL__') {
+                    falconLogContent('✖ لا تتوفر واجهة أوامر root في بيئة WebUI هذه.');
+                    return;
+                }
+                if (r === '__TIMEOUT__') return;
+                falconLogContent('الناتج: ' + (r || 'لا يوجد'));
+            }, { timeout: 20 });
+        }
+
+        function testSystemInfo() {
+            falconLogContent('🧪 جاري قراءة معلومات النظام...');
+            const cmds = [
+                'echo "الجهاز   : $(getprop ro.product.model)"',
+                'echo "الأندرويد : $(getprop ro.build.version.release)  (SDK $(getprop ro.build.version.sdk))"',
+                'echo "البصمة   : $(getprop ro.build.fingerprint)"',
+                'echo "الرقعة   : $(getprop ro.build.version.security_patch)"',
+                'echo "البوت    : verifiedbootstate=$(getprop ro.boot.verifiedbootstate)  locked=$(getprop ro.boot.flash.locked)"',
+                'echo "الإصدار  : $(grep ^version= /data/adb/modules/playintegrityfix/module.prop 2>/dev/null)"'
+            ];
+            falconRun(cmds.join('; '), function(r) {
+                if (r === '__NO_SHELL__') {
+                    falconLogContent('✖ لا تتوفر واجهة أوامر root في هذه البيئة.');
+                    return;
+                }
+                if (r === '__TIMEOUT__') return;
+                falconLogContent(r || 'لم يتم إرجاع أي نتيجة');
+            }, { timeout: 30 });
+        }
+
+        function clearFalconLog() {
+            try {
+                const el = document.getElementById('logContent');
+                if (el) el.textContent = '';
+            } catch (e) {}
+            addLog('🧹 تم مسح سجل التشخيص.');
         }
     </script>
 </body>

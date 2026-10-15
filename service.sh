@@ -236,8 +236,15 @@ chown root:root /data/adb/tricky_store/keybox.xml /data/adb/tricky_store/target.
 if [ -f "$TS_DIR/service.sh" ] && [ -f "$TS_DIR/daemon" ] && [ -f "$TS_DIR/classes.dex" ]; then
     chown root:root "$TS_DIR/daemon" 2>/dev/null
     : > /data/adb/falcon_daemon.log 2>/dev/null
-    sh "$TS_DIR/service.sh" >>/data/adb/falcon_daemon.log 2>&1 &
-    log -t "FALCON_FIX" "🚀 تم تشغيل محرك التعتيد Tricky Store OSS."
+    # 🛡️ حماية إلزامية من الحقن المزدوج: تشغيل المحرك مرتين يحقن keystore2
+    #    مرتين ⇒ جمود keystore2 وتجمّد الجهاز بالكامل. لا نُشغّله إن كان يعمل.
+    if pidof TrickyStoreOSS >/dev/null 2>&1; then
+        echo "[$(date)] المحرك يعمل مسبقاً — تم تخطي التشغيل المزدوج (حماية keystore2)" >> /data/adb/falcon_daemon.log
+        log -t "FALCON_FIX" "ℹ️ محرك التعتيد يعمل مسبقاً — تخطي التشغيل المزدوج."
+    else
+        sh "$TS_DIR/service.sh" >>/data/adb/falcon_daemon.log 2>&1 &
+        log -t "FALCON_FIX" "🚀 تم تشغيل محرك التعتيد Tricky Store OSS."
+    fi
     (
         sleep 12
         TS_PID=$(pidof TrickyStoreOSS 2>/dev/null)
@@ -259,20 +266,61 @@ fi
 rm -f /data/adb/tricky_store/keybox.xml.bak 2>/dev/null
 rm -f /data/adb/tricky_store/*.bak 2>/dev/null
 
-# البحث عن ملف keybox.xml المرفق ونسخه للمسار المطلوب
-KEYBOX_SRC=""
-if [ -f "$MODDIR/keybox.xml" ]; then
-    KEYBOX_SRC="$MODDIR/keybox.xml"
-elif [ -f "$MODDIR/zygisk/keybox.xml" ]; then
-    KEYBOX_SRC="$MODDIR/zygisk/keybox.xml"
+# ==============================================================================
+# 🔑 إصلاح جذري (v3.04): الحفاظ على كيبوكس المستخدم — سبب فشل DEVICE_INTEGRITY
+#    بعد إعادة التشغيل.
+#    السبب: الكود القديم كان ينسخ كيبوكس الإضافة المرفق فوق المسار في «كل إقلاع»،
+#    فيُدمَّر أي كيبوكس جديد/سليم يثبّته المستخدم من الواجهة ⇒ يعود الفحص إلى
+#    (1 أخضر / 2 أحمر) بعد كل إعادة تشغيل.  الإضافة العاملة لا تفعل ذلك إطلاقاً
+#    (تُنشر إعداداتها مرة واحدة عند التثبيت فقط).
+#    الأولوية الآن:
+#      1) /data/adb/falcon/keybox.xml       ← كيبوكس المستخدم الدائم (لا يُلمس أبداً)
+#      2) /data/adb/tricky_store/keybox.xml ← إن كان مخصّصاً/صالحاً نثبّته دائماً
+#      3) الكيبوكس المرفق مع الإضافة        ← الافتراضي فقط عند غياب أي كيبوكس
+# ==============================================================================
+TS_KEYBOX="/data/adb/tricky_store/keybox.xml"
+USER_KEYBOX="/data/adb/falcon/keybox.xml"
+BUNDLE_COPY="/data/adb/falcon/keybox_bundled.xml"
+mkdir -p /data/adb/falcon 2>/dev/null
+
+keybox_valid() {
+    [ -s "$1" ] && grep -q "<AndroidAttestation" "$1" 2>/dev/null
+}
+
+BUNDLED_SRC=""
+if [ -s "$MODDIR/keybox.xml" ]; then
+    BUNDLED_SRC="$MODDIR/keybox.xml"
+elif [ -s "$MODDIR/zygisk/keybox.xml" ]; then
+    BUNDLED_SRC="$MODDIR/zygisk/keybox.xml"
 fi
 
-if [ -n "$KEYBOX_SRC" ]; then
-    cp -f "$KEYBOX_SRC" /data/adb/tricky_store/keybox.xml
-    chmod 644 /data/adb/tricky_store/keybox.xml
-    chown root:root /data/adb/tricky_store/keybox.xml
-    chcon u:object_r:system_file:s0 /data/adb/tricky_store/keybox.xml 2>/dev/null
+# هل الكيبوكس الحالي في مسار المحرك هو مجرّد نسخة من كيبوكس الإضافة؟
+TS_IS_BUNDLE=0
+if [ -n "$BUNDLED_SRC" ] && cmp -s "$TS_KEYBOX" "$BUNDLED_SRC" 2>/dev/null; then
+    TS_IS_BUNDLE=1
 fi
+cmp -s "$TS_KEYBOX" "$BUNDLE_COPY" 2>/dev/null && TS_IS_BUNDLE=1
+
+if keybox_valid "$USER_KEYBOX"; then
+    # 1) كيبوكس المستخدم المحفوظ — الأعلى أولوية ولا يُستبدل أبداً
+    cp -f "$USER_KEYBOX" "$TS_KEYBOX" 2>/dev/null
+    log -t "FALCON_FIX" "🔑 كيبوكس المستخدم المحفوظ مطبّق (لن يُستبدل بالمرفق)."
+elif keybox_valid "$TS_KEYBOX" && [ "$TS_IS_BUNDLE" -eq 0 ]; then
+    # 2) كيبوكس مخصّص وضعه المستخدم ⇒ نثبّته دائماً في مسار المستخدم
+    cp -f "$TS_KEYBOX" "$USER_KEYBOX" 2>/dev/null
+    log -t "FALCON_FIX" "🔑 وُجد كيبوكس مخصّص — تم تثبيته ككيبوكس مستخدم دائم."
+elif [ -n "$BUNDLED_SRC" ]; then
+    # 3) لا يوجد كيبوكس مستخدم (أو الموجود نسخة قديمة من كيبوكس الإضافة)
+    cp -f "$BUNDLED_SRC" "$TS_KEYBOX" 2>/dev/null
+    cp -f "$BUNDLED_SRC" "$BUNDLE_COPY" 2>/dev/null
+    log -t "FALCON_FIX" "🔑 تم نشر كيبوكس الإضافة الافتراضي (لا يوجد كيبوكس مستخدم)."
+fi
+
+chmod 644 "$TS_KEYBOX" 2>/dev/null
+chown root:root "$TS_KEYBOX" 2>/dev/null
+chcon u:object_r:system_file:s0 "$TS_KEYBOX" 2>/dev/null
+chmod 600 "$USER_KEYBOX" 2>/dev/null
+chown root:root "$USER_KEYBOX" 2>/dev/null
 
 # --- 2.5 (أُزيل) حقن هوية الكيرنل في KernelSU Manager ---
 # كان هذا الإجراء يعتمد على ثنائيات محرك cleverestricky المدفوع

@@ -1,8 +1,8 @@
 id=playintegrityfix
 name=FALCON INTEGRITY FIX
-version=v3.01
-versionCode=101
+version=v3.04
+versionCode=104
 author=ABUFARID | Telegram=@FALCON_KERNEL
-description=🟢 ZygiskNext Ready | 🎭 PIF + 🔐 Tricky Store OSS v3.1.0 | 🩺 RKP Auto-Fix | 🛡️ بلا مسح بيانات جوجل | 👤 Online: 10
+description=🟢 ZygiskNext Ready | 🎭 PIF + 🔐 Tricky Store OSS v3.1.0 | 🩺 RKP Auto-Fix | 🛡️ بلا تعليق الجهاز وبلا مسح بيانات | 👤 Online: 10
 updateJson=https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/update.json
 zygisk=true

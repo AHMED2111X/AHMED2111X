@@ -136,63 +136,94 @@ if ! echo -e "A\nB" | grep -m1 -A1 "A" | grep -q "B"; then
   fi
 fi
 
-# --- 1. تنظيف ملفات Keybox القديمة والنسخ الاحتياطية ونقل الملف المحلي الجديد ---
-step_item "جاري تنظيف ملفات Keybox القديمة والنسخ الاحتياطية (.bak/.tmp/.xml)..."
+# --- 1. Keybox: نحفظ كيبوكس المستخدم الصالح ولا نطمسه أبداً (v3.04) ---
+# ⚠️ كان هذا الزر يحذف الكيبوكس ثم ينسخ كيبوكس الإضافة المرفق فوقه، فيُدمَّر أي
+#    كيبوكس جديد ثبّته المستخدم. الآن: الأولوية لكيبوكس المستخدم ثم الموجود ثم المرفق.
+step_item "جاري التحقق من سلامة ملف Keybox الحالي..."
 
 TARGET_DIR="/data/adb/tricky_store"
-mkdir -p "$TARGET_DIR"
-chmod 755 "$TARGET_DIR"
-chown root:root "$TARGET_DIR"
+mkdir -p "$TARGET_DIR" /data/adb/falcon
+chmod 755 "$TARGET_DIR" 2>/dev/null
+chown root:root "$TARGET_DIR" 2>/dev/null
 
-# حذف أي ملفات قديمة أو احتياطية أو مؤقتة أو كيبوكس سابقة
-rm -f "$TARGET_DIR/keybox.xml" 2>/dev/null
-rm -f "$TARGET_DIR"/*.bak 2>/dev/null
-rm -f "$TARGET_DIR"/*.tmp 2>/dev/null
-rm -f "$TARGET_DIR"/*keybox* 2>/dev/null
-step_success "تم تنظيف ملفات Tricky Store القديمة بنجاح"
+TS_KEYBOX="$TARGET_DIR/keybox.xml"
+USER_KEYBOX="/data/adb/falcon/keybox.xml"
 
-step_item "جاري البحث عن ملف Keybox داخل الموديول ونقله..."
-TARGET_KEYBOX="$TARGET_DIR/keybox.xml"
-KEYBOX_SRC=""
+kb_valid() { [ -s "$1" ] && grep -q "<AndroidAttestation" "$1" 2>/dev/null; }
 
-if [ -f "$MODDIR/keybox.xml" ]; then
-    KEYBOX_SRC="$MODDIR/keybox.xml"
-elif [ -f "$MODDIR/zygisk/keybox.xml" ]; then
-    KEYBOX_SRC="$MODDIR/zygisk/keybox.xml"
+BUNDLED_KEYBOX=""
+if [ -s "$MODDIR/keybox.xml" ]; then
+    BUNDLED_KEYBOX="$MODDIR/keybox.xml"
+elif [ -s "$MODDIR/zygisk/keybox.xml" ]; then
+    BUNDLED_KEYBOX="$MODDIR/zygisk/keybox.xml"
 fi
 
-if [ -n "$KEYBOX_SRC" ] && [ -f "$KEYBOX_SRC" ]; then
-    cp -f "$KEYBOX_SRC" "$TARGET_KEYBOX"
-    chmod 644 "$TARGET_KEYBOX"
-    chown root:root "$TARGET_KEYBOX"
-    chcon u:object_r:system_file:s0 "$TARGET_KEYBOX" 2>/dev/null
-    step_success "تم العثور على ملف Keybox ونقله بنجاح إلى Tricky Store"
+KB_CHOSEN=""
+if kb_valid "$USER_KEYBOX"; then
+    KB_CHOSEN="$USER_KEYBOX"
+    step_info "سيُستخدم كيبوكس المستخدم المحفوظ (لن يُستبدل بكيبوكس الإضافة)."
+elif kb_valid "$TS_KEYBOX"; then
+    KB_CHOSEN="$TS_KEYBOX"
+    step_info "وُجد كيبوكس صالح على الجهاز — تم الحفاظ عليه."
+elif [ -n "$BUNDLED_KEYBOX" ]; then
+    KB_CHOSEN="$BUNDLED_KEYBOX"
+    step_info "لا يوجد كيبوكس مستخدم — سيُثبّت الكيبوكس المرفق مع الإضافة."
+fi
+
+# حذف النسخ الاحتياطية/المؤقتة فقط — لا نحذف أي كيبوكس صالح
+rm -f "$TARGET_DIR"/*.bak "$TARGET_DIR"/*.tmp "$TARGET_DIR"/*.falcon_merge 2>/dev/null
+step_success "تم تنظيف ملفات Tricky Store المؤقتة بنجاح"
+
+step_item "جاري تثبيت ملف Keybox في المسار الدائم..."
+if [ -n "$KB_CHOSEN" ]; then
+    cp -f "$KB_CHOSEN" "$TS_KEYBOX"
+    chmod 644 "$TS_KEYBOX"
+    chown root:root "$TS_KEYBOX"
+    chcon u:object_r:system_file:s0 "$TS_KEYBOX" 2>/dev/null
+    cp -f "$KB_CHOSEN" "$USER_KEYBOX" 2>/dev/null
+    chmod 600 "$USER_KEYBOX" 2>/dev/null
+    chown root:root "$USER_KEYBOX" 2>/dev/null
+    step_success "تم تثبيت Keybox بشكل دائم (يبقى بعد إعادة التشغيل)"
 else
-    step_info "تنبيه: لم يتم العثور على ملف keybox.xml محلياً في الموديول."
+    step_info "تنبيه: لم يتم العثور على أي ملف keybox.xml صالح."
 fi
 
-# --- 2. سحب وإعادة استخدام البصمة والخصائص الحقيقية للجهاز الفعلي ---
-step_item "جاري قراءة واستخراج الخصائص والبصمة الحقيقية للجهاز..."
+# --- 2. قراءة بصمة التمويه (PIF) من custom.pif.prop ---
+# ⚠️ (v3.04) كان هذا الزر يكتب «بصمة الجهاز الحقيقية» (Red Magic/OnePlus) فيُتلف
+#    تمويه Play Integrity بالكامل! الآن يقرأ البصمة المزيفة (Pixel 6a) من
+#    custom.pif.prop نفسها التي يستخدمها المحرك عند الإقلاع.
+step_item "جاري قراءة بصمة التمويه من custom.pif.prop..."
 
-MODEL="$(getprop ro.product.model)"
-DEVICE="$(getprop ro.product.device)"
-PRODUCT="$(getprop ro.product.name)"
-MANUFACTURER="$(getprop ro.product.manufacturer)"
-FINGERPRINT="$(getprop ro.build.fingerprint)"
-SECURITY_PATCH="$(getprop ro.build.version.security_patch)"
-SDK_INT="$(getprop ro.build.version.sdk)"
+PROP_FILE="$MODDIR/custom.pif.prop"
+[ -s "$PROP_FILE" ] || PROP_FILE="$MODDIR/pif.prop"
 
-[ -z "$FINGERPRINT" ] && FINGERPRINT="$(getprop ro.vendor.build.fingerprint)"
-[ -z "$SECURITY_PATCH" ] && SECURITY_PATCH="$(date +%Y-%m-%d)"
-[ -z "$SDK_INT" ] && SDK_INT="34"
+pprop() {
+    awk -v k="$1" 'index($0, k"=")==1 { print substr($0, length(k)+2); exit }' "$PROP_FILE" 2>/dev/null | tr -d '\r'
+}
 
-step_info "الطراز الحقيقي    : $MODEL"
-step_info "المنتج الحقيقي    : $PRODUCT"
-step_info "البصمة الحقيقية  : $FINGERPRINT"
+MODEL="$(pprop MODEL)"
+DEVICE="$(pprop DEVICE)"
+PRODUCT="$(pprop PRODUCT)"
+MANUFACTURER="$(pprop MANUFACTURER)"
+FINGERPRINT="$(pprop FINGERPRINT)"
+SECURITY_PATCH="$(pprop SECURITY_PATCH)"
+SDK_INT="$(pprop DEVICE_INITIAL_SDK_INT)"
+
+[ -z "$MODEL" ] && MODEL="$(getprop ro.product.model)"
+[ -z "$DEVICE" ] && DEVICE="$(getprop ro.product.device)"
+[ -z "$PRODUCT" ] && PRODUCT="$(getprop ro.product.name)"
+[ -z "$MANUFACTURER" ] && MANUFACTURER="$(getprop ro.product.manufacturer)"
+[ -z "$FINGERPRINT" ] && FINGERPRINT="$(getprop ro.build.fingerprint)"
+[ -z "$SECURITY_PATCH" ] && SECURITY_PATCH="2026-09-05"
+[ -z "$SDK_INT" ] && SDK_INT="32"
+
+step_info "الطراز المزيف    : $MODEL"
+step_info "المنتج المزيف    : $PRODUCT"
+step_info "البصمة المزيفة   : $FINGERPRINT"
 step_info "الرقعة الأمنية    : $SECURITY_PATCH"
-step_success "تم استخراج خصائص الجهاز الحقيقي بنجاح"
+step_success "تم قراءة بصمة التمويه بنجاح"
 
-step_item "جاري كتابة الإعدادات والخصائص الحقيقية لملف pif.json..."
+step_item "جاري كتابة الإعدادات المزيفة لملف pif.json..."
 cat <<EOF > pif.json
 {
   "MANUFACTURER": "$MANUFACTURER",
@@ -204,7 +235,7 @@ cat <<EOF > pif.json
   "DEVICE_INITIAL_SDK_INT": "$SDK_INT"
 }
 EOF
-step_success "تم إنشاء ملف pif.json بالبصمة الحقيقية للجهاز"
+step_success "تم إنشاء ملف pif.json ببصمة التمويه"
 
 # --- 3. الترقية والمزامنة ---
 MIGRATE_SCRIPT=""
@@ -273,7 +304,15 @@ if [ -f "$TS_SECPAT" ]; then
   step_success "تم توحيد تاريخ الرقعة الأمنية لـ Tricky Store"
 fi
 
-# --- 5. إعادة تشغيل العمليات وتطبيق التمويه ---
+# --- 5. تثبيت ملفات البصمة المزيفة نهائياً ثم إعادة تشغيل العمليات (v3.04) ---
+step_item "جاري تثبيت ملفات البصمة المزيفة (JSON/prop) عبر apply_pif.sh..."
+if [ -f "$MODDIR/apply_pif.sh" ]; then
+  sh "$MODDIR/apply_pif.sh" force >/dev/null 2>&1
+  step_success "تم تثبيت ملفات البصمة المزيفة بنجاح"
+else
+  step_info "تنبيه: apply_pif.sh غير موجود."
+fi
+
 step_item "جاري إعادة تشغيل خدمات Google Play Services (GMS)..."
 if [ -f "$MODDIR/killpi.sh" ]; then
   sh "$MODDIR/killpi.sh" >/dev/null 2>&1

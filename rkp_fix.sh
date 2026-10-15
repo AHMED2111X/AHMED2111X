@@ -58,13 +58,15 @@ say() {
 reboot_now() {
     say "🔄 إعادة تشغيل الجهاز الآن..."
     sync 2>/dev/null
-    if command -v svc >/dev/null 2>&1; then
-        svc power reboot 2>/dev/null && exit 0
-    fi
-    if command -v reboot >/dev/null 2>&1; then
-        reboot 2>/dev/null && exit 0
-    fi
-    say "⚠️ تعذّرت إعادة التشغيل تلقائياً — أعد التشغيل يدوياً."
+    # ⚠️ نُطلق إعادة التشغيل في الخلفية حتى لا تعلّق واجهة الويب (WebUI) أبداً.
+    (
+        sleep 2
+        if command -v svc >/dev/null 2>&1; then
+            svc power reboot 2>/dev/null
+        fi
+        command -v reboot >/dev/null 2>&1 && reboot 2>/dev/null
+    ) >/dev/null 2>&1 &
+    return 0
 }
 
 # --- وضع google: تصفير خدمات جوجل فقط ---
@@ -111,12 +113,13 @@ say "✔ تم العثور على أداة الإصلاح: $KM_BIN"
 # --- 2. فحص حالة مفاتيح RKP الحالية ---
 say ""
 say "📋 الخطوة 1: فحص وحدات Remote Key Provisioning المتوفرة..."
-RKP_LIST=$(cmd remote_provisioning list 2>&1)
+# 🛡️ timeout إلزامي: أمر RKP قد يعلّق الجهاز إن كان TEE تالفاً
+RKP_LIST=$(timeout 20 cmd remote_provisioning list 2>&1)
 say "$RKP_LIST"
 
 say ""
 say "📋 الخطوة 2: محاولة إصدار شهادة تحقق (CSR) من TEE..."
-CSR_OUT=$(cmd remote_provisioning certify default 2>&1)
+CSR_OUT=$(timeout 30 cmd remote_provisioning certify default 2>&1)
 CSR_STATE="unknown"
 
 if echo "$CSR_OUT" | grep -qE "RkpProxyException|Failure in CSR|ERROR_UNKNOWN" 2>/dev/null; then
@@ -144,22 +147,40 @@ fi
 
 # --- 3. إعادة طلب شهادات جديدة من جوجل (وضع RKP) ---
 say ""
-say "🛠️ الخطوة 3: تنفيذ إعادة التزوير عبر KmInstallKeybox بوضع RKP..."
-say "   (الأداة تتجاهل ملف الـ XML وتطلب من TEE شهادات جديدة من جوجل)"
+SKIPPED=0
+if [ "$CSR_STATE" = "healthy" ]; then
+    # 🛡️ حماية حرجة: إعادة التزوير على مفاتيح سليمة لا تفيد إطلاقاً،
+    # وهي عملية خطيرة على TEE/keystore2 وقد تعلّق الجهاز بلا سبب.
+    # لذلك نتخطّاها دائماً ونسلك مسار إعادة التشغيل فقط.
+    say "ℹ️ مفاتيح التحقق سليمة — تم تخطي إعادة التزوير (عملية خطيرة بلا داعٍ)."
+    say "   السبب الحقيقي لظهور «غير معتمد» غالباً فتح البوت لودر وليس المفاتيح."
+    SKIPPED=1
+    INSTALL_OUT=""
+    RC=0
+else
+    say "🛠️ الخطوة 3: تنفيذ إعادة التزوير عبر KmInstallKeybox بوضع RKP..."
+    say "   (الأداة تتجاهل ملف الـ XML وتطلب من TEE شهادات جديدة من جوجل)"
+    say "   ⏳ مهلة قصوى 90 ثانية حمايةً للجهاز من التعليق."
 
-EMPTY_XML="/data/local/tmp/falcon_empty.xml"
-touch "$EMPTY_XML" 2>/dev/null
+    EMPTY_XML="/data/local/tmp/falcon_empty.xml"
+    touch "$EMPTY_XML" 2>/dev/null
 
-INSTALL_OUT=$(LD_LIBRARY_PATH=/vendor/lib64/hw:/vendor/lib64 \
-    "$KM_BIN" "$EMPTY_XML" 0 true true 2>&1)
-RC=$?
-say "$INSTALL_OUT"
+    # 🛡️ timeout إلزامي: أداة ZTE تعمل على TEE وقد تعلّق الجهاز بلا مهلة
+    INSTALL_OUT=$(timeout 90 env LD_LIBRARY_PATH=/vendor/lib64/hw:/vendor/lib64 \
+        "$KM_BIN" "$EMPTY_XML" 0 true true 2>&1)
+    RC=$?
+    say "$INSTALL_OUT"
 
-rm -f "$EMPTY_XML" 2>/dev/null
+    rm -f "$EMPTY_XML" 2>/dev/null
+fi
 
 if [ "$RC" = "0" ]; then
     say ""
-    say "✔ تم تنفيذ إعادة التزوير بنجاح (رمز الخروج: $RC)."
+    if [ "$SKIPPED" = "1" ]; then
+        say "ℹ️ تم تخطي إعادة التزوير (المفاتيح سليمة أصلاً)."
+    else
+        say "✔ تم تنفيذ إعادة التزوير بنجاح (رمز الخروج: $RC)."
+    fi
 
     if [ "$MODE" = "full" ]; then
         # ⛔ أُزيل مسح بيانات جوجل (pm clear) نهائياً لأنه كان يُخرج حسابات متجر Play.

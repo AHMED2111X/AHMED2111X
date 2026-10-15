@@ -35,8 +35,20 @@ for P in TrickyStoreOSS TrickyStore; do
 done
 pkill -f "io.github.beakthoven.TrickyStoreOSS" 2>/dev/null || true
 
+# --- إلغاء أي حذف معلّق للوحدات المتعارضة (احترام ممتلكات المستخدم) ---
+# إن أزلت موديولنا قبل إعادة التشغيل، نُلغي علامة الحذف التي وضعناها على
+# tricky_store / safetynet-fix حتى لا تُمسح وحدات المستخدم بلا سبب.
+for RID in tricky_store safetynet-fix; do
+    for RBASE in /data/adb/modules /data/adb/modules_update; do
+        [ -d "$RBASE/$RID" ] || continue
+        rm -f "$RBASE/$RID/remove" "$RBASE/$RID/disable" 2>/dev/null
+    done
+done
+
 # --- تنظيف ملفات حالة المحرك ---
-rm -rf /data/adb/tricky_store 2>/dev/null
+# ⛔ لا نحذف /data/adb/tricky_store إطلاقاً: قد يحتوي كيبوكس/إعدادات شخصية
+#    للمستخدم من وحدة TrickyStore المستقلة. نُبقيها كما هي.
+rm -f /data/adb/tricky_store/*.bak /data/adb/tricky_store/*.falcon_merge 2>/dev/null
 rm -f /data/adb/falcon_daemon.log /data/adb/falcon_pif.log /data/adb/falcon_rkp_fix.log 2>/dev/null
 
 exit 0

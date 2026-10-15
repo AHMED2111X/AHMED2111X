@@ -100,14 +100,16 @@ else
     ui_print "- ⚠️ لم يتم العثور على محرك التعتيد ($ABI)" ; delay
 fi
 
-# --- إزالة الوحدات المتعارضة (TrickyStore المستقلة + SafetyNet Fix) ---
-# المحرك مدمج بالكامل داخل هذه الإضافة، فلا حاجة لوحدة tricky_store منفصلة
-# تتعارض معه (وهذا هو سبب رسالة "مسح التراك ستور" عند التثبيت).
-for RID in tricky_store safetynet-fix; do
+# --- حذف الوحدات المتعارضة (TrickyStore المستقلة + SafetyNet Fix) ---
+# المحرك (Tricky Store OSS) مدمج بالكامل داخل هذه الإضافة، فوجود وحدة tricky_store
+# منفصلة مفعّلة يعني محرّكين يحقنان في keystore2 ⇒ تعارض يكسر Play Integrity
+# وقد يعلّق الجهاز. الإضافة العاملة (PlayIntegrity_19.7.7_r2) تحذفها بنفس الطريقة.
+CONFLICT_IDS="tricky_store safetynet-fix"
+for RID in $CONFLICT_IDS; do
     for RBASE in /data/adb/modules /data/adb/modules_update; do
         if [ -d "$RBASE/$RID" ]; then
             touch "$RBASE/$RID/disable" "$RBASE/$RID/remove" 2>/dev/null
-            ui_print "- 🗑️ سيُزال الموديول المتعارض ($RID) عند إعادة التشغيل" ; delay
+            ui_print "- 🗑️ سيُحذف الموديول المتعارض ($RID) عند إعادة التشغيل" ; delay
         fi
     done
 done

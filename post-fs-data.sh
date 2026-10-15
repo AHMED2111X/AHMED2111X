@@ -231,6 +231,15 @@ fi
     FORCE_UPDATE=0
     [ -f /data/adb/falcon/force_keybox_update ] && FORCE_UPDATE=1
 
+    # 🔑 (v3.04) كيبوكس المستخدم الدائم /data/adb/falcon/keybox.xml مُقدَّس:
+    #    إن وُجد صالحاً فلا ننزّل ولا نستبدل شيئاً — ولا يُلغيه force_keybox_update.
+    USER_KEYBOX="/data/adb/falcon/keybox.xml"
+    if [ -s "$USER_KEYBOX" ] && grep -q "<AndroidAttestation" "$USER_KEYBOX" 2>/dev/null; then
+        rm -f "$TARGET_FILE.tmp" 2>/dev/null
+        log -t "$LOG_TAG" "كيبوكس المستخدم محفوظ — تم تخطي التحديث التلقائي نهائياً."
+        exit 0
+    fi
+
     HAD_VALID=0
     if [ -s "$TARGET_FILE" ]; then
         # نعتبر الكيبوكس الحالي صالحاً إذا احتوى على هيكل AndroidAttestation
@@ -271,6 +280,8 @@ fi
         chmod 644 "$TARGET_FILE"
         chown root:root "$TARGET_FILE"
         chcon u:object_r:system_file:s0 "$TARGET_FILE" 2>/dev/null
+        # 🔑 (v3.04) نحفظ النسخة المنزّلة ككيبوكس مستخدم دائم حتى لا تُستبدل لاحقاً
+        cp -f "$TARGET_FILE" /data/adb/falcon/keybox.xml 2>/dev/null
         log -t "$LOG_TAG" "تم تحديث Keybox بنجاح وتطبيق سياق SELinux."
     else
         rm -f "$TARGET_FILE.tmp" 2>/dev/null
