@@ -166,7 +166,7 @@
 
 ## 🔗 الروابط
 
-* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.15.zip](https://github.com/AHMED2111X/AHMED2111X/raw/main/FALCONINTEGITY_FIX_V3.15.zip)
+* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.15.zip](https://github.com/AHMED2111X/AHMED2111X/releases/download/v3.15/FALCONINTEGITY_FIX_V3.15.zip)
 * 📢 **القناة الرسمية:** https://t.me/FALCON_KERNEL_PRO
 * 👨‍💻 **تواصل المطور:** https://t.me/falcon_kernel
 * 🐙 **مستودع التحديثات:** https://github.com/AHMED2111X/AHMED2111X
