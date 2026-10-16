@@ -632,6 +632,9 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     resetprop_if_diff ro.boot.veritymode enforcing
     resetprop_if_diff sys.oem_unlock_allowed 0
 
+    # --- (v3.16) تدميج مساحة الخصائص: إزالة القيم القديمة العالقة في ذاكرة النظام ---
+    (timeout 10 resetprop --compact) >/dev/null 2>&1 || true
+
     while true; do
         # فحص محرك حقن Zygisk في الذاكرة وعبر المقابس
         ZYGISK_FOUND=false

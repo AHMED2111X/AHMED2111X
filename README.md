@@ -1,8 +1,8 @@
-🦅🔥 **FALCON INTEGRITY FIX — الإصدار v3.15** 🔥🦅
+🦅🔥 **FALCON INTEGRITY FIX — الإصدار v3.16** 🔥🦅
 
 ━━━━━━━━━━━━━━━━━━━━
 **الإصدار الذي أنهى مشكلة** ❌ «الجهاز غير معتمد» **و** ❌ «Bootloader Unlocked» **في فحص Play Integrity!**
-بلا إغلاق بوت لودر · بلا مسح بيانات جوجل · بلا خروج من الحسابات.
+بلا إغلاق بوت لودر · بلا مسح تلقائي لأي بيانات جوجل · لا خروج من الحسابات إلا بزرّ «المسح الشامل» الذي تضغطه بنفسك.
 ━━━━━━━━━━━━━━━━━━━━
 
 ## 🎯 ما هو الموديول؟
@@ -11,7 +11,7 @@
 
 | المحرّك | الوظيفة |
 |---|---|
-| 🎭 **بصمة PIF** | بصمة Pixel 6a (bluejay · beta) مع رقعة أمنية مطابقة تماماً: `2026-09-05` |
+| 🎭 **بصمة PIF** | بصمة Pixel 6a (bluejay · beta · Canary ZP11.260918.007) مع رقعة أمنية مطابقة تماماً: `2026-10-05` |
 | 🔐 **تعتيد الكيبوكس** | محرك **Tricky Store OSS v3.1.0** مفتوح المصدر — يحقن `keystore2` فيُخفي فتح البوت لودر عن جوجل |
 | 🩺 **إصلاح RKP** | مخصّص لأجهزة Red Magic / ZTE / Nubia التي تفقد مفاتيح التحقق بعد استعادة EDL أو تحديث النظام |
 | 📱 **واجهتان WebUI** | `FALCON TRICKY` — مرصد تخفٍّ بـ **4 لغات** (عربي · إنجليزي · تركي · روسي) |
@@ -25,6 +25,29 @@
 ✅ STRONG_INTEGRITY   ← وفق قبول جوجل لمفتاح الكيبوكس
 ✅ متجر Google Play يعرض: «الجهاز معتمد»
 ```
+
+## 🆕 الجديد في v3.16 — سجل حي بلا انتظار + اعتماد متجر Play + العداد
+
+📜 **مشكلة السجل «المنتظر» انتهت نهائياً — وُجد السبب الجذري:**
+
+* 🧠 السبب كان دقيقاً: العملية الخلفية تُبقي **قناة الاتصال بالواجهة معلّقة** حتى تنتهي، فتنتهي مهلة البداية (20 ثانية) قبل أن يبدأ البثّ أصلاً — «انتهت المهلة» بلا أي سطر.
+* ⚡ الحل: فصل واصفات العملية الخلفية (`>/dev/null 2>&1`) — الآن **كل عملية طويلة تبثّ سطورها لحظياً**: فحص/إصلاح/إجبار RKP · البصمة · فحص CRL · تحديث Canary · المسح الشامل — مع **طمأنة كل 20 ثانية** ونتيجة واضحة «✅ انتهى بنجاح» أو فشل. (أُثبت بالقياس: 4 ثوانٍ انتظار ← صفر).
+* 🖥️ الإصلاح في **الواجهتين** — الرئيسية و FALCON TRICKY.
+
+✅ **إجبار اعتماد متجر Play (Certified) — في الواجهة الرئيسية:**
+
+* زر جديد يعيد ضبط **متجر Play وحده** ليقرأ حالة الاعتماد من جديد — **حسابك لا يُمس** (محفوظ في خدمات جوجل GMS لا في المتجر).
+
+💣 **المسح الشامل لجوجل (الخيار الأخير) — في الواجهتين:**
+
+* يمسح بيانات **متجر Play + خدمات جوجل (GMS) + إطار خدمات جوجل (GSF)** ثم **يعيد التشغيل تلقائياً** — للاعتماد المستعصي فقط.
+* ⛔ يُسجّل خروجك من حسابات جوجل (تُضيفها من جديد) — أما صورك وملفاتك وتطبيقاتك فلا تُمس إطلاقاً.
+
+📊 **عداد المستخدمين النشطين في FALCON TRICKY:**
+
+* نفس عداد الواجهة الرئيسية (نقطة خضراء نابضة + العدد الحقيقي) — في أعلى القائمة، ومترجم بأربع لغات.
+
+🩺 **ومن v3.16 أيضاً:** فحص إبطال الكيبوكس (CRL) بزر مستقل في الواجهتين · تحديث بصمة Canary عند الطلب · سطر إقلاع محروس · تحسين سرعة الواجهة الرئيسية.
 
 ## 🆕 الجديد في v3.15 — حذف قسري لإضافات TrickyStore + ربط مزدوج فوري
 
@@ -69,7 +92,7 @@
 * 🔤 وإن تعذّر الاستخراج (تطبيق نظامي أو APK مقسّم) يظهر **حرف ملوّن** بلون ثابت لكل تطبيق.
 * 📐 يفضّل أعلى دقة متاحة (`xxxhdpi` → `hdpi`) ويفضّل PNG على WEBP.
 
-## ✨ ما أضافته سلسلة التحديثات v3.05 → v3.15
+## ✨ ما أضافته سلسلة التحديثات v3.05 → v3.16
 
 | الإصدار | الإضافة |
 |---|---|
@@ -84,6 +107,7 @@
 | **v3.13** | 🖼️ **أيقونات التطبيقات الحقيقية** + بديل الحرف الملوّن |
 | **v3.14** | ⚡ **ردّ فعل لحظي** (إلغاء `readState` بعد الحفظ + أيقونات عبر HTTP بلا جسر) + **زر «تحديد الكل» و«إلغاء الكل»** بضغطة مع عدّاد |
 | **v3.15** | 🗑️ **حذف قسري فوري لأي إضافة/ملحق يخص TrickyStore** (كشف من `module.prop` + قائمة معرّفات + مسح عند كل إقلاع) + 🔗 **ربط مزدوج فوري** بين الوحدة الأم والمرافقة |
+| **v3.16** | 📜 **سجل حي لكل عملية طويلة** (إصلاح جذري لتعليق الجسر) + ✅ **إجبار اعتماد متجر Play** + 💣 **مسح شامل لجوجل** (اختياري) + 📊 **عداد المستخدمين النشطين** في FALCON TRICKY + 🩺 فحص CRL وتحديث Canary |
 
 ## 🧩 وحدة FALCON TRICKY المرافقة
 
@@ -95,7 +119,7 @@
 
 ### 📖 شرح كل قائمة في واجهة FALCON TRICKY
 
-**🔝 الأعلى:** رادار + اسم الواجهة، وزر **⟳ تحديث** (يقرأ حالة الملفات من جديد — لحظي).
+**🔝 الأعلى:** رادار + اسم الواجهة + **📊 عداد المستخدمين النشطين** (نقطة خضراء نابضة + العدد الحقيقي)، وزر **⟳ تحديث** (يقرأ حالة الملفات من جديد — لحظي).
 
 **🌐 شريط اللغات:** العربية · English · Türkçe · Русский — التبديل فوري، والنصوص اللاتينية مثل `@falcon_kernel` لا تنقلب.
 
@@ -118,6 +142,8 @@
 * **📜 سجل الإخفاء** — يقرأ `/data/adb/falcon/auto_hide.log`: الدليل المكتوب على أن الإخفاء التلقائي عمل فعلاً.
 * **💾 حفظ الإعدادات** — يحفظ المفتاح واللغة فعلياً ويتحقق من الملف بعد الكتابة.
 * **📥 استيراد كيبوكس** — يبحث في الوحدات و zygisk و payload و Downloads و `/data/misc` وينسخه إلى `/data/adb/tricky_store/keybox.xml`.
+* **🩺 فحص الإبطال (CRL)** — يفحص هل كيبوكسك أُبطل من جوجل عبر قائمة الإبطال الرسمية (بلا طباعة أي محتوى مفاتيح في السجل).
+* **💣 مسح شامل لجوجل (الخيار الأخير)** — يمسح بيانات المتجر + GMS + GSF ثم **يعيد التشغيل تلقائياً** — يُخرج الحسابات، فلا تستخدمه إلا إن استعصى الاعتماد.
 * **🩺 فحص الجسر** — تشخيص كامل (الجسر · الكتابة · الصلاحيات · المسارات) — أرسل نتيجته عند أي مشكلة.
 * **📄 نسخ السجل** — نافذة بكل السجل لتحديده ونسخه.
 * **📋 استعراض القائمة الخام** — يطبع `target.txt` سطراً سطراً كما هو على الجهاز.
@@ -151,7 +177,7 @@
 * 🚫 **لا تثبّت وحدة أو ملحقاً يخص TrickyStore** — يُحذف قسرياً عند التثبيت وعند الإقلاع لأن التكرار يُجمّد الجهاز (حقن مزدوج في `keystore2`).
 * 🌀 **لا تُكرّر الفحص بسرعة** — جوجل تُرجع خطأً مؤقتاً (`-17`).
 * 🧩 **المعرّف موحّد** (`playintegrityfix`) فتُستبدل الإضافة المشابهة تلقائياً.
-* 🧹 الموديول **لا يمسح بيانات جوجل** ولا أي ملف تحت `/data/data` — حساباتك في متجر Play لا تُخرَج أبداً.
+* 🧹 الموديول **لا يمسح أي بيانات من تلقاء نفسه** — لا شيء يُمسح إلا بضغطتك: «إجبار اعتماد متجر Play» (المتجر وحده، وحسابك لا يُمس) أو «💣 المسح الشامل لجوجل» (وهو وحده الذي يُخرج الحسابات — باختيارك أنت).
 
 ## 🗂️ أماكن الملفات
 
@@ -166,7 +192,7 @@
 
 ## 🔗 الروابط
 
-* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.15.zip](https://github.com/AHMED2111X/AHMED2111X/releases/download/v3.15/FALCONINTEGITY_FIX_V3.15.zip)
+* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.16.zip](https://github.com/AHMED2111X/AHMED2111X/releases/download/v3.16/FALCONINTEGITY_FIX_V3.16.zip)
 * 📢 **القناة الرسمية:** https://t.me/FALCON_KERNEL_PRO
 * 👨‍💻 **تواصل المطور:** https://t.me/falcon_kernel
 * 🐙 **مستودع التحديثات:** https://github.com/AHMED2111X/AHMED2111X
@@ -174,19 +200,24 @@
 ━━━━━━━━━━━━━━━━━━━━
 ## 🇬🇧 English Summary
 
-**FALCON INTEGRITY FIX v3.15** — a complete root module that passes **Play Integrity 3/3** without locking the bootloader and without wiping any Google data (BASIC / DEVICE / STRONG).
+**FALCON INTEGRITY FIX v3.16** — a complete root module that passes **Play Integrity 3/3** without locking the bootloader and without any automatic wipe (BASIC / DEVICE / STRONG).
 
-* 🎭 **PIF fingerprint** — Pixel 6a (bluejay beta) with matching security patch `2026-09-05`.
+* 🎭 **PIF fingerprint** — Pixel 6a (bluejay beta · Canary ZP11.260918.007) with matching security patch `2026-10-05`.
 * 🔐 **Keybox attestation** — open-source **Tricky Store OSS v3.1.0** hooking `keystore2`, so the unlocked bootloader is hidden from Google.
 * 🩺 **Automatic RKP key repair** for Red Magic / ZTE / Nubia devices.
 * ⚡ **Instant UI (v3.14)** — no more 10-second “operation in progress”: saving no longer re-lists packages, and app icons are served as plain files from the module webroot instead of travelling over the root bridge.
 * ✔️ **Select all / Clear all (v3.14)** — hide or unhide every app currently on screen with one tap, with a live “can hide / can show” counter.
 * 🗑️ **Forced cleanup of TrickyStore addons (v3.15)** — any module or add-on tied to the original Tricky Store is detected from its folder name **and** its `module.prop` (id + name) and **hard-deleted instantly** at install (plus a safety known-id list), then re-checked on every boot. Your engine data in `/data/adb/tricky_store` is never touched, and the description-only weak signal just disables instead of deleting.
 * 🔗 **Instant two-way unlink (v3.15)** — removing either FALCON INTEGRITY FIX or FALCON TRICKY immediately removes the other one (with a guard flag so a running script is never deleted mid-execution, plus a boot-time orphan sweep).
+* 📜 **Live progress everywhere (v3.16)** — root cause found and fixed: the background operation used to hold the bridge pipe open, so the UI hit its 20 s timeout before streaming even started. Now every long operation streams its lines live with a 20 s reassurance and a clear success/fail result (measured: 4 s wait → 0).
+* ✅ **Force Play certification (v3.16)** — a button that resets the Play Store alone so it re-reads the certification status; your Google account is never touched (it lives in GMS).
+* 💣 **Full Google wipe (v3.16, last resort)** — clears Play Store + GMS + GSF data and reboots automatically; it signs you out of Google accounts (your photos, files and apps are untouched).
+* 📊 **Active-users counter in FALCON TRICKY (v3.16)** — the same live counter as the main UI, in all 4 languages.
+* 🩺 **CRL keybox-revocation check (both UIs) + on-demand Canary fingerprint updater + guarded boot line (v3.16).**
 * 📱 **FALCON TRICKY companion WebUI** in 4 languages (AR/EN/TR/RU) with a real **Save** button, instant load, auto-hide of newly installed apps, an on-device **hide log**, one-tap keybox import, and app icons extracted straight from the installed APKs.
 * 🔑 Keybox is transferred automatically to `/data/adb/tricky_store/keybox.xml` on install and every boot.
 * 🚫 Standalone `tricky_store` modules and any TrickyStore add-on are hard-removed at install and re-checked every boot (double injection into `keystore2` deadlocks the device).
-* 🔒 Your Google accounts are never signed out — no `pm clear`, nothing under `/data/data` is touched.
+* 🔒 Nothing is ever wiped automatically — the Play-certification reset (Play Store only; your account lives in GMS) and the optional last-resort full Google wipe only run when you tap their buttons. The full wipe signs you out of Google accounts — your choice; photos, files and apps are untouched.
 
 **Install:** flash the ZIP → reboot → wait 15–20 min → check Play Integrity once.
 **Requirements:** Android 10+, KernelSU-Next / Magisk / APatch, Zygisk Next.

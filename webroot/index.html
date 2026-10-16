@@ -6,10 +6,10 @@
     <link rel="icon" href="data:,">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        /* (v3.16) أُزيل استيراد خطوط جوجل الخارجي — كان يوقف فتح الواجهة حتى ينزّل الخط من الإنترنت */
         :root {
             --bg-gradient: radial-gradient(circle at 50% 0%, #1a102f 0%, #08090c 70%);
-            --panel: rgba(20, 23, 36, 0.65);
+            --panel: rgba(20, 23, 36, 0.92);
             --panel-border: rgba(255, 255, 255, 0.08);
             --panel-hover: rgba(28, 33, 50, 0.85);
             --input-bg: rgba(12, 14, 22, 0.7);
@@ -34,7 +34,7 @@
             background-image: var(--bg-gradient);
             background-attachment: fixed;
             color: var(--text);
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Naskh Arabic", sans-serif;
             margin: 0 auto;
             padding: 0 20px;
             min-height: 100vh;
@@ -73,7 +73,6 @@
             flex-direction: column;
             gap: 10px;
             background: var(--panel);
-            backdrop-filter: blur(16px);
             border: 1px solid var(--panel-border);
             border-radius: var(--radius-lg);
             padding: 14px;
@@ -100,9 +99,9 @@
             animation: pulse 1.5s infinite;
         }
         @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 200, 83, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
+            0% { opacity: 0.55; }
+            50% { opacity: 1; }
+            100% { opacity: 0.55; }
         }
         .online-title { font-size: 0.75rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; }
         .online-count { font-size: 1rem; font-weight: 800; color: #00c853; }
@@ -119,7 +118,7 @@
         .tab-panel { display: none; flex-direction: column; gap: 22px; }
         .tab-panel.active { display: flex; }
         .card {
-            background: var(--panel); backdrop-filter: blur(16px);
+            background: var(--panel);
             border: 1px solid var(--panel-border); border-radius: var(--radius-lg);
             padding: 26px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
         }
@@ -127,7 +126,7 @@
         .card-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
         .guide-box {
             background: var(--info-bg); border: 1px solid var(--info-border);
-            border-radius: var(--radius-lg); padding: 16px 20px; backdrop-filter: blur(12px);
+            border-radius: var(--radius-lg); padding: 16px 20px;
         }
         .guide-box summary {
             font-weight: 700; color: var(--accent-cyan); cursor: pointer;
@@ -209,30 +208,36 @@
                 <div class="action-bar" style="margin-top:20px; display: flex; gap: 12px; flex-wrap: wrap;">
                     <button class="btn btn-primary" onclick="fetchKeybox()">📥 جلب وتثبيت Keybox (الإنترنت)</button>
                     <button class="btn btn-apply-accent" onclick="installLocalKeyboxDevice()">📁 جلب وتثبيت Keybox.xml من الجهاز مباشرةً</button>
+                    <button class="btn" onclick="checkKeyboxCrl()">🩺 فحص إبطال الكيبوكس (CRL)</button>
                 </div>
             </div>
             <div class="card">
                 <div class="card-title">🩺 إصلاح مفاتيح التحقق RKP (أجهزة Red Magic / ZTE)</div>
                 <div class="card-desc">
                     يعالج حالة <strong>«مفاتيح التحقق تالفة»</strong> (تظهر عند فشل الأمر <code>cmd remote_provisioning certify default</code>، وغالباً بعد استعادة نسخة EDL) — فيعيد الجهاز طلب شهادات أصلية من جوجل عبر مفتاح TEE الخاص به.<br>
-                    <strong>تنبيه مهم:</strong> إذا كان الفحص يعرض <em>«TEE قادر على إصدار الشهادات»</em> فمعنى ذلك أن مفاتيحك <u>سليمة أصلاً</u>، وأن سبب المشكلة مختلف: جوجل ترفض شهادة الجهاز بسبب <strong>فتح البوت لودر</strong> (نصّ جوجل الرسمي: Lock bootloader to fix issue). في هذه الحالة استخدم زر <strong>إعادة تشغيل خدمات جوجل</strong> ثم تأكد من تفعيل تزوير حالة البوت لودر والكيبوكس.
+                    <strong>تنبيه مهم:</strong> إذا كان الفحص يعرض <em>«TEE قادر على إصدار الشهادات»</em> فمعنى ذلك أن مفاتيحك <u>سليمة أصلاً</u>، وأن سبب المشكلة مختلف: جوجل ترفض شهادة الجهاز بسبب <strong>فتح البوت لودر</strong> (نصّ جوجل الرسمي: Lock bootloader to fix issue). في هذه الحالة استخدم زر <strong>إعادة تشغيل خدمات جوجل</strong> ثم تأكد من تفعيل تزوير حالة البوت لودر والكيبوكس.<br>
+                    <strong>أجهزة ريد ماجيك (تحديث جوجل فبراير 2026):</strong> إذا كانت المفاتيح سليمة والفحص ما زال أحمر، فالجهاز يتجاهل الكيبوكس المسروق — استخدم زر <strong>🔧 إجبار إعادة التزوير</strong> (مخصّص لهذه الحالة، ويعمل حتى لو كانت المفاتيح سليمة).
                 </div>
                 <div class="action-bar" style="margin-top: 6px;">
                     <button class="btn btn-primary" onclick="rkpDiagnose()">🔍 فحص حالة مفاتيح RKP</button>
                     <button class="btn btn-apply-accent" onclick="fullRepair()">🚀 الإصلاح الكامل (RKP + إعادة تشغيل)</button>
                     <button class="btn" onclick="rkpRepair()">🛠️ إعادة تزوير RKP فقط</button>
                     <button class="btn" onclick="resetGoogle()">🔄 إعادة تشغيل خدمات جوجل (لتصبح Certified)</button>
+                    <button class="btn" onclick="rkpForce()">🔧 إجبار إعادة التزوير (أجهزة ريد ماجيك)</button>
+                    <button class="btn" onclick="certifyPlay()">✅ إجبار اعتماد متجر Play (Certified)</button>
+                    <button class="btn btn-danger-outline" onclick="googleWipeAll()">💣 المسح الشامل لجوجل (الخيار الأخير)</button>
                 </div>
             </div>
             <div class="card">
                 <div class="card-title">🎭 ملف البصمة (PIF Fingerprint) — custom.pif.prop</div>
                 <div class="card-desc">
                     البصمة المستخدمة في تزييف الجهاز (PIF). محرك الموديول يقرأ ملف البصمة من <code>/data/adb/modules/playintegrityfix/</code> وهو مجلد الموديول نفسه الآن. زرّ «تطبيق البصمة» يتحقّق من وجود بصمة صالحة، ويحوّل <code>custom.pif.prop</code> إلى JSON عند الحاجة، وينسخ <code>classes.dex</code> المطلوب (تتطلب إعادة تشغيل بعده).<br>
-                    <span style="opacity:.75">الملف المضمّن: بصمة Pixel 6a صالحة حتى 2026-10-28 — لا يُمسّ ملف بصمة صالح موجود لديك.</span>
+                    <span style="opacity:.75">الملف المضمّن: بصمة Pixel 6a صالحة حتى 2026-11-18 (Canary 2026-10-07) — لا يُمسّ ملف بصمة صالح موجود لديك.</span>
                 </div>
                 <div class="action-bar" style="margin-top:6px;">
                     <button class="btn btn-primary" onclick="applyPif()">🎭 تطبيق البصمة الآن (تتطلب إعادة التشغيل)</button>
                     <button class="btn" onclick="checkPif()">🔎 فحص ملف البصمة الحالي</button>
+                    <button class="btn btn-apply-accent" onclick="updateCanaryFingerprint()">🔁 تحديث بصمة Canary تلقائياً (جديد v3.16)</button>
                 </div>
             </div>
             <div class="card">
@@ -371,11 +376,12 @@
 
         function falconRun(cmd, done, opts) {
             const secs = (opts && opts.timeout) || FALCON_TIMEOUT;
-            if (falconBusy) {
+            const silent = !!(opts && opts.silent); // (v3.16) قراءة خلفية لا تقفل الواجهة (لتتبّع سجل التحديث الحي)
+            if (!silent && falconBusy) {
                 addLog('⚠️ هناك عملية قيد التنفيذ بالفعل — انتظر انتهاءها.');
                 return;
             }
-            falconBusy = true;
+            if (!silent) falconBusy = true;
             const wrapped = falconWrap(cmd, secs);
             let finished = false;
             let watchdog = null;
@@ -383,17 +389,15 @@
                 if (finished) return;
                 finished = true;
                 if (watchdog) clearTimeout(watchdog);
-                falconBusy = false;
-                falconBusyUI(false);
+                if (!silent) { falconBusy = false; falconBusyUI(false); }
                 done(r);
             };
             // شبكة أمان: حرّر الواجهة حتى لو تجمّد الجسر
             watchdog = setTimeout(function() {
                 if (finished) return;
                 finished = true;
-                falconBusy = false;
-                falconBusyUI(false);
-                addLog('⚠️ انتهت المهلة (' + secs + 'ث) — تم تحرير الواجهة. الأمر قد يكون ما زال يعمل في الخلفية.');
+                if (!silent) { falconBusy = false; falconBusyUI(false); }
+                if (!silent) addLog('⚠️ انتهت المهلة (' + secs + 'ث) — تم تحرير الواجهة. الأمر قد يكون ما زال يعمل في الخلفية.');
                 done('__TIMEOUT__');
             }, secs * 1000 + 15000);
             try {
@@ -430,28 +434,92 @@
             finish('__NO_SHELL__');
         }
 
+        // (v3.16) مشغّل موحّد للعمليات الطويلة: يشتغّل في الخلفية ويسكب التقدم سطراً بسطر في السجل
+        // (يحل مشكلة «الانتظار الصامت»: ترى كل خطوة مباشرة + طمأنة دورية + نتيجة نجاح/فشل واضحة)
+        let falconLive = null; // اسم العملية الطويلة الجارية (يمنع تشغيل عمليتين معاً)
+        function falconRunLive(label, cmd, opts) {
+            opts = opts || {};
+            if (falconLive) {
+                addLog('⚠️ عملية أخرى قيد التنفيذ الآن (' + falconLive + ') — انتظر انتهاءها أولاً.');
+                return;
+            }
+            if (opts.confirmText && !confirm(opts.confirmText)) return;
+            const LOGF = opts.logPath || '/data/adb/falcon/live_op.log';
+            falconLive = label;
+            addLog('⏳ ' + label + ' — بدأ التنفيذ في الخلفية، والتقدم سيظهر هنا مباشرة...');
+            falconRun('mkdir -p /data/adb/falcon 2>/dev/null; rm -f ' + LOGF + '; ( ' + cmd + ' > ' + LOGF + ' 2>&1; echo FALCON_EXIT=$? >> ' + LOGF + ' ) >/dev/null 2>&1 & echo FALCON_STARTED', function (r) {
+                if (r === '__NO_SHELL__') { falconLive = null; addLog('✖ لا تتوفر واجهة أوامر root في هذه البيئة.'); return; }
+                if (r === '__TIMEOUT__') { falconLive = null; return; }
+                if (String(r || '').indexOf('FALCON_STARTED') === -1) { falconLive = null; addLog('✖ تعذّر بدء العملية في الخلفية.'); return; }
+                let shown = 0, ticks = 0, idle = 0;
+                function pollLive() {
+                    falconRun('cat ' + LOGF + ' 2>/dev/null', function (r2) {
+                        if (r2 === '__NO_SHELL__') { falconLive = null; addLog('✖ انقطع الاتصال بالجسر — أعد فتح الواجهة لمتابعة السجل.'); return; }
+                        if (r2 === '__TIMEOUT__') { nextLive(); return; }
+                        const t = String(r2 || '');
+                        const cut = t.lastIndexOf('\n');
+                        if (cut >= 0 && cut + 1 > shown) {
+                            const chunk = t.substring(shown, cut + 1).replace(/\n+$/, '');
+                            if (chunk.trim()) addLog(chunk);
+                            shown = cut + 1;
+                            idle = 0;
+                        } else {
+                            idle++;
+                            if (idle % 8 === 0) addLog('… ' + label + ' ما زال يعمل (لم يتوقف — ينتظر الخطوة التالية)');
+                        }
+                        if (t.indexOf('FALCON_EXIT=') !== -1) {
+                            falconLive = null;
+                            const mm = /FALCON_EXIT=([0-9]+)/.exec(t);
+                            const code = mm ? mm[1] : '?';
+                            if (opts.onDone) { opts.onDone(t, code); return; }
+                            if (code === '0') {
+                                addLog('✅ انتهى ' + label + ' بنجاح.');
+                                if (opts.successMsg) alert(opts.successMsg);
+                            } else {
+                                addLog('⚠️ انتهى ' + label + ' برمز خطأ (' + code + ') — راجع السطور أعلاه.');
+                                if (opts.failMsg) alert(opts.failMsg);
+                            }
+                            return;
+                        }
+                        nextLive();
+                    }, { timeout: 15, silent: true });
+                }
+                function nextLive() {
+                    ticks++;
+                    if (ticks > 300) { falconLive = null; addLog('⚠️ توقف عرض التتبع (12 دقيقة). السجل محفوظ في: ' + LOGF); return; }
+                    setTimeout(pollLive, 2500);
+                }
+                setTimeout(pollLive, 1500);
+            }, { timeout: 20 });
+        }
+
         let deviceId = localStorage.getItem('falcon_device_id');
         if (!deviceId) {
             deviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('falcon_device_id', deviceId);
         }
         function refreshLiveStatus() {
+            // (v3.16) مهلة قصوى 6 ثوانٍ — كي لا تبقى الاتصالات معلقة إن كان الخادم نائماً
+            const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+            const timer = ctl ? setTimeout(() => { try { ctl.abort(); } catch (e) {} }, 6000) : null;
             fetch(`${SERVER_URL}/ping`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deviceId: deviceId })
+                body: JSON.stringify({ deviceId: deviceId }),
+                signal: ctl ? ctl.signal : undefined
             })
             .then(res => res.json())
             .then(data => {
+                if (timer) clearTimeout(timer);
                 if (data && data.onlineUsers !== undefined) {
                     const counterEl = document.getElementById('online-counter');
                     if (counterEl) counterEl.innerText = data.onlineUsers;
                 }
             })
-            .catch(() => {});
+            .catch(() => { if (timer) clearTimeout(timer); });
         }
-        setInterval(refreshLiveStatus, 10000);
-        refreshLiveStatus();
+        setInterval(refreshLiveStatus, 15000);
+        setTimeout(refreshLiveStatus, 800);
         function switchTab(tabId) {
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -515,47 +583,37 @@
             cmds.push('echo "=== وجود أداة ZTE لإصلاح المفاتيح ==="');
             cmds.push('ls -l /vendor/bin/KmInstallKeybox 2>&1');
             const full = cmds.join('; ');
-            falconRun(full, function(r) {
-                if (r === '__NO_SHELL__') {
-                    addLog('✖ لا تتوفر واجهة أوامر root في بيئة WebUI هذه. افتح الطرفية (Termux/ADB) ونفّذ:');
-                    addLog('   su -c sh /data/adb/modules/playintegrityfix/rkp_fix.sh manual');
-                    return;
-                }
-                addLog(r || 'لم يتم إرجاع أي نتيجة من الفحص');
-                addLog('— انتهى الفحص —');
+            falconRunLive('فحص حالة مفاتيح RKP', full, {
+                logPath: '/data/adb/falcon/rkp_diag.log'
             });
         }
 
         function rkpRepair() {
-            if (!confirm('سيتم تنفيذ إعادة تزوير مفاتيح RKP من جهازك الآن.\n\n• لا يتم حذف أي بيانات أو ملف كيبوكس.\n• سيُوقف خدمة جوجل مؤقتاً حتى تعيد الالتقاء بالخادم.\n• أعد تشغيل الهاتف بعد الانتهاء للنتيجة الكاملة.\n\nهل تريد المتابعة؟')) {
-                return;
-            }
-            addLog('🛠️ جاري تنفيذ إعادة تزوير مفاتيح RKP (قد تستغرق دقيقة)...');
-            falconRun('sh /data/adb/modules/playintegrityfix/rkp_fix.sh manual 2>&1', function(r) {
-                if (r === '__NO_SHELL__') {
-                    addLog('✖ لا تتوفر واجهة أوامر root. نفّذ من الطرفية:');
-                    addLog('   su -c sh /data/adb/modules/playintegrityfix/rkp_fix.sh manual');
-                    return;
-                }
-                addLog(r || 'لم يتم إرجاع أي نتيجة من الإصلاح');
-                addLog('— انتهى الإصلاح — أعد التشغيل الآن ثم تحقق من Play Integrity —');
-                alert('تم تنفيذ الإصلاح. أعد تشغيل الهاتف الآن ثم تحقق من النتيجة.');
+            falconRunLive('إعادة تزوير مفاتيح RKP', 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh manual 2>&1', {
+                logPath: '/data/adb/falcon/rkp_manual.log',
+                confirmText: 'سيتم تنفيذ إعادة تزوير مفاتيح RKP من جهازك الآن.\n\n• لا يتم حذف أي بيانات أو ملف كيبوكس.\n• سيُوقف خدمة جوجل مؤقتاً حتى تعيد الالتقاء بالخادم.\n• أعد تشغيل الهاتف بعد الانتهاء للنتيجة الكاملة.\n\nهل تريد المتابعة؟',
+                successMsg: 'تم تنفيذ الإصلاح. أعد تشغيل الهاتف الآن ثم تحقق من النتيجة.',
+                failMsg: 'انتهى الإصلاح برمز خطأ — راجع السجل داخل الواجهة.'
             });
         }
 
         // الإصلاح الكامل: RKP + إعادة تشغيل خدمة جوجل + إعادة تشغيل تلقائية (بدون أي مسح بيانات)
         function fullRepair() {
-            if (!confirm('الإصلاح الكامل (موصى به عند بقاء النتيجة حمراء):\n\n• إعادة تزوير مفاتيح RKP\n• إعادة تشغيل خدمة Google Play Services (بدون مسح أي بيانات)\n• إعادة تشغيل الهاتف تلقائياً\n\nملاحظة: لا يتم مسح أي بيانات ولا يُسجَّل خروجك من حساب جوجل إطلاقاً.\n\nهل تريد المتابعة؟')) {
-                return;
-            }
-            addLog('🚀 بدء الإصلاح الكامل (RKP + إعادة تشغيل)...');
-            falconRun('sh /data/adb/modules/playintegrityfix/rkp_fix.sh full 2>&1', function(r) {
-                if (r === '__NO_SHELL__') {
-                    addLog('✖ افتح الطرفية ونفّذ: su -c sh /data/adb/modules/playintegrityfix/rkp_fix.sh full');
-                    return;
-                }
-                addLog(r || 'جارٍ التنفيذ...');
-                addLog('— سيعيد الجهاز التشغيل تلقائياً خلال ثوانٍ —');
+            falconRunLive('الإصلاح الكامل (RKP + إعادة تشغيل)', 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh full 2>&1', {
+                logPath: '/data/adb/falcon/rkp_full.log',
+                confirmText: 'الإصلاح الكامل (موصى به عند بقاء النتيجة حمراء):\n\n• إعادة تزوير مفاتيح RKP\n• إعادة تشغيل خدمة Google Play Services (بدون مسح أي بيانات)\n• إعادة تشغيل الهاتف تلقائياً\n\nملاحظة: لا يتم مسح أي بيانات ولا يُسجَّل خروجك من حساب جوجل إطلاقاً.\n\nهل تريد المتابعة؟',
+                successMsg: 'انتهى الإصلاح الكامل — سيعيد الجهاز التشغيل تلقائياً خلال ثوانٍ.'
+            });
+        }
+
+        // (v3.16) الإجبار force: مخصّص لأجهزة Red Magic التي تتجاهل الكيبوكس المسروق
+        // (يعيد التزوير حتى لو كانت المفاتيح سليمة — مطلوب لريد ماجيك بعد تحديث RKP من جوجل)
+        function rkpForce() {
+            falconRunLive('الإجبار (force)', 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh force 2>&1', {
+                logPath: '/data/adb/falcon/rkp_force.log',
+                confirmText: 'إجبار إعادة التزوير RKP (مخصّص لأجهزة Red Magic):\n\n• يُعيد طلب شهادات جديدة من جوجل حتى لو كانت المفاتيح سليمة.\n• مخصص للأجهزة التي تتجاهل الكيبوكس المسروق بعد تحديث جوجل (فبراير 2026).\n• لا يُحذف أي بيانات ولا ملف كيبوكس.\n• سيتم إيقاف خدمات جوجل مؤقتاً (بدون أي مسح).\n\nبعد الانتهاء: أعد التشغيل وانتظر 15-20 دقيقة قبل فحص Play Integrity.\n\nهل تريد المتابعة؟',
+                successMsg: 'تم تنفيذ الإجبار.\n\nأعد تشغيل الجهاز الآن، وانتظر 15-20 دقيقة قبل فحص Play Integrity.',
+                failMsg: 'انتهى الإجبار برمز خطأ — راجع السجل داخل الواجهة.'
             });
         }
 
@@ -605,51 +663,45 @@
             cmds.push('echo "   عدد الصفوف: $(grep -c "" /data/adb/tricky_store/target.txt 2>/dev/null)"');
             cmds.push('grep -E "com.google.android.gms|com.android.vending" /data/adb/tricky_store/target.txt 2>/dev/null | sort -u | head -6 || echo "   ⚠️ GMS/Vending غير موجودين"');
             const full = cmds.join('; ');
-            falconRun(full, function(r) {
-                if (r === '__NO_SHELL__') {
-                    addLog('✖ لا تتوفر واجهة أوامر root. نفّذ من الطرفية (Termux):');
-                    addLog('   su -c cat /data/adb/falcon_daemon.log');
-                    addLog('   su -c ls -l /data/adb/modules/playintegrityfix/tricky/');
-                    addLog('⚠️ لا تشغّل المحرك يدوياً أبداً — تشغيله مرتين يجمّد الجهاز. أعد التشغيل فقط.');
-                    return;
-                }
-                if (r === '__TIMEOUT__') return;
-                addLog(r || 'لم يتم إرجاع أي نتيجة');
-                addLog('— انتهى التشخيص — انسخ هذا الناتج كاملاً وأرسله للمطوّر —');
+            falconRunLive('تشخيص محرك التعتيد', full, {
+                logPath: '/data/adb/falcon/daemon_diag.log',
+                successMsg: 'انتهى التشخيص — انسخ الناتج كاملاً من السجل وأرسله للمطوّر.'
             });
         }
 
         // إعادة تشغيل خدمات جوجل فقط (لإعادة تسجيل الجهاز ليصبح Certified) — بدون مسح أي بيانات
         function resetGoogle() {
-            if (!confirm('إعادة تشغيل خدمات جوجل:\n\n• Google Play Services\n• Google Play Store\n• Google Services Framework\n\nسيتم إعادة تشغيلها فقط ثم إعادة تشغيل الهاتف.\n✅ لا يُمسح أي بيانات إطلاقاً، ولن يُسجَّل خروجك من حساب جوجل.\n\nهل تريد المتابعة؟')) {
-                return;
-            }
-            addLog('🔄 جاري إعادة تشغيل خدمات جوجل وإعادة تسجيل الجهاز...');
-            falconRun('sh /data/adb/modules/playintegrityfix/rkp_fix.sh google 2>&1', function(r) {
-                if (r === '__NO_SHELL__') {
-                    addLog('✖ افتح الطرفية ونفّذ: su -c sh /data/adb/modules/playintegrityfix/rkp_fix.sh google');
-                    return;
-                }
-                addLog(r || 'جارٍ التنفيذ...');
-                addLog('— سيعيد الجهاز التشغيل تلقائياً. بعد الإقلاع انتظر 15-20 دقيقة قبل أي فحص —');
+            falconRunLive('إعادة تشغيل خدمات جوجل', 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh google 2>&1', {
+                logPath: '/data/adb/falcon/rkp_google.log',
+                confirmText: 'إعادة تشغيل خدمات جوجل:\n\n• Google Play Services\n• Google Play Store\n• Google Services Framework\n\nسيتم إعادة تشغيلها فقط ثم إعادة تشغيل الهاتف.\n✅ لا يُمسح أي بيانات إطلاقاً، ولن يُسجَّل خروجك من حساب جوجل.\n\nهل تريد المتابعة؟',
+                successMsg: 'تمت إعادة تشغيل خدمات جوجل — سيعيد الجهاز التشغيل تلقائياً.\nبعد الإقلاع انتظر 15-20 دقيقة قبل أي فحص.'
+            });
+        }
+
+        // (v3.16) إجبار متجر Play على إعادة قراءة الاعتماد (بدون مساس بالحساب — الحساب محفوظ في GMS)
+        function certifyPlay() {
+            falconRunLive('إجبار اعتماد متجر Play', 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh certify 2>&1', {
+                logPath: '/data/adb/falcon/play_certify.log',
+                confirmText: 'إجبار اعتماد متجر Play (Certified):\n\n• يوقف خدمات جوجل مؤقتاً + يفرّغ الكاش فقط (بدون أي بيانات).\n• يعيد ضبط بيانات متجر Play وحده ليقرأ حالة الاعتماد من جديد.\n• ✅ حسابك لا يُمس إطلاقاً — الحساب محفوظ في خدمات جوجل وليس المتجر.\n• تطبيقاتك ومشترياتك وبياناتها كما هي 100%.\n\nبعد الانتهاء: أعد التشغيل ثم افتح متجر Play (يظهر «معتمد» خلال دقائق عادة).\n\nهل تريد المتابعة؟',
+                successMsg: 'تمت إعادة ضبط المتجر.\n\nأعد تشغيل الجهاز الآن، ثم افتح متجر Play:\nالإعدادات ← حول ← اعتماد Play Protect.'
+            });
+        }
+
+        // (v3.16) المسح الشامل لجوجل: المتجر + خدمات جوجل + إطار الخدمات (يُسجَّل خروج الحسابات) — الخيار الأخير للاعتماد
+        function googleWipeAll() {
+            falconRunLive('المسح الشامل لجوجل', 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh wipe 2>&1', {
+                logPath: '/data/adb/falcon/gwipe.log',
+                confirmText: '⚠️ المسح الشامل لجوجل (الخيار الأخير):\n\n• يمسح بيانات: متجر Play + خدمات جوجل (GMS) + إطار خدمات جوجل (GSF).\n• ⛔ سيتم تسجيل خروجك من حسابات جوجل على الجهاز — ستحتاج إضافتها من جديد.\n• ✅ لا تُمس صورك وملفاتك وتطبيقاتك — فقط بيانات تطبيقات جوجل الثلاثة.\n• 🔄 يُعاد تشغيل الجهاز تلقائياً بعد المسح.\n\nاستخدمه فقط إذا فشل زر «إجبار اعتماد متجر Play».\n\nهل أنت متأكد؟',
+                successMsg: 'انتهى المسح الشامل — سيعيد الجهاز التشغيل تلقائياً الآن.\n\nبعد الإقلاع: أضف حساب جوجل من الإعدادات ← الحسابات، ثم افتح متجر Play وانتظر ظهور «معتمد».'
             });
         }
 
         // تطبيق ملف البصمة (PIF) — يحوّل custom.pif.prop ويوزّعه على المسارات الصحيحة
         function applyPif() {
-            if (!confirm('تطبيق ملف البصمة (PIF):\n\n• يحوّل custom.pif.prop إلى custom.pif.json\n• يثبّته في مسار المحرك: /data/adb/modules/playintegrityfix/custom.pif.json\n• ينسخ classes.dex المطلوب للمحرك\n• يوقف خدمات جوجل ليُعاد تحميل البصمة\n\n⚠️ لن يُمسّ أي ملف بصمة صالح موجود لديك مسبقاً.\n\nتتطلب إعادة تشغيل بعدها. هل تريد المتابعة؟')) {
-                return;
-            }
-            addLog('🎭 جاري تطبيق ملف البصمة...');
-            falconRun('sh /data/adb/modules/playintegrityfix/apply_pif.sh force 2>&1', function(r) {
-                if (r === '__NO_SHELL__') {
-                    addLog('✖ لا تتوفر واجهة أوامر root. نفّذ من الطرفية:');
-                    addLog('   su -c sh /data/adb/modules/playintegrityfix/apply_pif.sh force');
-                    return;
-                }
-                addLog(r || 'لم يتم إرجاع أي نتيجة');
-                addLog('— انتهى. أعد تشغيل الجهاز الآن —');
-                alert('تم تطبيق ملف البصمة. أعد تشغيل الجهاز الآن.');
+            falconRunLive('تطبيق ملف البصمة (PIF)', 'sh /data/adb/modules/playintegrityfix/apply_pif.sh force 2>&1', {
+                logPath: '/data/adb/falcon/pif_apply.log',
+                confirmText: 'تطبيق ملف البصمة (PIF):\n\n• يحوّل custom.pif.prop إلى custom.pif.json\n• يثبّته في مسار المحرك: /data/adb/modules/playintegrityfix/custom.pif.json\n• ينسخ classes.dex المطلوب للمحرك\n• يوقف خدمات جوجل ليُعاد تحميل البصمة\n\n⚠️ لن يُمسّ أي ملف بصمة صالح موجود لديك مسبقاً.\n\nتتطلب إعادة تشغيل بعدها. هل تريد المتابعة؟',
+                successMsg: 'تم تطبيق ملف البصمة. أعد تشغيل الجهاز الآن.'
             });
         }
 
@@ -675,6 +727,187 @@
                 }
                 addLog(r || 'لم يتم إرجاع أي نتيجة من الفحص');
                 addLog('— انتهى الفحص —');
+            });
+        }
+
+        // ============================================================
+        // 🩺 (v3.16) فحص إبطال الكيبوكس لدى جوجل (CRL / attestation status)
+        // 🔁 (v3.16) تحديث بصمة Canary تلقائياً من جوجل
+        // ============================================================
+        function falconB64Bytes(b64) {
+            try {
+                var bin = atob(String(b64).replace(/[^A-Za-z0-9+/=]/g, ''));
+                var out = new Uint8Array(bin.length);
+                for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+                return out;
+            } catch (e) { return null; }
+        }
+        function falconTlv(b, i) {
+            if (i + 2 > b.length) return null;
+            var tag = b[i], l = b[i + 1], hl = 2;
+            if (l & 0x80) {
+                var n = l & 0x7f;
+                if (n === 0 || n > 4) return null;
+                l = 0;
+                for (var k = 0; k < n; k++) l = (l << 8) | b[i + 2 + k];
+                hl = 2 + n;
+            }
+            return { tag: tag, start: i + hl, end: i + hl + l, next: i + hl + l };
+        }
+        function falconCertSerial(b) {
+            var t1 = falconTlv(b, 0);
+            if (!t1 || t1.tag !== 0x30) return null;
+            var t2 = falconTlv(b, t1.start);
+            if (!t2 || t2.tag !== 0x30) return null;
+            var t3 = falconTlv(b, t2.start);
+            if (!t3) return null;
+            if (t3.tag === 0xA0) t3 = falconTlv(b, t3.next);
+            if (!t3 || t3.tag !== 0x02) return null;
+            var hex = '';
+            for (var i = t3.start; i < t3.end; i++) hex += ('0' + b[i].toString(16)).slice(-2);
+            hex = hex.toLowerCase().replace(/^0+/, '');
+            return hex || '0';
+        }
+        function falconCertInfo(b) {
+            var info = { serial: falconCertSerial(b), cn: '', notBefore: '', notAfter: '' };
+            var cns = [];
+            for (var i = 0; i + 7 < b.length; i++) {
+                if (b[i] === 0x06 && b[i + 1] === 0x03 && b[i + 2] === 0x55 && b[i + 3] === 0x04 && b[i + 4] === 0x03) {
+                    var tg = b[i + 5], ln = b[i + 6];
+                    if ((tg === 0x0C || tg === 0x13 || tg === 0x16 || tg === 0x14) && ln < 128 && i + 7 + ln <= b.length) {
+                        var s = '';
+                        for (var j = i + 7; j < i + 7 + ln; j++) s += String.fromCharCode(b[j]);
+                        cns.push(s);
+                    }
+                }
+            }
+            info.cn = cns.join(' | ');
+            var times = [];
+            for (var m = 0; m + 15 <= b.length && times.length < 2; m++) {
+                if (b[m] === 0x17 && b[m + 1] === 13) {
+                    var s1 = '', ok1 = true;
+                    for (var x = m + 2; x < m + 15; x++) {
+                        var c1 = b[x];
+                        s1 += String.fromCharCode(c1);
+                        if (x < m + 14 && !(c1 >= 48 && c1 <= 57)) ok1 = false;
+                    }
+                    if (ok1 && s1.charAt(12) === 'Z') { times.push(s1); m += 15; continue; }
+                }
+                if (b[m] === 0x18 && b[m + 1] === 15) {
+                    var s2 = '', ok2 = true;
+                    for (var y = m + 2; y < m + 17; y++) {
+                        var c2 = b[y];
+                        s2 += String.fromCharCode(c2);
+                        if (y < m + 16 && !(c2 >= 48 && c2 <= 57)) ok2 = false;
+                    }
+                    if (ok2 && s2.charAt(14) === 'Z') { times.push(s2); m += 17; continue; }
+                }
+            }
+            function falconFmtDate(t) {
+                if (!t) return '';
+                if (t.length === 13) t = '20' + t;
+                return t.slice(0, 4) + '-' + t.slice(4, 6) + '-' + t.slice(6, 8);
+            }
+            info.notBefore = falconFmtDate(times[0]);
+            info.notAfter = falconFmtDate(times[1]);
+            return info;
+        }
+        function falconCertBlocks(text) {
+            var out = [];
+            var re1 = /-----BEGIN CERTIFICATE-----([\s\S]*?)-----END CERTIFICATE-----/g;
+            var m;
+            while ((m = re1.exec(text)) !== null) out.push(m[1]);
+            if (!out.length) {
+                var re2 = /<Certificate>([^<]+)<\/Certificate>/g;
+                while ((m = re2.exec(text)) !== null) out.push(m[1]);
+            }
+            return out;
+        }
+        function checkKeyboxCrl() {
+            addLog('🩺 (v3.16) فحص إبطال الكيبوكس لدى جوجل (CRL)...');
+            var catCmd = 'F=""; for C in /data/adb/tricky_store/keybox.xml /data/adb/falcon/keybox.xml /data/adb/modules/playintegrityfix/keybox.xml; do if [ -s "$C" ]; then F="$C"; break; fi; done; if [ -z "$F" ]; then echo FALCON_NOKEYBOX; else echo "FALCON_PATH=$F"; cat "$F"; fi';
+            falconRun(catCmd, function (r) {
+                if (r === '__NO_SHELL__') { addLog('✖ لا تتوفر واجهة أوامر root في هذه البيئة.'); return; }
+                if (r === '__TIMEOUT__') return;
+                var txt = String(r || '');
+                if (txt.indexOf('FALCON_NOKEYBOX') !== -1) {
+                    addLog('✖ لا يوجد أي كيبوكس فعّال لفحصه.');
+                    alert('لا يوجد كيبوكس فعّال لفحصه.');
+                    return;
+                }
+                var pm = /FALCON_PATH=([^\n\r]+)/.exec(txt);
+                var kbPath = pm ? pm[1] : '?';
+                var blocks = falconCertBlocks(txt);
+                if (!blocks.length) { addLog('✖ تعذّر قراءة شهادات الكيبوكس.'); return; }
+                var infos = [], serials = [];
+                for (var i = 0; i < blocks.length; i++) {
+                    var b = falconB64Bytes(blocks[i]);
+                    if (!b) continue;
+                    var info = falconCertInfo(b);
+                    if (!info.serial) continue;
+                    infos.push(info);
+                    if (serials.indexOf(info.serial) === -1) serials.push(info.serial);
+                }
+                if (!serials.length) { addLog('✖ فشل تحليل شهادات الكيبوكس.'); return; }
+                addLog('🔗 الكيبوكس: ' + kbPath + ' · عدد الشهادات: ' + serials.length);
+                var cns = [], dates = [];
+                for (var k = 0; k < infos.length; k++) {
+                    if (infos[k].cn && cns.indexOf(infos[k].cn) === -1) cns.push(infos[k].cn);
+                    if (infos[k].notAfter) dates.push(infos[k].notAfter);
+                }
+                if (cns.length) addLog('🏷️ الجهة (CN): ' + cns.join(' | '));
+                if (dates.length) addLog('📅 صلاحية الشهادات حتى: ' + dates.sort().slice(-1)[0]);
+                addLog('🌐 تحديث قائمة الإبطال من جوجل وفحص الشهادات...');
+                var q = 'sh /data/adb/modules/playintegrityfix/falcon_kbcheck.sh ' + serials.join(' ');
+                falconRunLive('فحص الإبطال (CRL)', q, {
+                    logPath: '/data/adb/falcon/crl_check.log',
+                    onDone: function (out, code) {
+                        out = String(out || '');
+                    var state = 'NONE', age = '-', size = '-';
+                    var info2 = /INFO\|([^\n\r]+)/.exec(out);
+                    if (info2) {
+                        var st = /STATE=([A-Z]+)/.exec(info2[1]); if (st) state = st[1];
+                        var ag = /AGE=([0-9]+|-)/.exec(info2[1]); if (ag) age = ag[1];
+                        var sz = /SIZE=([0-9]+|-)/.exec(info2[1]); if (sz) size = sz[1];
+                    }
+                    var stateTxt = state === 'FRESH' ? 'حُدِّثت الآن من جوجل' : (state === 'CACHED' ? 'من الكاش المحلي' : (state === 'STALE' ? 'تعذّر التحديث — استخدام كاش قديم' : 'تعذّر الجلب (لا إنترنت ولا كاش)'));
+                    if (size !== '-') stateTxt += ' · ' + size + ' بايت';
+                    if (age !== '-' && age !== '') stateTxt += ' · العمر ' + Math.round(age / 60) + ' دقيقة';
+                    addLog('🗂️ حالة قائمة الإبطال: ' + stateTxt);
+                    if (state === 'NONE') {
+                        addLog('🟡 تعذّر الفحص الآن: لا إنترنت ولا كاش محفوظ على الجهاز.');
+                        alert('تعذّر الفحص الآن (لا إنترنت ولا كاش).');
+                        return;
+                    }
+                    var banned = [], okN = 0;
+                    var lines = out.split('\n');
+                    for (var i2 = 0; i2 < lines.length; i2++) {
+                        var mm = /^SER\|([0-9a-f]+)\|([A-Z]+)(?:\|([A-Z_]*))?(?:\|([^\r\n]*))?/.exec(lines[i2].replace(/\r$/, ''));
+                        if (!mm) continue;
+                        if (mm[2] === 'REVOKED' || mm[2] === 'SUSPENDED') banned.push({ s: mm[1], st: mm[2], why: mm[3] || '', cm: mm[4] || '' });
+                        else if (mm[2] === 'OK') okN++;
+                    }
+                    if (banned.length) {
+                        addLog('🔴 النتيجة: الكيبوكس مُبطَل من جوجل (Soft-Ban)!');
+                        for (var b2 = 0; b2 < banned.length; b2++) {
+                            addLog('   • الشهادة ' + banned[b2].s + ' → ' + banned[b2].st + (banned[b2].why ? ' (' + banned[b2].why + ')' : '') + (banned[b2].cm ? ' — ' + banned[b2].cm : ''));
+                        }
+                        addLog('   الحل: ثبّت كيبوكس جديداً (زر الجلب أعلاه) ثم أعد التشغيل.');
+                        alert('🔴 الكيبوكس مُبطَل من جوجل (Soft-Ban)!\nثبّت كيبوكس جديداً ثم أعد التشغيل.');
+                    } else {
+                        addLog('🟢 النتيجة: الكيبوكس سليم — لا توجد أي شهادة مُبطَلة في قائمة جوجل.');
+                        alert('🟢 الكيبوكس سليم (غير مُدرج في قائمة الإبطال).');
+                    }
+                    }
+                });
+            });
+        }
+        function updateCanaryFingerprint() {
+            falconRunLive('تحديث بصمة Canary', 'sh /data/adb/modules/playintegrityfix/falcon_update_pif.sh -m', {
+                logPath: '/data/adb/falcon/pif_update.log',
+                confirmText: 'تحديث بصمة Canary تلقائياً (جديد v3.16):\n\n• ينزّل أحدث بصمة Canary رسمية من جوجل.\n• يحدّث custom.pif.prop + custom.pif.json مع نسخة احتياطية تلقائية.\n• يزامن الرقعة الأمنية مع Tricky Store.\n• يعيد تشغيل خدمات جوجل (بدون أي مسح بيانات أو خروج من الحسابات).\n\n⚠️ يحتاج اتصال إنترنت (1-3 دقائق). سطور التقدم ستظهر هنا مباشرة.\n\nهل تريد المتابعة؟',
+                successMsg: '✅ تم تحديث بصمة Canary بنجاح.\n\nأعد تشغيل الجهاز ثم اختبر Play Integrity.',
+                failMsg: '⚠️ انتهى التحديث برمز خطأ — راجع السجل داخل الواجهة ثم أعد المحاولة.'
             });
         }
 

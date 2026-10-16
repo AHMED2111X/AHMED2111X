@@ -1,0 +1,9 @@
+# FALCON INTEGRITY FIX — حماية الملفات الثنائية من أي تحويل نصي (CRLF) عبر Git
+# سبب الملف: أي تحويل نصي لملف ثنائي يُفسد الحزمة/المكتبة بصمت
+*.zip binary
+*.so binary
+*.dex binary
+*.apk binary
+*.png binary
+*.jar binary
+*.img binary

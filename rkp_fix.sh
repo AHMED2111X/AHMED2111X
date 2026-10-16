@@ -22,9 +22,15 @@
 #   sh rkp_fix.sh google  ← إعادة تشغيل خدمات جوجل الثلاث (بدون مسح أي بيانات)
 #   sh rkp_fix.sh force   ← إجبار إعادة التزوير حتى لو كانت المفاتيح سليمة
 #                            (مخصّص لأجهزة Red Magic التي تتجاهل الكيبوكس المسروق)
+#   sh rkp_fix.sh certify ← إجبار متجر Play على إعادة قراءة الاعتماد (Certified)
+#                            (يفرّغ الكاش + يعيد ضبط بيانات المتجر فقط — الحساب لا يُمس)
+#   sh rkp_fix.sh wipe    ← المسح الشامل لجوجل (الخيار الأخير): يمسح بيانات المتجر +
+#                            خدمات جوجل (GMS) + إطار الخدمات (GSF) ويُعيد التشغيل تلقائياً
+#                            ⛔ يُسجّل خروج الحسابات — لا يُنفَّذ إلا بطلب صريح من المستخدم
 #
-# ⛔ سياسة صارمة: لا يُنفَّذ pm clear ولا أي مسح لبيانات جوجل في أي وضع إطلاقاً.
-#    السبب: pm clear com.google.android.gms يُخرج كل حسابات جوجل من متجر Play.
+# ⛔ سياسة المسح: لا يُنفَّذ أي مسح تلقائياً أو عند الإقلاع إطلاقاً — فقط بطلب صريح من المستخدم.
+#    • certify: مسح متجر Play وحده (الحساب لا يُمس — محفوظ في GMS وليس في المتجر).
+#    • wipe: المسح الشامل (متجر + GMS + GSF) — يُسجّل خروج الحسابات، ويُعاد التشغيل تلقائياً.
 # ==============================================================================
 
 FALCON_DIR="/data/adb/falcon"
@@ -33,7 +39,7 @@ LOGFILE="/data/adb/falcon_rkp_fix.log"
 
 MODE="$1"
 case "$MODE" in
-    manual|full|google|force) ;;
+    manual|full|google|force|certify|wipe) ;;
     *) MODE="auto" ;;
 esac
 
@@ -81,6 +87,60 @@ if [ "$MODE" = "google" ]; then
     done
     say "✔ تمت إعادة التشغيل بلا أي مسح — حساباتك وبياناتك كما هي."
     say "  بعد الإقلاع: لا تفحص Play Integrity لمدة 15-20 دقيقة على الأقل."
+    say "════════ انتهى التقرير ════════"
+    reboot_now
+    exit 0
+fi
+
+# --- وضع certify: إجبار متجر Play على إعادة قراءة حالة الاعتماد (Certified) ---
+# ⛔ لا نلمس حساب جوجل إطلاقاً: الحساب محفوظ في خدمات جوجل (GMS)، والضبط يخص متجر Play وحده.
+if [ "$MODE" = "certify" ]; then
+    say "════════ FALCON إجبار اعتماد متجر Play (Certified) ════════"
+    say "ℹ️ حسابك وتطبيقاتك ومشترياتك لا تُمس — الضبط يخص متجر Play فقط."
+    for P in com.google.android.gms com.google.android.gsf com.android.vending; do
+        say "🔄 إيقاف مؤقت: $P"
+        am force-stop "$P" >/dev/null 2>&1
+    done
+    say "🧹 تفريغ كاش خدمات جوجل (بدون أي بيانات)..."
+    rm -rf /data/data/com.google.android.gms/cache/* 2>/dev/null
+    rm -rf /data/data/com.google.android.gsf/cache/* 2>/dev/null
+    say "🗑️ إعادة ضبط بيانات متجر Play وحده (ليعيد قراءة الاعتماد)..."
+    if pm clear com.android.vending >/dev/null 2>&1; then
+        say "  ✔ تمت إعادة ضبط المتجر — حسابك لم يُمس إطلاقاً."
+    else
+        say "  ⚠️ تعذّرت إعادة الضبط — سيكملها الإقلاع."
+    fi
+    say ""
+    say "🔄 أعد تشغيل الجهاز الآن ثم افتح متجر Play واتركه يبني حالته."
+    say "   • التحقق: Play Store ← الإعدادات ← حول ← «اعتماد Play Protect»."
+    say "   • يظهر «معتمد» عادة خلال دقائق — وقد يتأخر حتى 1-2 ساعة (جوجل تسجّل الجهاز)."
+    say "   • إن بقي غير معتمد: تأكد أن فحص Play Integrity يعطي BASIC على الأقل."
+    say "════════ انتهى التقرير ════════"
+    exit 0
+fi
+
+# --- وضع wipe: المسح الشامل لجوجل (الخيار الأخير للاعتماد — يُسجّل خروج الحسابات) ---
+# ⛔ يُنفَّذ فقط بطلب صريح من المستخدم (زر الواجهة) — لا يُستدعى تلقائياً أو عند الإقلاع أبداً.
+if [ "$MODE" = "wipe" ]; then
+    say "════════ FALCON المسح الشامل لجوجل (الخيار الأخير) ════════"
+    say "⛔ تنبيه: سيتم تسجيل الخروج من حسابات جوجل — ستحتاج إضافتها من جديد."
+    say "ℹ️ لا تُمس صورك وملفاتك وتطبيقاتك — فقط بيانات تطبيقات جوجل الثلاثة."
+    for P in com.google.android.gms com.google.android.gsf com.android.vending; do
+        am force-stop "$P" >/dev/null 2>&1
+        say "🔄 إيقاف: $P"
+    done
+    for P in com.google.android.gsf com.google.android.gms com.android.vending; do
+        if pm clear "$P" >/dev/null 2>&1; then
+            say "🗑️ مُسحت بيانات: $P"
+        else
+            say "⚠️ تعذّر مسح: $P"
+        fi
+    done
+    say ""
+    say "✅ انتهى المسح الشامل — جاري إعادة تشغيل الجهاز..."
+    say "   • بعد الإقلاع: أضف حساب جوجل من: الإعدادات ← الحسابات."
+    say "   • ثم افتح متجر Play واتركه يبني حالته (يظهر «معتمد» خلال دقائق إلى ساعتين)."
+    say "   • إن بقي غير معتمد: تأكد أن Play Integrity يعطي BASIC على الأقل."
     say "════════ انتهى التقرير ════════"
     reboot_now
     exit 0

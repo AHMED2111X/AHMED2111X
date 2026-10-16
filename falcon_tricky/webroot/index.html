@@ -120,6 +120,23 @@
     .kpi b.bad { color: var(--red); text-shadow: 0 0 10px rgba(255,77,94,0.4); }
     .kpi span { display: block; color: var(--muted); font-size: 0.68rem; margin-top: 3px; }
 
+    /* (v3.16) عداد المستخدمين النشطين — منسوخ كما هو من الواجهة الرئيسية */
+    .online-badge {
+        display: flex; align-items: center; justify-content: space-between;
+        background: rgba(43, 255, 136, 0.06);
+        border: 1px solid var(--neon-dim);
+        border-radius: 10px; padding: 8px 12px; margin-bottom: 10px;
+    }
+    .online-left { display: flex; align-items: center; gap: 8px; }
+    .pulse-dot {
+        width: 8px; height: 8px; background-color: var(--neon);
+        border-radius: 50%; box-shadow: 0 0 6px var(--neon);
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 0.55; } 50% { opacity: 1; } 100% { opacity: 0.55; } }
+    .online-title { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; }
+    .online-count { font-size: 1rem; font-weight: 800; color: var(--neon); text-shadow: 0 0 10px rgba(43,255,136,0.4); }
+
     button {
         font-family: var(--font); font-size: 0.78rem; cursor: pointer;
         color: var(--neon); background: rgba(43,255,136,0.06);
@@ -289,6 +306,14 @@
     <button data-lang="ru">Русский</button>
 </div>
 
+<div class="online-badge">
+    <div class="online-left">
+        <div class="pulse-dot"></div>
+        <span class="online-title" data-i18n="onlineTitle"></span>
+    </div>
+    <div class="online-count" id="online-counter">--</div>
+</div>
+
 <div class="hint" id="bridgeTag"></div>
 
 <section class="kpis">
@@ -310,6 +335,8 @@
     <div class="hint" id="cfgStatus"></div>
     <div class="row">
         <button id="btnKeyboxImport" class="amber" data-i18n="btnKeyboxImport"></button>
+        <button id="btnCrlCheck" class="amber" data-i18n="btnCrlCheck"></button>
+        <button id="btnGwipe" class="danger" data-i18n="btnGwipe"></button>
         <button id="btnDiag" class="ghost" data-i18n="btnDiag"></button>
         <button id="btnCopyLog" class="ghost" data-i18n="btnCopyLog"></button>
         <button id="btnDump" class="ghost" data-i18n="btnDump"></button>
@@ -374,7 +401,7 @@
 
 <script>
 /* =============================================================================
-   FALCON TRICKY — WebUI (Stealth Radar) — v3.15
+   FALCON TRICKY — WebUI (Stealth Radar) — v3.16
    Languages: العربية · English · Türkçe · Русский
    المطوّر / Developer: ABUFARID | Telegram: @falcon_kernel
 
@@ -412,6 +439,7 @@ var I18N = {
         kpiMust: 'حماية Google',
         kpiKey: 'الكيبوكس',
         kpiEngine: 'المحرك',
+        onlineTitle: 'المستخدمين النشطين',
         panelControl: 'لوحة التحكم',
         btnEssOnly: '🎯 الإبقاء على الأساسي فقط',
         lblAuto: 'إخفاء التطبيقات الجديدة تلقائياً',
@@ -463,6 +491,26 @@ var I18N = {
         logBridgeName: '🔌 الجسر: وضع KsuWebUI / MMRL (اسم دالة عامة)',
         logBridgeFn: '🔌 الجسر: وضع KernelSU (دالة مباشرة)',
         btnKeyboxImport: '📥 استيراد كيبوكس',
+        btnCrlCheck: '🩺 فحص الإبطال (CRL)',
+        btnGwipe: '💣 مسح شامل لجوجل (الخيار الأخير)',
+        gwipeConfirm: '⚠️ المسح الشامل لجوجل:\n\n• يمسح بيانات متجر Play + خدمات جوجل + إطار الخدمات.\n• ⛔ سيتم تسجيل خروجك من حسابات جوجل (ستحتاج إضافتها من جديد).\n• لا تُمس صورك وملفاتك وتطبيقاتك.\n• يُعاد تشغيل الجهاز تلقائياً بعد المسح.\n\nهل أنت متأكد؟',
+        logGwipeHead: '💣 بدء المسح الشامل لجوجل — يمسح المتجر والخدمات، ثم يعيد التشغيل...',
+        logCrlHead: '🩺 فحص إبطال الكيبوكس لدى جوجل (CRL)…',
+        logCrlNoKeybox: '✖ لا يوجد كيبوكس فعّال لفحصه',
+        logCrlNoCerts: '✖ تعذّر قراءة شهادات الكيبوكس',
+        logCrlChain: '🔗 الكيبوكس: {a} · عدد الشهادات: {b}',
+        logCrlCn: '🏷️ الجهة (CN): {a}',
+        logCrlUntil: '📅 صلاحية الشهادات حتى: {a}',
+        logCrlFetching: '🌐 تحديث قائمة الإبطال من جوجل وفحص الشهادات…',
+        logCrlState: '🗂️ حالة القائمة: {a}',
+        crlStateFresh: 'حُدِّثت الآن من جوجل',
+        crlStateCached: 'من الكاش المحلي',
+        crlStateStale: 'تعذّر التحديث — كاش قديم',
+        crlStateNone: 'تعذّر الجلب (لا إنترنت ولا كاش)',
+        logCrlUnknown: '🟡 تعذّر الفحص الآن (لا إنترنت ولا كاش)',
+        logCrlBanned: '   • الشهادة {a} → {b}{c}',
+        logCrlBannedHead: '🔴 الكيبوكس مُبطَل من جوجل (Soft-Ban)!',
+        logCrlOk: '🟢 الكيبوكس سليم — لا توجد شهادات مُبطَلة',
         logKeyboxScanHead: '🔍 البحث عن ملف كيبوكس صالح على الجهاز…',
         logKeyboxImported: '✅ تم نسخ الكيبوكس إلى TrickyStore: {a}',
         logKeyboxNone: '✖ لم يُعثر على أي كيبوكس صالح على الجهاز',
@@ -535,6 +583,7 @@ var I18N = {
         kpiMust: 'Google protection',
         kpiKey: 'Keybox',
         kpiEngine: 'Engine',
+        onlineTitle: 'Active users',
         panelControl: 'Control Panel',
         btnEssOnly: '🎯 Essential only',
         lblAuto: 'Auto-hide new apps',
@@ -586,6 +635,26 @@ var I18N = {
         logBridgeName: '🔌 Bridge: KsuWebUI / MMRL mode (global function name)',
         logBridgeFn: '🔌 Bridge: KernelSU mode (direct function)',
         btnKeyboxImport: '📥 Import keybox',
+        btnCrlCheck: '🩺 Revocation check (CRL)',
+        btnGwipe: '💣 Full Google wipe (last resort)',
+        gwipeConfirm: '⚠️ Full Google wipe:\n\n• Clears Play Store + Google Play services + Services Framework data.\n• ⛔ You WILL be signed out of Google accounts (you must re-add them).\n• Your photos and apps are untouched.\n• The device reboots automatically after.\n\nAre you sure?',
+        logGwipeHead: '💣 Full Google wipe started — clearing store + services, then rebooting...',
+        logCrlHead: '🩺 Checking keybox revocation status (CRL)…',
+        logCrlNoKeybox: '✖ No active keybox to check',
+        logCrlNoCerts: '✖ Could not read keybox certificates',
+        logCrlChain: '🔗 Keybox: {a} · Certificates: {b}',
+        logCrlCn: '🏷️ Subject (CN): {a}',
+        logCrlUntil: '📅 Certificates valid until: {a}',
+        logCrlFetching: '🌐 Fetching Google revocation list and checking…',
+        logCrlState: '🗂️ List status: {a}',
+        crlStateFresh: 'just updated from Google',
+        crlStateCached: 'from local cache',
+        crlStateStale: 'update failed — using old cache',
+        crlStateNone: 'fetch failed (no internet or cache)',
+        logCrlUnknown: '🟡 Cannot check now (no internet and no cache)',
+        logCrlBanned: '   • Cert {a} → {b}{c}',
+        logCrlBannedHead: '🔴 Keybox is REVOKED by Google (soft-ban)!',
+        logCrlOk: '🟢 Keybox is clean — no revoked certificates',
         logKeyboxScanHead: '🔍 Searching the device for a valid keybox…',
         logKeyboxImported: '✅ Keybox copied into TrickyStore: {a}',
         logKeyboxNone: '✖ No valid keybox found on the device',
@@ -658,6 +727,7 @@ var I18N = {
         kpiMust: 'Google koruması',
         kpiKey: 'Keybox',
         kpiEngine: 'Motor',
+        onlineTitle: 'Aktif kullanıcılar',
         panelControl: 'Kontrol Paneli',
         btnEssOnly: '🎯 Yalnızca temel',
         lblAuto: 'Yeni uygulamaları otomatik gizle',
@@ -709,6 +779,26 @@ var I18N = {
         logBridgeName: '🔌 Köprü: KsuWebUI / MMRL modu (genel fonksiyon adı)',
         logBridgeFn: '🔌 Köprü: KernelSU modu (doğrudan fonksiyon)',
         btnKeyboxImport: '📥 Keybox içe aktar',
+        btnCrlCheck: '🩺 İptal kontrolü (CRL)',
+        btnGwipe: '💣 Tam Google silme (son çare)',
+        gwipeConfirm: '⚠️ Tam Google silme:\n\n• Play Store + Google Play hizmetleri + Hizmetler Çerçevesi verilerini siler.\n• ⛔ Google hesaplarından ÇIKIŞ yapılacak (yeniden eklemeniz gerekir).\n• Fotoğraflarınız ve uygulamalarınız korunur.\n• İşlemden sonra cihaz otomatik yeniden başlar.\n\nEmin misiniz?',
+        logGwipeHead: '💣 Tam Google silme başladı — mağaza + hizmetler siliniyor, sonra yeniden başlatma...',
+        logCrlHead: '🩺 Keybox iptal durumu kontrol ediliyor (CRL)…',
+        logCrlNoKeybox: '✖ Kontrol edilecek etkin keybox yok',
+        logCrlNoCerts: '✖ Keybox sertifikaları okunamadı',
+        logCrlChain: '🔗 Keybox: {a} · Sertifika sayısı: {b}',
+        logCrlCn: '🏷️ Konu (CN): {a}',
+        logCrlUntil: '📅 Sertifikaların geçerlilik sonu: {a}',
+        logCrlFetching: '🌐 Google iptal listesi indiriliyor ve kontrol ediliyor…',
+        logCrlState: '🗂️ Liste durumu: {a}',
+        crlStateFresh: 'az önce Google üzerinden güncellendi',
+        crlStateCached: 'yerel önbellekten',
+        crlStateStale: 'güncelleme başarısız — eski önbellek',
+        crlStateNone: 'alınamadı (internet veya önbellek yok)',
+        logCrlUnknown: '🟡 Şu an kontrol edilemiyor (internet ve önbellek yok)',
+        logCrlBanned: '   • Sertifika {a} → {b}{c}',
+        logCrlBannedHead: '🔴 Keybox Google tarafından İPTAL edilmiş (soft-ban)!',
+        logCrlOk: '🟢 Keybox temiz — iptal edilmiş sertifika yok',
         logKeyboxScanHead: '🔍 Cihazda geçerli bir keybox aranıyor…',
         logKeyboxImported: '✅ Keybox TrickyStore içine kopyalandı: {a}',
         logKeyboxNone: '✖ Cihazda geçerli keybox bulunamadı',
@@ -781,6 +871,7 @@ var I18N = {
         kpiMust: 'Защита Google',
         kpiKey: 'Keybox',
         kpiEngine: 'Движок',
+        onlineTitle: 'Активные пользователи',
         panelControl: 'Панель управления',
         btnEssOnly: '🎯 Только базовые',
         lblAuto: 'Автоскрытие новых приложений',
@@ -832,6 +923,26 @@ var I18N = {
         logBridgeName: '🔌 Мост: режим KsuWebUI / MMRL (имя глобальной функции)',
         logBridgeFn: '🔌 Мост: режим KernelSU (прямая функция)',
         btnKeyboxImport: '📥 Импорт keybox',
+        btnCrlCheck: '🩺 Проверка отзыва (CRL)',
+        btnGwipe: '💣 Полная очистка Google (крайняя мера)',
+        gwipeConfirm: '⚠️ Полная очистка Google:\n\n• Очищает данные Play Store + сервисов Google Play + Services Framework.\n• ⛔ Вы ВЫЙДЕТЕ из аккаунтов Google (нужно добавить их заново).\n• Фото и приложения не затрагиваются.\n• После очистки устройство перезагрузится автоматически.\n\nВы уверены?',
+        logGwipeHead: '💣 Начата полная очистка Google — очистка магазина и сервисов, затем перезагрузка...',
+        logCrlHead: '🩺 Проверка статуса отзыва keybox (CRL)…',
+        logCrlNoKeybox: '✖ Нет активного keybox для проверки',
+        logCrlNoCerts: '✖ Не удалось прочитать сертификаты keybox',
+        logCrlChain: '🔗 Keybox: {a} · Сертификатов: {b}',
+        logCrlCn: '🏷️ Субъект (CN): {a}',
+        logCrlUntil: '📅 Сертификаты действительны до: {a}',
+        logCrlFetching: '🌐 Загрузка списка отзыва Google и проверка…',
+        logCrlState: '🗂️ Состояние списка: {a}',
+        crlStateFresh: 'только что обновлён (Google)',
+        crlStateCached: 'из локального кэша',
+        crlStateStale: 'обновление не удалось — старый кэш',
+        crlStateNone: 'не удалось получить (нет интернета или кэша)',
+        logCrlUnknown: '🟡 Сейчас проверить нельзя (нет интернета и кэша)',
+        logCrlBanned: '   • Сертификат {a} → {b}{c}',
+        logCrlBannedHead: '🔴 Keybox ОТОЗВАН Google (soft-ban)!',
+        logCrlOk: '🟢 Keybox чист — отозванных сертификатов нет',
         logKeyboxScanHead: '🔍 Поиск подходящего keybox на устройстве…',
         logKeyboxImported: '✅ Keybox скопирован в TrickyStore: {a}',
         logKeyboxNone: '✖ Подходящий keybox на устройстве не найден',
@@ -1245,7 +1356,7 @@ function wrap(cmd, secs) {
 }
 
 function setBusy(on) {
-    var ids = ['btnRefresh', 'btnEssOnly', 'btnAdd', 'btnDump', 'btnDiag', 'btnCopyLog', 'btnSaveCfg', 'btnBaseline', 'btnAutoLog', 'btnKeyboxImport'];
+    var ids = ['btnRefresh', 'btnEssOnly', 'btnAdd', 'btnDump', 'btnDiag', 'btnCopyLog', 'btnSaveCfg', 'btnBaseline', 'btnAutoLog', 'btnKeyboxImport', 'btnCrlCheck', 'btnGwipe'];
     for (var i = 0; i < ids.length; i++) { if ($(ids[i])) $(ids[i]).disabled = !!on; }
 }
 
@@ -1413,7 +1524,7 @@ function loadDemo() {
     state.engine = 'RUNNING';
     state.patch = 'all=2026-09-05';
     state.auto = 'on';
-    state.ver = 'v3.15';
+    state.ver = 'v3.16';
     state.loaded = true;
 }
 
@@ -1906,6 +2017,219 @@ function importKeybox() {
     }, 45);
 }
 
+/* --------------------- (v3.16) فحص الإبطال لدى جوجل (CRL) --------------------- */
+function crlB64Bytes(b64) {
+    try {
+        var bin = atob(String(b64).replace(/[^A-Za-z0-9+/=]/g, ''));
+        var out = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        return out;
+    } catch (e) { return null; }
+}
+function crlTlv(b, i) {
+    if (i + 2 > b.length) return null;
+    var tag = b[i], l = b[i + 1], hl = 2;
+    if (l & 0x80) {
+        var n = l & 0x7f;
+        if (n === 0 || n > 4) return null;
+        l = 0;
+        for (var k = 0; k < n; k++) l = (l << 8) | b[i + 2 + k];
+        hl = 2 + n;
+    }
+    return { tag: tag, start: i + hl, end: i + hl + l, next: i + hl + l };
+}
+function crlCertSerial(b) {
+    var t1 = crlTlv(b, 0);
+    if (!t1 || t1.tag !== 0x30) return null;
+    var t2 = crlTlv(b, t1.start);
+    if (!t2 || t2.tag !== 0x30) return null;
+    var t3 = crlTlv(b, t2.start);
+    if (!t3) return null;
+    if (t3.tag === 0xA0) t3 = crlTlv(b, t3.next);
+    if (!t3 || t3.tag !== 0x02) return null;
+    var hex = '';
+    for (var i = t3.start; i < t3.end; i++) hex += ('0' + b[i].toString(16)).slice(-2);
+    hex = hex.toLowerCase().replace(/^0+/, '');
+    return hex || '0';
+}
+function crlCertInfo(b) {
+    var info = { serial: crlCertSerial(b), cn: '', notAfter: '' };
+    var cns = [];
+    for (var i = 0; i + 7 < b.length; i++) {
+        if (b[i] === 0x06 && b[i + 1] === 0x03 && b[i + 2] === 0x55 && b[i + 3] === 0x04 && b[i + 4] === 0x03) {
+            var tg = b[i + 5], ln = b[i + 6];
+            if ((tg === 0x0C || tg === 0x13 || tg === 0x16 || tg === 0x14) && ln < 128 && i + 7 + ln <= b.length) {
+                var s = '';
+                for (var j = i + 7; j < i + 7 + ln; j++) s += String.fromCharCode(b[j]);
+                cns.push(s);
+            }
+        }
+    }
+    info.cn = cns.join(' | ');
+    var times = [];
+    for (var m = 0; m + 15 <= b.length && times.length < 2; m++) {
+        if (b[m] === 0x17 && b[m + 1] === 13) {
+            var s1 = '', ok1 = true;
+            for (var x = m + 2; x < m + 15; x++) {
+                var c1 = b[x];
+                s1 += String.fromCharCode(c1);
+                if (x < m + 14 && !(c1 >= 48 && c1 <= 57)) ok1 = false;
+            }
+            if (ok1 && s1.charAt(12) === 'Z') { times.push(s1); m += 15; continue; }
+        }
+        if (b[m] === 0x18 && b[m + 1] === 15) {
+            var s2 = '', ok2 = true;
+            for (var y = m + 2; y < m + 17; y++) {
+                var c2 = b[y];
+                s2 += String.fromCharCode(c2);
+                if (y < m + 16 && !(c2 >= 48 && c2 <= 57)) ok2 = false;
+            }
+            if (ok2 && s2.charAt(14) === 'Z') { times.push(s2); m += 17; continue; }
+        }
+    }
+    function fmt(t) {
+        if (!t) return '';
+        if (t.length === 13) t = '20' + t;
+        return t.slice(0, 4) + '-' + t.slice(4, 6) + '-' + t.slice(6, 8);
+    }
+    info.notAfter = fmt(times[1]);
+    return info;
+}
+function crlCertBlocks(text) {
+    var out = [];
+    var re1 = /-----BEGIN CERTIFICATE-----([\s\S]*?)-----END CERTIFICATE-----/g;
+    var m;
+    while ((m = re1.exec(text)) !== null) out.push(m[1]);
+    if (!out.length) {
+        var re2 = /<Certificate>([^<]+)<\/Certificate>/g;
+        while ((m = re2.exec(text)) !== null) out.push(m[1]);
+    }
+    return out;
+}
+function checkCrl() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    logLine(t('logCrlHead'));
+    var cmd = 'F=""; for C in ' + KEYBOX_FILE + ' /data/adb/falcon/keybox.xml ' + MAIN_KEYBOX + '; do if [ -s "$C" ]; then F="$C"; break; fi; done; if [ -z "$F" ]; then echo FALCON_NOKEYBOX; else echo "FALCON_PATH=$F"; cat "$F"; fi';
+    sh(cmd, function (ec, out) {
+        if (out === '__TIMEOUT__') { toast(t('logKeyboxFail')); return; }
+        var txt = String(out || '');
+        if (txt.indexOf('FALCON_NOKEYBOX') !== -1) { logLine(t('logCrlNoKeybox')); toast(t('logCrlNoKeybox')); return; }
+        var pm = /FALCON_PATH=([^\n\r]+)/.exec(txt);
+        var kbPath = pm ? pm[1] : '?';
+        var blocks = crlCertBlocks(txt);
+        var serials = [], cnAll = [], until = '';
+        for (var i = 0; i < blocks.length; i++) {
+            var b = crlB64Bytes(blocks[i]);
+            if (!b) continue;
+            var info = crlCertInfo(b);
+            if (!info.serial) continue;
+            if (serials.indexOf(info.serial) === -1) serials.push(info.serial);
+            if (info.cn && cnAll.indexOf(info.cn) === -1) cnAll.push(info.cn);
+            if (info.notAfter && info.notAfter > until) until = info.notAfter;
+        }
+        if (!serials.length) { logLine(t('logCrlNoCerts')); return; }
+        logLine(tf('logCrlChain', { a: tok(kbPath), b: serials.length }));
+        if (cnAll.length) logLine(tf('logCrlCn', { a: cnAll.join(' | ') }));
+        if (until) logLine(tf('logCrlUntil', { a: until }));
+        logLine(t('logCrlFetching'));
+        var CRL_LOG = '/data/adb/falcon/crl_check.log';
+        sh('mkdir -p /data/adb/falcon; rm -f ' + CRL_LOG + '; ( sh /data/adb/modules/playintegrityfix/falcon_kbcheck.sh ' + serials.join(' ') + ' > ' + CRL_LOG + ' 2>&1; echo FALCON_EXIT=$? >> ' + CRL_LOG + ' ) >/dev/null 2>&1 & echo FALCON_STARTED', function (ec0, out0) {
+            if (String(out0 || '').indexOf('FALCON_STARTED') === -1) { toast(t('logKeyboxFail')); return; }
+            var shown = 0, ticks = 0;
+            function crlPoll() {
+                sh('cat ' + CRL_LOG + ' 2>/dev/null', function (ec2, out2) {
+                    if (out2 === '__TIMEOUT__') { crlNext(); return; }
+                    var o2 = String(out2 || '');
+                    var cut = o2.lastIndexOf('\n');
+                    if (cut >= 0 && cut + 1 > shown) {
+                        var chunk = o2.substring(shown, cut + 1).replace(/\n+$/, '');
+                        var cls = chunk.split('\n');
+                        for (var ci = 0; ci < cls.length; ci++) {
+                            var ln = cls[ci].replace(/\r$/, '');
+                            if (!ln.replace(/\s/g, '')) continue;
+                            logLine(ln.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+                        }
+                        shown = cut + 1;
+                    }
+                    if (o2.indexOf('FALCON_EXIT=') === -1) { crlNext(); return; }
+                    var o = o2;
+            var state = 'NONE', age = '-', size = '-';
+            var inf = /INFO\|([^\n\r]+)/.exec(o);
+            if (inf) {
+                var st = /STATE=([A-Z]+)/.exec(inf[1]); if (st) state = st[1];
+                var ag = /AGE=([0-9]+|-)/.exec(inf[1]); if (ag) age = ag[1];
+                var sz = /SIZE=([0-9]+|-)/.exec(inf[1]); if (sz) size = sz[1];
+            }
+            var stateTxt = state === 'FRESH' ? t('crlStateFresh') : (state === 'CACHED' ? t('crlStateCached') : (state === 'STALE' ? t('crlStateStale') : t('crlStateNone')));
+            if (size !== '-') stateTxt += ' · ' + size;
+            if (age !== '-' && age !== '') stateTxt += ' · ' + Math.round(age / 60) + 'm';
+            logLine(tf('logCrlState', { a: stateTxt }));
+            if (state === 'NONE') { logLine(t('logCrlUnknown')); toast(t('logCrlUnknown')); return; }
+            var banned = 0, lines = o.split('\n');
+            for (var j = 0; j < lines.length; j++) {
+                var mm = /^SER\|([0-9a-f]+)\|([A-Z]+)(?:\|([A-Z_]*))?(?:\|([^\r\n]*))?/.exec(lines[j].replace(/\r$/, ''));
+                if (!mm) continue;
+                if (mm[2] === 'REVOKED' || mm[2] === 'SUSPENDED') {
+                    banned++;
+                    logLine(tf('logCrlBanned', { a: mm[1], b: mm[2], c: (mm[3] ? ' (' + mm[3] + ')' : '') }));
+                }
+            }
+            if (banned) { logLine(t('logCrlBannedHead')); toast(t('logCrlBannedHead')); }
+            else { logLine(t('logCrlOk')); toast(t('logCrlOk')); }
+                }, 15, true);
+            }
+            function crlNext() {
+                ticks++;
+                if (ticks > 120) { logLine(t('logCrlUnknown')); return; }
+                setTimeout(crlPoll, 2500);
+            }
+            setTimeout(crlPoll, 1500);
+        }, 15, true);
+    }, 30);
+}
+
+/* (v3.16) مشغّل عام بسجل حي (ES5): يشغّل أمراً طويلاً في الخلفية ويعرض سطوره لحظياً */
+function shLive(headMsg, cmd, logPath) {
+    var LOGF = logPath || '/data/adb/falcon/live_op.log';
+    logLine(headMsg);
+    sh('mkdir -p /data/adb/falcon; rm -f ' + LOGF + '; ( ' + cmd + ' > ' + LOGF + ' 2>&1; echo FALCON_EXIT=$? >> ' + LOGF + ' ) >/dev/null 2>&1 & echo FALCON_STARTED', function (ec0, out0) {
+        if (String(out0 || '').indexOf('FALCON_STARTED') === -1) { logLine(t('logSaveFail')); return; }
+        var shown = 0, ticks = 0;
+        function shLiveNext() {
+            ticks++;
+            if (ticks > 240) { logLine(tf('logTimeout', { a: 600 })); return; }
+            setTimeout(shLivePoll, 2500);
+        }
+        function shLivePoll() {
+            sh('cat ' + LOGF + ' 2>/dev/null', function (ec2, out2) {
+                if (out2 === '__TIMEOUT__') { shLiveNext(); return; }
+                var o2 = String(out2 || '');
+                var cut = o2.lastIndexOf('\n');
+                if (cut >= 0 && cut + 1 > shown) {
+                    var chunk = o2.substring(shown, cut + 1).replace(/\n+$/, '');
+                    var cls = chunk.split('\n');
+                    for (var ci = 0; ci < cls.length; ci++) {
+                        var ln = cls[ci].replace(/\r$/, '');
+                        if (!ln.replace(/\s/g, '')) continue;
+                        logLine(ln.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+                    }
+                    shown = cut + 1;
+                }
+                if (o2.indexOf('FALCON_EXIT=') !== -1) return;
+                shLiveNext();
+            }, 15, true);
+        }
+        setTimeout(shLivePoll, 1500);
+    }, 15, true);
+}
+
+/* (v3.16) المسح الشامل لجوجل — الخيار الأخير للاعتماد (يُسجّل خروج الحسابات) */
+function googleWipe() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    if (!confirm(t('gwipeConfirm'))) return;
+    shLive(t('logGwipeHead'), 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh wipe', '/data/adb/falcon/gwipe.log');
+}
+
 function forceStop(pkg) {
     if (!/^[A-Za-z0-9._]+$/.test(pkg)) return;
     if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
@@ -2234,6 +2558,8 @@ $('btnSaveCfg').onclick = saveCfg;
 $('btnBaseline').onclick = resetBaseline;
 $('btnAutoLog').onclick = readAutoLog;
 $('btnKeyboxImport').onclick = importKeybox;
+$('btnCrlCheck').onclick = checkCrl;
+$('btnGwipe').onclick = googleWipe;
 $('btnSelAll').onclick = function () { selectAll(true); };
 $('btnSelNone').onclick = function () { selectAll(false); };
 $('logClose').onclick = closeLog;
@@ -2253,6 +2579,36 @@ var langBtns = document.querySelectorAll('#langbar button');
 for (var li = 0; li < langBtns.length; li++) {
     langBtns[li].onclick = function () { setLang(this.getAttribute('data-lang'), true); };
 }
+
+/* (v3.16) عداد المستخدمين النشطين — منسوخ كما هو من الواجهة الرئيسية (ES5 + XHR، عند الطلب فقط) */
+var GW_SERVER = 'https://falcon-counter-server.onrender.com';
+var gwDeviceId = null;
+try { gwDeviceId = localStorage.getItem('falcon_device_id'); } catch (e) {}
+if (!gwDeviceId) {
+    gwDeviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
+    try { localStorage.setItem('falcon_device_id', gwDeviceId); } catch (e) {}
+}
+function gwPing() {
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', GW_SERVER + '/ping', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        try { xhr.timeout = 6000; } catch (e) {}
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4 || xhr.status !== 200) return;
+            try {
+                var data = JSON.parse(xhr.responseText);
+                if (data && data.onlineUsers !== undefined) {
+                    var el = document.getElementById('online-counter');
+                    if (el) el.textContent = String(data.onlineUsers);
+                }
+            } catch (e) {}
+        };
+        xhr.send(JSON.stringify({ deviceId: gwDeviceId }));
+    } catch (e) {}
+}
+setTimeout(gwPing, 800);
+setInterval(gwPing, 15000);
 
 /* ------------------------------ الإقلاع ------------------------------ */
 applyStatic();
