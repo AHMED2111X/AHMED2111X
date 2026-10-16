@@ -314,6 +314,30 @@ if [ -f "$MODPATH/falcon_tricky/module.prop" ]; then
         chmod 755 "$FT_DIR/webroot" 2>/dev/null
         chmod 644 "$FT_DIR/webroot/index.html" 2>/dev/null
     fi
+    # (v3.14) إعادة أيقونات التطبيقات فوراً بعد إعادة بناء المجلد:
+    # كنا نحذف المجلد كاملاً أعلاه، فتضيع أيقونات الواجهة حتى الإقلاع التالي.
+    # نُعيدها الآن من الأرشيف الدائم /data/adb/falcon_icons + نُعيد بناء الفهرس،
+    # فتظهر الأيقونات من أول فتح للواجهة بلا انتظار إعادة تشغيل.
+    # ملاحظة: كل أمر هنا محصّن بـ || true حتى لا يُجهض التثبيت أبداً
+    # (بعض المديرين يشغّل customize.sh مع set -e).
+    if [ -d /data/adb/falcon_icons ]; then
+        _fwi="$FT_DIR/webroot/icons"
+        mkdir -p "$_fwi" 2>/dev/null || true
+        for _ic in /data/adb/falcon_icons/*.png; do
+            [ -s "$_ic" ] || continue
+            cp -f "$_ic" "$_fwi/" 2>/dev/null || true
+            chmod 644 "$_fwi/$(basename "$_ic")" 2>/dev/null || true
+        done
+        {
+            echo "# falcon-icons-index"
+            for _g in "$_fwi"/*.png; do
+                [ -s "$_g" ] || continue
+                basename "$_g" .png
+            done
+        } > "$_fwi/_index.txt" 2>/dev/null || true
+        chmod 644 "$_fwi/_index.txt" 2>/dev/null || true
+        chmod 755 "$_fwi" 2>/dev/null || true
+    fi
     rm -rf "$MODPATH/falcon_tricky" 2>/dev/null
     ui_print "- 🔗 FALCON TRICKY: وحدة مرئية مربوطة بالأم (حذف أحدهما يحذف الآخر)" ; delay
 fi
