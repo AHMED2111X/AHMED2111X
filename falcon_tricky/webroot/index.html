@@ -344,6 +344,30 @@
     <div class="hint" data-i18n="hintEssential"></div>
 </section>
 
+<section class="panel">
+    <h2 data-i18n="panelMaint"></h2>
+    <div class="row">
+        <button id="btnKbSmart" class="amber" data-i18n="btnKbSmart"></button>
+        <button id="btnKbNet" data-i18n="btnKbNet"></button>
+    </div>
+    <div class="row" style="margin-top:8px">
+        <button id="btnRkpDiag" data-i18n="btnRkpDiag"></button>
+        <button id="btnRkpManual" data-i18n="btnRkpManual"></button>
+        <button id="btnRkpFull" class="amber" data-i18n="btnRkpFull"></button>
+        <button id="btnGmsReset" data-i18n="btnGmsReset"></button>
+        <button id="btnRkpForce" data-i18n="btnRkpForce"></button>
+        <button id="btnCertify" data-i18n="btnCertify"></button>
+        <button id="btnSoter" data-i18n="btnSoter"></button>
+    </div>
+    <div class="row" style="margin-top:8px">
+        <button id="btnPifApply" data-i18n="btnPifApply"></button>
+        <button id="btnPifCheck" data-i18n="btnPifCheck"></button>
+        <button id="btnCanary" data-i18n="btnCanary"></button>
+        <button id="btnEngineDiag" data-i18n="btnEngineDiag"></button>
+    </div>
+    <div class="hint" data-i18n="hintMaint"></div>
+</section>
+
 <section class="panel" id="appsPanel">
     <h2 data-i18n="panelApps"></h2>
     <div class="row grow">
@@ -401,8 +425,10 @@
 
 <script>
 /* =============================================================================
-   FALCON TRICKY — WebUI (Stealth Radar) — v3.16
+   FALCON TRICKY — WebUI (Stealth Radar) — v3.17 (UNIFIED)
    Languages: العربية · English · Türkçe · Русский
+   🧰 (v3.17-UNIFIED) واجهة واحدة نهائياً: أدوات الأم (كيبوكس ذكي/RKP/SOTER/بصمة)
+   نُقلت هنا من واجهة الأم القديمة التي حُذفت — كل عملية بمهلة + نجاح/فشل واضح.
    المطوّر / Developer: ABUFARID | Telegram: @falcon_kernel
 
    🛡️ Freeze-safety rules (mandatory):
@@ -574,7 +600,40 @@ var I18N = {
         logDemoAction: 'ℹ️ وضع المعاينة — لا يتم تنفيذ أوامر فعلية',
         logRefused: '⚠️ هناك عملية قيد التنفيذ — انتظر انتهاءها.',
         logLang: '🌐 اللغة: {a}',
-        confirmEssential: 'سيتم حصر قائمة التخفي على الإدخالات الأساسية الثلاثة فقط، ويُظهر كل تطبيق آخر على الجهاز. متابعة؟'
+        confirmEssential: 'سيتم حصر قائمة التخفي على الإدخالات الأساسية الثلاثة فقط، ويُظهر كل تطبيق آخر على الجهاز. متابعة؟',
+        panelMaint: '🧰 صيانة الوحدة الأم',
+        hintMaint: 'أدوات FALCON INTEGRITY FIX — كل عملية محمية بمهلة، والتقدّم يظهر لحظياً في السجل.',
+        btnKbSmart: '🔄 جلب ذكي (CRL + مصادر)',
+        btnKbNet: '📥 جلب Keybox (إنترنت)',
+        btnRkpDiag: '🔍 فحص مفاتيح RKP',
+        btnRkpManual: '🛠️ إعادة تزوير RKP',
+        btnRkpFull: '🚀 الإصلاح الكامل + إعادة تشغيل',
+        btnGmsReset: '🔄 إعادة تشغيل خدمات جوجل',
+        btnRkpForce: '🔧 إجبار التزوير (ريد ماجيك)',
+        btnCertify: '✅ اعتماد متجر Play',
+        btnSoter: '🔐 إصلاح SOTER',
+        btnPifApply: '🎭 تطبيق البصمة',
+        btnPifCheck: '🔎 فحص ملف البصمة',
+        btnCanary: '🔁 تحديث بصمة Canary',
+        btnEngineDiag: '🩺 فحص محرك التعتيد',
+        confirmKbSmart: 'جلب ذكي للكيبوكس (جديد v3.17):\n\n• يفحص الكيبوكس الحالي في قائمة إبطال جوجل (CRL).\n• يجرّب مصادر متعددة حتى يجد كيبوكساً سليماً.\n• نسخة احتياطية تلقائية + إعادة تشغيل خدمات جوجل.\n\n⚠️ يحتاج إنترنت (1-3 دقائق). متابعة؟',
+        confirmKbNet: 'جلب كيبوكس من الإنترنت:\n\n• ينزّل الكيبوكس الرسمي ويتحقق من صلاحيته.\n• يُثبَّت بشكل دائم (لا يُستبدل عند الإقلاع).\n\n⚠️ يحتاج إنترنت (حتى دقيقة). متابعة؟',
+        confirmRkpManual: 'إعادة تزوير مفاتيح RKP:\n\n• لا يُحذف أي بيانات أو ملف كيبوكس.\n• أعد تشغيل الهاتف بعد الانتهاء.\n\nمتابعة؟',
+        confirmRkpFull: 'الإصلاح الكامل:\n\n• إعادة تزوير RKP + إعادة تشغيل خدمات جوجل.\n• سيعيد الجهاز التشغيل تلقائياً (بدون أي مسح).\n\nمتابعة؟',
+        confirmGmsReset: 'إعادة تشغيل خدمات جوجل:\n\n• GMS + المتجر + GSF — إعادة تشغيل فقط.\n• لا يُمسح شيء ولن تُسجَّل خروجك من الحسابات.\n• سيعيد الجهاز التشغيل تلقائياً.\n\nمتابعة؟',
+        confirmRkpForce: 'إجبار إعادة التزوير (ريد ماجيك):\n\n• للأجهزة التي تتجاهل الكيبوكس المسروق.\n• يعمل حتى لو كانت المفاتيح سليمة.\n• لا يُحذف أي بيانات.\n\nمتابعة؟',
+        confirmCertify: 'إجبار اعتماد متجر Play:\n\n• يفرّغ كاش المتجر فقط — حسابك لا يُمس.\n• أعد التشغيل ثم افتح المتجر.\n\nمتابعة؟',
+        confirmSoter: 'إصلاح SOTER:\n\n• إعادة تشغيل خدمة vendor.soter.\n• تصفير بيانات خادم SOTER فقط.\n\nمتابعة؟',
+        confirmPifApply: 'تطبيق البصمة (PIF):\n\n• يحوّل custom.pif.prop ويثبّته في مسار المحرك.\n• تتطلب إعادة تشغيل بعدها.\n\nمتابعة؟',
+        confirmCanary: 'تحديث بصمة Canary:\n\n• ينزّل أحدث بصمة Canary رسمية من جوجل.\n• يزامن الرقعة الأمنية + يعيد تشغيل خدمات جوجل (بدون مسح).\n\n⚠️ يحتاج إنترنت (1-3 دقائق). متابعة؟',
+        logMaintHead: '⏳ {a} — جارٍ التنفيذ، والسطور تظهر لحظياً...',
+        logMaintOk: '✅ انتهى «{a}» بنجاح.',
+        logMaintFail: '⚠️ انتهى «{a}» برمز خطأ — راجع السجل أعلاه.',
+        logKbNetHead: '📥 جاري جلب الكيبوكس من الإنترنت...',
+        logKbNetOk: '✅ تم تنزيل الكيبوكس وتثبيته بشكل دائم.',
+        logKbNetFail: '✖ فشل التنزيل أو أن الملف غير صالح — راجع السجل.',
+        logPifCheckHead: '🔎 جاري فحص ملفات البصمة...',
+        logBridgeLost: '⚠️ انقطع الاتصال بالجسر أثناء التتبع — أعد فتح الواجهة.'
     },
     en: {
         subtitle: 'Stealth Radar — who sees a clean device right now?',
@@ -718,7 +777,40 @@ var I18N = {
         logDemoAction: 'ℹ️ Preview mode — no real commands are executed',
         logRefused: '⚠️ Another operation is running — please wait.',
         logLang: '🌐 Language: {a}',
-        confirmEssential: 'The hidden list will be reduced to the three essential entries, and every other app becomes visible. Continue?'
+        confirmEssential: 'The hidden list will be reduced to the three essential entries, and every other app becomes visible. Continue?',
+        panelMaint: '🧰 Main module tools',
+        hintMaint: 'FALCON INTEGRITY FIX tools — every operation is timeout-guarded, and progress appears live in the log.',
+        btnKbSmart: '🔄 Smart keybox fetch (CRL + sources)',
+        btnKbNet: '📥 Fetch keybox (internet)',
+        btnRkpDiag: '🔍 RKP keys status',
+        btnRkpManual: '🛠️ Re-provision RKP',
+        btnRkpFull: '🚀 Full repair + auto reboot',
+        btnGmsReset: '🔄 Restart Google services',
+        btnRkpForce: '🔧 Force re-provision (Red Magic)',
+        btnCertify: '✅ Certify Play Store',
+        btnSoter: '🔐 SOTER repair',
+        btnPifApply: '🎭 Apply PIF fingerprint',
+        btnPifCheck: '🔎 Check fingerprint file',
+        btnCanary: '🔁 Update Canary fingerprint',
+        btnEngineDiag: '🩺 Engine diagnostics',
+        confirmKbSmart: 'Smart keybox fetch (new in v3.17):\n\n• Checks the current keybox against the Google revocation list (CRL).\n• Tries multiple sources until a clean keybox is found.\n• Automatic backup + restarts Google services.\n\n⚠️ Needs internet (1-3 min). Continue?',
+        confirmKbNet: 'Fetch keybox from the internet:\n\n• Downloads the official keybox and validates it.\n• Installed permanently (never reverted at boot).\n\n⚠️ Needs internet (up to 1 min). Continue?',
+        confirmRkpManual: 'Re-provision RKP keys:\n\n• No data or keybox files are deleted.\n• Reboot the phone afterwards.\n\nContinue?',
+        confirmRkpFull: 'Full repair:\n\n• Re-provisions RKP + restarts Google services.\n• The device reboots automatically (nothing is wiped).\n\nContinue?',
+        confirmGmsReset: 'Restart Google services:\n\n• GMS + Play Store + GSF — restart only.\n• Nothing is wiped and you will NOT be signed out.\n• The device reboots automatically.\n\nContinue?',
+        confirmRkpForce: 'Force re-provision (Red Magic):\n\n• For devices that ignore the leaked keybox.\n• Works even if the keys are healthy.\n• No data is deleted.\n\nContinue?',
+        confirmCertify: 'Force Play Store certification:\n\n• Clears only the Store cache — your account is untouched.\n• Reboot, then open the Store.\n\nContinue?',
+        confirmSoter: 'SOTER repair:\n\n• Restarts the vendor.soter service.\n• Clears the SOTER server data only.\n\nContinue?',
+        confirmPifApply: 'Apply fingerprint (PIF):\n\n• Converts custom.pif.prop and installs it into the engine path.\n• Requires a reboot afterwards.\n\nContinue?',
+        confirmCanary: 'Update Canary fingerprint:\n\n• Downloads the latest official Canary fingerprint from Google.\n• Syncs the security patch + restarts Google services (no wipe).\n\n⚠️ Needs internet (1-3 min). Continue?',
+        logMaintHead: '⏳ {a} — running, lines appear live...',
+        logMaintOk: '✅ "{a}" finished successfully.',
+        logMaintFail: '⚠️ "{a}" finished with an error code — check the log above.',
+        logKbNetHead: '📥 Fetching keybox from the internet...',
+        logKbNetOk: '✅ Keybox downloaded and installed permanently.',
+        logKbNetFail: '✖ Download failed or the file is invalid — check the log.',
+        logPifCheckHead: '🔎 Checking fingerprint files...',
+        logBridgeLost: '⚠️ Bridge connection lost while tracking — reopen the WebUI.'
     },
     tr: {
         subtitle: 'Gizlilik Radarı — cihazı şu anda kim temiz görüyor?',
@@ -862,7 +954,40 @@ var I18N = {
         logDemoAction: 'ℹ️ Önizleme modu — gerçek komut çalıştırılmaz',
         logRefused: '⚠️ Başka bir işlem sürüyor — bekleyin.',
         logLang: '🌐 Dil: {a}',
-        confirmEssential: 'Gizli liste yalnızca üç temel kayda indirilecek ve diğer tüm uygulamalar görünür olacak. Devam?'
+        confirmEssential: 'Gizli liste yalnızca üç temel kayda indirilecek ve diğer tüm uygulamalar görünür olacak. Devam?',
+        panelMaint: '🧰 Ana modül araçları',
+        hintMaint: 'FALCON INTEGRITY FIX araçları — her işlem zaman aşımı korumalı, ilerleme kayıtta canlı görünür.',
+        btnKbSmart: '🔄 Akıllı keybox getir (CRL + kaynaklar)',
+        btnKbNet: '📥 Keybox indir (internet)',
+        btnRkpDiag: '🔍 RKP anahtar durumu',
+        btnRkpManual: '🛠️ RKP yeniden sağla',
+        btnRkpFull: '🚀 Tam onarım + otomatik yeniden başlatma',
+        btnGmsReset: '🔄 Google servislerini yeniden başlat',
+        btnRkpForce: '🔧 Zorla yeniden sağla (Red Magic)',
+        btnCertify: '✅ Play Store sertifikası',
+        btnSoter: '🔐 SOTER onarımı',
+        btnPifApply: '🎭 PIF parmak izini uygula',
+        btnPifCheck: '🔎 Parmak izi dosyasını denetle',
+        btnCanary: '🔁 Canary parmak izini güncelle',
+        btnEngineDiag: '🩺 Motor tanılama',
+        confirmKbSmart: 'Akıllı keybox getirme (yeni v3.17):\n\n• Mevcut keybox Google iptal listesinde (CRL) denetlenir.\n• Temiz bir keybox bulunana kadar birden çok kaynak denenir.\n• Otomatik yedek + Google servisleri yeniden başlatılır.\n\n⚠️ İnternet gerekir (1-3 dk). Devam?',
+        confirmKbNet: 'Keybox internetten indirilsin mi:\n\n• Resmî keybox indirilir ve doğrulanır.\n• Kalıcı olarak kurulur (açılışta geri alınmaz).\n\n⚠️ İnternet gerekir (1 dk kadar). Devam?',
+        confirmRkpManual: 'RKP anahtarlarını yeniden sağlama:\n\n• Hiçbir veri veya keybox dosyası silinmez.\n• Sonrasında telefonu yeniden başlatın.\n\nDevam?',
+        confirmRkpFull: 'Tam onarım:\n\n• RKP yeniden sağlanır + Google servisleri yeniden başlatılır.\n• Cihaz otomatik yeniden başlar (hiçbir şey silinmez).\n\nDevam?',
+        confirmGmsReset: 'Google servislerini yeniden başlat:\n\n• GMS + Play Store + GSF — yalnızca yeniden başlatma.\n• Hiçbir şey silinmez, oturumunuz kapanmaz.\n• Cihaz otomatik yeniden başlar.\n\nDevam?',
+        confirmRkpForce: 'Zorla yeniden sağlama (Red Magic):\n\n• Sızdırılmış keyboxu yok sayan cihazlar için.\n• Anahtarlar sağlam olsa bile çalışır.\n• Hiçbir veri silinmez.\n\nDevam?',
+        confirmCertify: 'Play Store sertifikasını zorla:\n\n• Yalnızca Store önbelleği temizlenir — hesabınıza dokunulmaz.\n• Yeniden başlatıp Store uygulamasını açın.\n\nDevam?',
+        confirmSoter: 'SOTER onarımı:\n\n• vendor.soter servisi yeniden başlatılır.\n• Yalnızca SOTER sunucu verisi temizlenir.\n\nDevam?',
+        confirmPifApply: 'Parmak izini uygula (PIF):\n\n• custom.pif.prop dönüştürülür ve motor yoluna kurulur.\n• Sonrasında yeniden başlatma gerekir.\n\nDevam?',
+        confirmCanary: 'Canary parmak izini güncelle:\n\n• Google üzerinden en son resmî Canary parmak izi indirilir.\n• Güvenlik yaması eşitlenir + Google servisleri yeniden başlatılır (silme yok).\n\n⚠️ İnternet gerekir (1-3 dk). Devam?',
+        logMaintHead: '⏳ {a} — çalışıyor, satırlar canlı görünür...',
+        logMaintOk: '✅ "{a}" başarıyla tamamlandı.',
+        logMaintFail: '⚠️ "{a}" hata koduyla bitti — yukarıdaki kayda bakın.',
+        logKbNetHead: '📥 Keybox internetten indiriliyor...',
+        logKbNetOk: '✅ Keybox indirildi ve kalıcı olarak kuruldu.',
+        logKbNetFail: '✖ İndirme başarısız veya dosya geçersiz — kayda bakın.',
+        logPifCheckHead: '🔎 Parmak izi dosyaları denetleniyor...',
+        logBridgeLost: '⚠️ İzleme sırasında köprü bağlantısı koptu — arayüzü yeniden açın.'
     },
     ru: {
         subtitle: 'Радар скрытности — кто сейчас видит чистое устройство?',
@@ -1006,7 +1131,40 @@ var I18N = {
         logDemoAction: 'ℹ️ Режим предпросмотра — команды не выполняются',
         logRefused: '⚠️ Уже выполняется другая операция — подождите.',
         logLang: '🌐 Язык: {a}',
-        confirmEssential: 'Список скрытых будет сведён к трём базовым записям, а все остальные приложения станут видимыми. Продолжить?'
+        confirmEssential: 'Список скрытых будет сведён к трём базовым записям, а все остальные приложения станут видимыми. Продолжить?',
+        panelMaint: '🧰 Инструменты основного модуля',
+        hintMaint: 'Инструменты FALCON INTEGRITY FIX — каждая операция защищена тайм-аутом, прогресс виден в журнале.',
+        btnKbSmart: '🔄 Умный keybox (CRL + источники)',
+        btnKbNet: '📥 Скачать keybox (интернет)',
+        btnRkpDiag: '🔍 Состояние ключей RKP',
+        btnRkpManual: '🛠️ Перевыпуск RKP',
+        btnRkpFull: '🚀 Полный ремонт + автоперезагрузка',
+        btnGmsReset: '🔄 Перезапуск сервисов Google',
+        btnRkpForce: '🔧 Принудительный перевыпуск (Red Magic)',
+        btnCertify: '✅ Сертификация Play Store',
+        btnSoter: '🔐 Ремонт SOTER',
+        btnPifApply: '🎭 Применить отпечаток PIF',
+        btnPifCheck: '🔎 Проверить файл отпечатка',
+        btnCanary: '🔁 Обновить отпечаток Canary',
+        btnEngineDiag: '🩺 Диагностика движка',
+        confirmKbSmart: 'Умная загрузка keybox (новая в v3.17):\n\n• Текущий keybox проверяется по списку отзыва Google (CRL).\n• Перебираются источники, пока не найдётся чистый keybox.\n• Автоматическая резервная копия + перезапуск сервисов Google.\n\n⚠️ Нужен интернет (1-3 мин). Продолжить?',
+        confirmKbNet: 'Скачать keybox из интернета:\n\n• Скачивается официальный keybox и проверяется.\n• Устанавливается навсегда (не откатывается при загрузке).\n\n⚠️ Нужен интернет (до 1 мин). Продолжить?',
+        confirmRkpManual: 'Перевыпуск ключей RKP:\n\n• Данные и keybox не удаляются.\n• После завершения перезагрузите телефон.\n\nПродолжить?',
+        confirmRkpFull: 'Полный ремонт:\n\n• Перевыпуск RKP + перезапуск сервисов Google.\n• Устройство перезагрузится автоматически (ничего не удаляется).\n\nПродолжить?',
+        confirmGmsReset: 'Перезапуск сервисов Google:\n\n• GMS + Play Маркет + GSF — только перезапуск.\n• Ничего не удаляется, выход из аккаунтов не выполняется.\n• Устройство перезагрузится автоматически.\n\nПродолжить?',
+        confirmRkpForce: 'Принудительный перевыпуск (Red Magic):\n\n• Для устройств, игнорирующих утёкший keybox.\n• Работает даже при исправных ключах.\n• Данные не удаляются.\n\nПродолжить?',
+        confirmCertify: 'Принудительная сертификация Play Store:\n\n• Очищается только кэш магазина — аккаунт не затрагивается.\n• Перезагрузите и откройте магазин.\n\nПродолжить?',
+        confirmSoter: 'Ремонт SOTER:\n\n• Перезапуск службы vendor.soter.\n• Очищаются только данные сервера SOTER.\n\nПродолжить?',
+        confirmPifApply: 'Применить отпечаток (PIF):\n\n• custom.pif.prop конвертируется и устанавливается в путь движка.\n• После этого требуется перезагрузка.\n\nПродолжить?',
+        confirmCanary: 'Обновление отпечатка Canary:\n\n• Скачивается свежий официальный отпечаток Canary из Google.\n• Синхронизируется патч безопасности + перезапуск сервисов Google (без очистки).\n\n⚠️ Нужен интернет (1-3 мин). Продолжить?',
+        logMaintHead: '⏳ {a} — выполняется, строки видны вживую...',
+        logMaintOk: '✅ «{a}» успешно завершено.',
+        logMaintFail: '⚠️ «{a}» завершено с кодом ошибки — см. журнал выше.',
+        logKbNetHead: '📥 Загрузка keybox из интернета...',
+        logKbNetOk: '✅ Keybox скачан и установлен навсегда.',
+        logKbNetFail: '✖ Загрузка не удалась или файл недействителен — см. журнал.',
+        logPifCheckHead: '🔎 Проверка файлов отпечатка...',
+        logBridgeLost: '⚠️ Связь с мостом потеряна при отслеживании — откройте WebUI заново.'
     }
 };
 
@@ -1356,7 +1514,7 @@ function wrap(cmd, secs) {
 }
 
 function setBusy(on) {
-    var ids = ['btnRefresh', 'btnEssOnly', 'btnAdd', 'btnDump', 'btnDiag', 'btnCopyLog', 'btnSaveCfg', 'btnBaseline', 'btnAutoLog', 'btnKeyboxImport', 'btnCrlCheck', 'btnGwipe'];
+    var ids = ['btnRefresh', 'btnEssOnly', 'btnAdd', 'btnDump', 'btnDiag', 'btnCopyLog', 'btnSaveCfg', 'btnBaseline', 'btnAutoLog', 'btnKeyboxImport', 'btnCrlCheck', 'btnGwipe', 'btnKbSmart', 'btnKbNet', 'btnRkpDiag', 'btnRkpManual', 'btnRkpFull', 'btnGmsReset', 'btnRkpForce', 'btnCertify', 'btnSoter', 'btnPifApply', 'btnPifCheck', 'btnCanary', 'btnEngineDiag'];
     for (var i = 0; i < ids.length; i++) { if ($(ids[i])) $(ids[i]).disabled = !!on; }
 }
 
@@ -1455,7 +1613,7 @@ function probeBridge(cb) {
 
 function sh(cmd, cb, secs, bg) {
     // bg = true ⇒ عملية خلفية: لا تُقفل الواجهة ولا تُعطّل الأزرار
-    if (busy && !bg) { toast(t('logRefused')); return; }
+    if (!bg && (busy || LIVE_RUNNING)) { toast(t('logRefused')); return; }
     if (!bg) { busy = true; setBusy(true); }
     var limit = secs || TIMEOUT;
     var wrapped = wrap(cmd, limit);
@@ -1524,7 +1682,7 @@ function loadDemo() {
     state.engine = 'RUNNING';
     state.patch = 'all=2026-09-05';
     state.auto = 'on';
-    state.ver = 'v3.16';
+    state.ver = 'v3.17';
     state.loaded = true;
 }
 
@@ -2133,7 +2291,7 @@ function checkCrl() {
         if (until) logLine(tf('logCrlUntil', { a: until }));
         logLine(t('logCrlFetching'));
         var CRL_LOG = '/data/adb/falcon/crl_check.log';
-        sh('mkdir -p /data/adb/falcon; rm -f ' + CRL_LOG + '; ( sh /data/adb/modules/playintegrityfix/falcon_kbcheck.sh ' + serials.join(' ') + ' > ' + CRL_LOG + ' 2>&1; echo FALCON_EXIT=$? >> ' + CRL_LOG + ' ) >/dev/null 2>&1 & echo FALCON_STARTED', function (ec0, out0) {
+        sh('mkdir -p /data/adb/falcon; rm -f ' + CRL_LOG + '; ( sh /data/adb/modules/playintegrityfix/falcon_kbcheck.sh ' + serials.join(' ') + ' > ' + CRL_LOG + ' 2>&1; echo FALCON_EXIT=$? >> ' + CRL_LOG + ' ) < /dev/null >/dev/null 2>&1 & echo FALCON_STARTED', function (ec0, out0) {
             if (String(out0 || '').indexOf('FALCON_STARTED') === -1) { toast(t('logKeyboxFail')); return; }
             var shown = 0, ticks = 0;
             function crlPoll() {
@@ -2188,21 +2346,39 @@ function checkCrl() {
     }, 30);
 }
 
-/* (v3.16) مشغّل عام بسجل حي (ES5): يشغّل أمراً طويلاً في الخلفية ويعرض سطوره لحظياً */
-function shLive(headMsg, cmd, logPath) {
+/* (v3.16) مشغّل عام بسجل حي (ES5): يشغّل أمراً طويلاً في الخلفية ويعرض سطوره لحظياً
+   (v3.17-UNIFIED) قفل منع التكرار + فصل stdin عن الجسر + تقرير نجاح/فشل للزر المستدعي */
+var LIVE_RUNNING = false;
+function shLive(headMsg, cmd, logPath, onDone) {
+    if (busy || LIVE_RUNNING) { toast(t('logRefused')); return; }
+    LIVE_RUNNING = true;
     var LOGF = logPath || '/data/adb/falcon/live_op.log';
     logLine(headMsg);
-    sh('mkdir -p /data/adb/falcon; rm -f ' + LOGF + '; ( ' + cmd + ' > ' + LOGF + ' 2>&1; echo FALCON_EXIT=$? >> ' + LOGF + ' ) >/dev/null 2>&1 & echo FALCON_STARTED', function (ec0, out0) {
-        if (String(out0 || '').indexOf('FALCON_STARTED') === -1) { logLine(t('logSaveFail')); return; }
-        var shown = 0, ticks = 0;
+    function liveFinish(out, code) {
+        LIVE_RUNNING = false;
+        if (onDone) onDone(out, code);
+    }
+    sh('mkdir -p /data/adb/falcon; rm -f ' + LOGF + '; ( ' + cmd + ' > ' + LOGF + ' 2>&1; echo FALCON_EXIT=$? >> ' + LOGF + ' ) < /dev/null >/dev/null 2>&1 & echo FALCON_STARTED', function (ec0, out0) {
+        if (String(out0 || '').indexOf('FALCON_STARTED') === -1) {
+            LIVE_RUNNING = false;
+            logLine(t('logSaveFail'));
+            if (onDone) onDone('', -1);
+            return;
+        }
+        var shown = 0, ticks = 0, misses = 0;
         function shLiveNext() {
             ticks++;
-            if (ticks > 240) { logLine(tf('logTimeout', { a: 600 })); return; }
+            if (ticks > 240) { LIVE_RUNNING = false; logLine(tf('logTimeout', { a: 600 })); return; }
             setTimeout(shLivePoll, 2500);
         }
         function shLivePoll() {
             sh('cat ' + LOGF + ' 2>/dev/null', function (ec2, out2) {
-                if (out2 === '__TIMEOUT__') { shLiveNext(); return; }
+                if (out2 === '__TIMEOUT__') {
+                    misses++;
+                    if (misses >= 2) { LIVE_RUNNING = false; logLine(t('logBridgeLost')); return; }
+                    shLiveNext(); return;
+                }
+                misses = 0;
                 var o2 = String(out2 || '');
                 var cut = o2.lastIndexOf('\n');
                 if (cut >= 0 && cut + 1 > shown) {
@@ -2215,7 +2391,11 @@ function shLive(headMsg, cmd, logPath) {
                     }
                     shown = cut + 1;
                 }
-                if (o2.indexOf('FALCON_EXIT=') !== -1) return;
+                if (o2.indexOf('FALCON_EXIT=') !== -1) {
+                    var em = /FALCON_EXIT=([0-9-]+)/.exec(o2);
+                    liveFinish(o2, em ? parseInt(em[1], 10) : -1);
+                    return;
+                }
                 shLiveNext();
             }, 15, true);
         }
@@ -2228,6 +2408,157 @@ function googleWipe() {
     if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
     if (!confirm(t('gwipeConfirm'))) return;
     shLive(t('logGwipeHead'), 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh wipe', '/data/adb/falcon/gwipe.log');
+}
+
+/* ============================================================================
+   (v3.17-UNIFIED) أدوات الوحدة الأم — نُقلت نهائياً من واجهة الأم القديمة
+   • كل أمر محمي بمهلة الجسر + قفل منع التكرار (LIVE_RUNNING / busy).
+   • العمليات الطويلة تمشي عبر shLive (تقدم حي) وتنتهي بسطر نجاح/فشل واضح.
+   ============================================================================ */
+var MAIN_MOD = '/data/adb/modules/playintegrityfix';
+
+function maintRun(labelKey, cmd, logName, confirmKey) {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    if (confirmKey && !confirm(t(confirmKey))) return;
+    shLive(tf('logMaintHead', { a: t(labelKey) }), cmd, '/data/adb/falcon/' + logName, function (out, code) {
+        var msg = tf(code === 0 ? 'logMaintOk' : 'logMaintFail', { a: t(labelKey) });
+        logLine(msg);
+        toast(msg);
+        readCore(function () { render(); });
+    });
+}
+
+function kbSmartFetch() {
+    maintRun('btnKbSmart', 'sh ' + MAIN_MOD + '/kb_sync.sh --now', 'keysync_live.log', 'confirmKbSmart');
+}
+
+function kbNetFetch() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    if (!confirm(t('confirmKbNet'))) return;
+    logLine(t('logKbNetHead'));
+    var KBURL = 'https://github.com/AHMED2111X/AHMED2111X/raw/main/keybox.xml';
+    var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; mkdir -p /data/adb/tricky_store /data/adb/falcon; '
+        + 'TMP=/data/adb/falcon/keybox.new.xml; rm -f "$TMP"; '
+        + 'curl -L --connect-timeout 10 --max-time 60 -o "$TMP" "' + KBURL + '" 2>/dev/null || wget -T 15 -O "$TMP" "' + KBURL + '" 2>/dev/null; '
+        + 'if [ -s "$TMP" ] && grep -q "<AndroidAttestation" "$TMP" 2>/dev/null; then '
+        + 'cp -f "$TMP" /data/adb/falcon/keybox.xml && cp -f "$TMP" /data/adb/tricky_store/keybox.xml && '
+        + 'chmod 600 /data/adb/falcon/keybox.xml 2>/dev/null; chmod 644 /data/adb/tricky_store/keybox.xml 2>/dev/null; '
+        + 'chown root:root /data/adb/falcon/keybox.xml /data/adb/tricky_store/keybox.xml 2>/dev/null; '
+        + 'rm -f "$TMP"; echo KB_NET_OK; else rm -f "$TMP"; echo KB_NET_FAIL; fi';
+    sh(cmd, function (ec, out) {
+        if (out === '__TIMEOUT__') { logLine(t('logKbNetFail')); toast(t('logKbNetFail')); return; }
+        var txt = String(out || '');
+        if (txt.indexOf('KB_NET_OK') !== -1) { logLine(t('logKbNetOk')); toast(t('logKbNetOk')); }
+        else { logLine(t('logKbNetFail')); toast(t('logKbNetFail')); }
+        readCore(function () { render(); });
+    }, 90);
+}
+
+function rkpDiagnose() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    logLine(tf('logMaintHead', { a: t('btnRkpDiag') }));
+    var cmds = [];
+    cmds.push('echo "=== وحدات Remote Key Provisioning المتوفرة ==="');
+    cmds.push('timeout 20 cmd remote_provisioning list 2>&1');
+    cmds.push('echo "=== فحص إصدار شهادة التحقق من TEE ==="');
+    cmds.push('timeout 30 cmd remote_provisioning certify default 2>&1 | head -c 600');
+    cmds.push('echo ""');
+    cmds.push('echo "=== وجود أداة ZTE لإصلاح المفاتيح ==="');
+    cmds.push('ls -l /vendor/bin/KmInstallKeybox 2>&1');
+    sh(cmds.join('; '), function (ec, out) {
+        if (out === '__TIMEOUT__') { logLine(tf('logTimeout', { a: 60 })); return; }
+        var lines = String(out || '').split('\n');
+        for (var i = 0; i < lines.length; i++) {
+            var l = lines[i].replace(/\r/g, '');
+            if (!l) continue;
+            logLine(tok(l));
+        }
+        logLine(t('logDiagDone'));
+    }, 60);
+}
+
+function rkpManual() { maintRun('btnRkpManual', 'sh ' + MAIN_MOD + '/rkp_fix.sh manual', 'rkp_manual.log', 'confirmRkpManual'); }
+function rkpFull() { maintRun('btnRkpFull', 'sh ' + MAIN_MOD + '/rkp_fix.sh full', 'rkp_full.log', 'confirmRkpFull'); }
+function gmsReset() { maintRun('btnGmsReset', 'sh ' + MAIN_MOD + '/rkp_fix.sh google', 'rkp_google.log', 'confirmGmsReset'); }
+function rkpForce() { maintRun('btnRkpForce', 'sh ' + MAIN_MOD + '/rkp_fix.sh force', 'rkp_force.log', 'confirmRkpForce'); }
+function certifyPlay() { maintRun('btnCertify', 'sh ' + MAIN_MOD + '/rkp_fix.sh certify', 'play_certify.log', 'confirmCertify'); }
+function soterRepair() { maintRun('btnSoter', 'sh ' + MAIN_MOD + '/soter_fix.sh', 'soter_fix.log', 'confirmSoter'); }
+function pifApply() { maintRun('btnPifApply', 'sh ' + MAIN_MOD + '/apply_pif.sh force', 'pif_apply.log', 'confirmPifApply'); }
+function canaryUpdate() { maintRun('btnCanary', 'sh ' + MAIN_MOD + '/falcon_update_pif.sh -m', 'pif_update.log', 'confirmCanary'); }
+
+function pifCheck() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    logLine(t('logPifCheckHead'));
+    var cmds = [
+        'echo "=== [المسار الحقيقي للمحرك] /data/adb/modules/playintegrityfix/ ==="',
+        'ls -l /data/adb/modules/playintegrityfix/ 2>&1',
+        'echo ""; echo "--- custom.pif.json (في مسار المحرك) ---"',
+        'head -c 700 /data/adb/modules/playintegrityfix/custom.pif.json 2>&1',
+        'echo ""; echo "=== /data/adb/pif.json (مسار احتياطي) ==="',
+        'cat /data/adb/pif.json 2>&1 | head -c 400',
+        'echo ""; echo "=== مجلد الموديول ==="',
+        'ls -l /data/adb/modules/playintegrityfix/custom.pif.* 2>&1',
+        'echo ""; echo "=== سجل تطبيق البصمة ==="',
+        'cat /data/adb/falcon_pif.log 2>&1 | tail -n 20'
+    ];
+    sh(cmds.join('; '), function (ec, out) {
+        if (out === '__TIMEOUT__') { logLine(tf('logTimeout', { a: 45 })); return; }
+        var lines = String(out || '').split('\n');
+        for (var i = 0; i < lines.length; i++) {
+            var l = lines[i].replace(/\r/g, '');
+            if (!l) continue;
+            logLine(tok(l));
+        }
+        logLine(t('logDiagDone'));
+    }, 45);
+}
+
+function engineDiag() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    var MOD = MAIN_MOD;
+    var cmds = [];
+    cmds.push('echo "### [1] هل المحرك يعمل؟"');
+    cmds.push('TS=$(pidof TrickyStoreOSS 2>/dev/null); [ -n "$TS" ] && echo "TrickyStoreOSS يعمل pid=$TS" || echo "المحرك غير مشغّل"');
+    cmds.push('echo "### [2] سجل الإقلاع falcon_daemon.log"');
+    cmds.push('cat /data/adb/falcon_daemon.log 2>/dev/null || echo "لا يوجد سجل"');
+    cmds.push('echo "### [3] المحرك يُشغَّل تلقائياً عند الإقلاع فقط — لا يُشغَّل يدوياً أبداً"');
+    cmds.push('echo "    (تم تعطيل التشغيل اليدوي نهائياً: تشغيله مرتين يحقن keystore2 مرتين ويجمّد الجهاز)"');
+    cmds.push('echo "    إن لم يكن يعمل: أعد تشغيل الجهاز — ولا تشغّله يدوياً."');
+    cmds.push('echo "### [4] ملفات محرك التعتيد"');
+    cmds.push('ls -l ' + MOD + '/tricky/ 2>&1');
+    cmds.push('ls -l ' + MOD + '/tricky/lib/arm64-v8a/ 2>&1');
+    cmds.push('echo "### [5] إعدادات Tricky Store"');
+    cmds.push('ls -la /data/adb/tricky_store/ 2>&1');
+    cmds.push('echo "--- target.txt ---"; cat /data/adb/tricky_store/target.txt 2>/dev/null | head -30');
+    cmds.push('echo "--- security_patch.txt ---"; cat /data/adb/tricky_store/security_patch.txt 2>/dev/null');
+    cmds.push('echo "--- رأس keybox.xml ---"; head -3 /data/adb/tricky_store/keybox.xml 2>/dev/null');
+    cmds.push('echo "### [6] وحدة tricky_store مستقلة (يجب ألا تكون مثبتة — تُحذف تلقائياً)"');
+    cmds.push('if [ -d /data/adb/modules/tricky_store ]; then if [ -f /data/adb/modules/tricky_store/remove ]; then echo "معلّمة للحذف (ستُزال عند الإقلاع ✔)"; else echo "مثبتة (يجب حذفها ✖)"; fi; else echo "غير مثبتة (صحيح ✔)"; fi');
+    cmds.push('echo "### [6.1] كل الوحدات المثبتة (للتأكد أن شيئاً لم يُحذف بلا سبب)"');
+    cmds.push('for d in /data/adb/modules/*/; do n=$(basename "$d"); s="مفعّلة ✔"; [ -f "$d/disable" ] && s="معطّلة ⏸️"; [ -f "$d/remove" ] && s="معلّمة للحذف ⚠️"; echo "   $n : $s"; done');
+    cmds.push('echo "### [7] logcat (TrickyStore/keystore/attest)"');
+    cmds.push('timeout 20 logcat -d -t 1500 2>/dev/null | grep -iE "TrickyStore|keystore2|attestation|Injection" | tail -40');
+    cmds.push('echo "### [8] حالة البوت"');
+    cmds.push('getprop ro.boot.verifiedbootstate; getprop ro.boot.flash.locked; getprop ro.boot.vbmeta.device_state');
+    cmds.push('echo "### [9] أي كيبوكس نشط فعلاً (الحاسمة للمقارنة)"');
+    cmds.push('for f in /data/adb/tricky_store/keybox.xml /data/adb/falcon/keybox.xml /data/adb/modules/playintegrityfix/keybox.xml; do if [ -s "$f" ]; then N=$(wc -c < "$f"); C=$(grep -c "BEGIN CERT" "$f" 2>/dev/null); echo "   $f -> $N bytes | شهادات=$C"; else echo "   $f -> غير موجود"; fi; done');
+    cmds.push('cmp -s /data/adb/tricky_store/keybox.xml /data/adb/falcon/keybox.xml 2>/dev/null && echo "   النشط == كيبوكس المستخدم المحفوظ ✔" || echo "   ⚠️ النشط يختلف عن كيبوكس المستخدم المحفوظ"');
+    cmds.push('cmp -s /data/adb/tricky_store/keybox.xml /data/adb/modules/playintegrityfix/keybox.xml 2>/dev/null && echo "   النشط == كيبوكس الإضافة المرفق (الافتراضي)" || echo "   النشط != كيبوكس الإضافة المرفق (أنت تستخدم كيبوكساً خاصاً)"');
+    cmds.push('echo "### [10] حالة مفاتيح التحقق RKP"');
+    cmds.push('ls -l /vendor/bin/KmInstallKeybox /system/bin/KmInstallKeybox 2>&1 | head -3');
+    cmds.push('if [ -f /data/adb/falcon/rkp_fix_done ]; then echo "   علامة الإصلاح التلقائي: $(cat /data/adb/falcon/rkp_fix_done)"; else echo "   لم يُنفَّذ الإصلاح التلقائي بعد"; fi');
+    cmds.push('tail -n 20 /data/adb/falcon_rkp_fix.log 2>/dev/null || echo "   لا يوجد سجل RKP"');
+    cmds.push('echo "### [11] البصمة الحقيقية مقابل المزيفة"');
+    cmds.push('echo "   الحقيقية: $(getprop ro.build.fingerprint)"');
+    cmds.push('echo "   المزيفة:   $(grep "^FINGERPRINT=" /data/adb/modules/playintegrityfix/custom.pif.prop 2>/dev/null)"');
+    cmds.push('echo "   الرقعة الحقيقية: $(getprop ro.build.version.security_patch)"');
+    cmds.push('echo "### [12] target.txt"');
+    cmds.push('echo "   عدد الصفوف: $(grep -c "" /data/adb/tricky_store/target.txt 2>/dev/null)"');
+    cmds.push('grep -E "com.google.android.gms|com.android.vending" /data/adb/tricky_store/target.txt 2>/dev/null | sort -u | head -6 || echo "   ⚠️ GMS/Vending غير موجودين"');
+    shLive(tf('logMaintHead', { a: t('btnEngineDiag') }), cmds.join('; '), '/data/adb/falcon/daemon_diag.log', function () {
+        logLine(t('logDiagDone'));
+        toast(t('logDiagDone'));
+    });
 }
 
 function forceStop(pkg) {
@@ -2560,6 +2891,19 @@ $('btnAutoLog').onclick = readAutoLog;
 $('btnKeyboxImport').onclick = importKeybox;
 $('btnCrlCheck').onclick = checkCrl;
 $('btnGwipe').onclick = googleWipe;
+$('btnKbSmart').onclick = kbSmartFetch;
+$('btnKbNet').onclick = kbNetFetch;
+$('btnRkpDiag').onclick = rkpDiagnose;
+$('btnRkpManual').onclick = rkpManual;
+$('btnRkpFull').onclick = rkpFull;
+$('btnGmsReset').onclick = gmsReset;
+$('btnRkpForce').onclick = rkpForce;
+$('btnCertify').onclick = certifyPlay;
+$('btnSoter').onclick = soterRepair;
+$('btnPifApply').onclick = pifApply;
+$('btnPifCheck').onclick = pifCheck;
+$('btnCanary').onclick = canaryUpdate;
+$('btnEngineDiag').onclick = engineDiag;
 $('btnSelAll').onclick = function () { selectAll(true); };
 $('btnSelNone').onclick = function () { selectAll(false); };
 $('logClose').onclick = closeLog;

@@ -630,7 +630,10 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     resetprop_if_diff vendor.boot.verifiedbootstate green
     resetprop_if_diff ro.boot.verifiedbootstate green
     resetprop_if_diff ro.boot.veritymode enforcing
+    resetprop_if_diff vendor.boot.veritymode enforcing
     resetprop_if_diff sys.oem_unlock_allowed 0
+    resetprop_if_diff service.adb.root 0
+    resetprop_if_diff ro.boot.vbmeta.invalidate_on_error yes
 
     # --- (v3.16) تدميج مساحة الخصائص: إزالة القيم القديمة العالقة في ذاكرة النظام ---
     (timeout 10 resetprop --compact) >/dev/null 2>&1 || true
@@ -693,3 +696,28 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
         sleep 4
     done
 ) &
+
+# --- 6. (v3.17) مزامنة الكيبوكس التلقائية (FALCON KEYSYNC) ---
+# فحص دوري بعد اكتمال الإقلاع: إن كان الكيبوكس مُبطَلاً لدى جوجل (CRL) أو
+# مفقوداً/تالفاً → جلب بديل سليم تلقائياً من مصادر عامة وتثبيته.
+# لا شبكة أثناء الإقلاع (ننتظر sys.boot_completed + دقيقتين). منفصلة تماماً
+# وبلا أي تأثير على الإقلاع. للإيقاف: touch /data/adb/falcon_keysync/disable_auto
+(
+    [ -f "$MODDIR/kb_sync.sh" ] || exit 0
+    KS_WAIT=0
+    while [ "$(getprop sys.boot_completed 2>/dev/null)" != "1" ] && [ "$KS_WAIT" -lt 300 ]; do
+        sleep 5
+        KS_WAIT=$((KS_WAIT + 1))
+    done
+    sleep 120
+
+    while true; do
+        [ -f /data/adb/falcon_keysync/disable_auto ] && exit 0
+        KS_INT=3600
+        [ -f /data/adb/falcon_keysync/interval ] && KS_INT=$(cat /data/adb/falcon_keysync/interval 2>/dev/null)
+        case "$KS_INT" in ''|*[!0-9]*) KS_INT=3600 ;; esac
+        [ "$KS_INT" -lt 900 ] 2>/dev/null && KS_INT=900
+        sh "$MODDIR/kb_sync.sh" --auto >/dev/null 2>&1
+        sleep "$KS_INT"
+    done
+) >/dev/null 2>&1 &

@@ -92,6 +92,33 @@ resetprop_if_diff ro.force.debuggable 0
 resetprop_if_diff ro.secure 1
 resetprop_if_diff ro.boot.veritymode.managed yes
 
+# --- (v3.17) خصائص إقلاع موسّعة (سامسونج + التشفير + سلسلة vbmeta) — تُطبَّق عند الاختلاف فقط ---
+resetprop_if_diff ro.boot.fmp_config 1
+resetprop_if_diff ro.boot.dp_fw_check 1
+resetprop_if_diff ro.crypto.state encrypted
+resetprop_if_diff ro.boot.vbmeta.hash_alg sha256
+resetprop_if_diff ro.boot.vbmeta.avb_version 1.0
+resetprop_if_diff ro.boot.vbmeta.invalidate_on_error yes
+# حجم قسم vbmeta الحقيقي (قراءة خفيفة جداً — بلا أي تحليل ثقيل)
+VBMETA_BLK=""
+for VP in /dev/block/by-name/vbmeta /dev/block/by-name/vbmeta_a /dev/block/bootdevice/by-name/vbmeta /dev/block/bootdevice/by-name/vbmeta_a; do
+    [ -e "$VP" ] && VBMETA_BLK="$VP" && break
+done
+if [ -n "$VBMETA_BLK" ] && command -v blockdev >/dev/null 2>&1; then
+    VBMETA_SIZE=$(blockdev --getsize64 "$VBMETA_BLK" 2>/dev/null)
+    case "$VBMETA_SIZE" in
+        ''|*[!0-9]*) ;;
+        *) resetprop_if_diff ro.boot.vbmeta.size "$VBMETA_SIZE" ;;
+    esac
+fi
+
+# --- (v3.17) إزالة بصمات الرومات المخصصة (LineageOS) — علامة مكشوفة لفحوصات جوجل ---
+if [ "$SKIPDELPROP" != "true" ]; then
+    for LP in ro.lineage.build.version ro.lineage.version ro.lineage.display.version ro.modversion ro.cm.version; do
+        delprop_if_exist "$LP" 2>/dev/null || true
+    done
+fi
+
 # حذف أعلام أخطاء التحقق إن وجد
 if [ "$SKIPDELPROP" != "true" ]; then
     delprop_if_exist ro.boot.verifiedbooterror
@@ -113,6 +140,16 @@ fi
 
 if [ -f /data/system/gms_certified_props.json ] && [ "$(getprop persist.sys.spoof.gms)" != "false" ]; then
     resetprop persist.sys.spoof.gms false
+fi
+
+# --- (v3.17) حجب محركات تزييف الرومات المخصصة (pixelprops/pihooks/entryhooks) ---
+# لا يتحرك إلا إذا اكتشف محرك تزييف فعلاً. للإيقاف: touch /data/adb/falcon/no_rom_spoof_block
+if [ -f "$MODPATH/rom_spoof_block.sh" ]; then
+    if command -v timeout >/dev/null 2>&1; then
+        timeout 20 sh "$MODPATH/rom_spoof_block.sh" >/dev/null 2>&1 || true
+    else
+        sh "$MODPATH/rom_spoof_block.sh" >/dev/null 2>&1 || true
+    fi
 fi
 
 # --- 2.5 إعادة تطبيق هوية الجهاز المزيفة قبل تشغيل Zygote (جوجل بلاي) ---

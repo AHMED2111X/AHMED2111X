@@ -338,6 +338,9 @@ fi
 [ -f "$MODPATH/post-fs-data.sh" ] && set_perm "$MODPATH/post-fs-data.sh" 0 0 0755
 [ -f "$MODPATH/rkp_fix.sh" ] && set_perm "$MODPATH/rkp_fix.sh" 0 0 0755
 [ -f "$MODPATH/apply_pif.sh" ] && set_perm "$MODPATH/apply_pif.sh" 0 0 0755
+[ -f "$MODPATH/kb_sync.sh" ] && set_perm "$MODPATH/kb_sync.sh" 0 0 0755
+[ -f "$MODPATH/soter_fix.sh" ] && set_perm "$MODPATH/soter_fix.sh" 0 0 0755
+[ -f "$MODPATH/rom_spoof_block.sh" ] && set_perm "$MODPATH/rom_spoof_block.sh" 0 0 0755
 
 # --- صلاحيات محرك التعتيد المدمج (Tricky Store OSS) ---
 # ⚠️ ضروري: المحرك يُقلع بـ ./daemon لذا يجب أن يكون الملف تنفيذياً (755).
@@ -365,6 +368,12 @@ fi
 #    • حذف الملحق (falcon_tricky)  ⇒ يُحذف مجلد الأم فوراً (falcon_tricky/uninstall.sh)
 #    + حماية احتياطية: service.sh في الوحدتين يزيل أي يتيم متبقٍ عند الإقلاع.
 # ==============================================================================
+# (v3.17-UNIFIED) واجهة الأم القديمة أُزيلت نهائياً — كل الأدوات انتقلت إلى واجهة FALCON TRICKY.
+# نمسح أي نسخة متبقية من الواجهة القديمة (webroot + bridge.js) من الوحدة الحيّة ومن
+# تحديث معلّق، حتى لا يبقى زر WebUI قديم للأم على أي جهاز كان مثبَّتاً عليه إصدار أقدم.
+rm -rf /data/adb/modules/playintegrityfix/webroot /data/adb/modules_update/playintegrityfix/webroot 2>/dev/null || true
+rm -f /data/adb/modules/playintegrityfix/bridge.js /data/adb/modules_update/playintegrityfix/bridge.js 2>/dev/null || true
+
 if [ -f "$MODPATH/falcon_tricky/module.prop" ]; then
     FT_DIR="/data/adb/modules/falcon_tricky"
     rm -rf "$FT_DIR" 2>/dev/null
@@ -513,6 +522,19 @@ ui_print "- ✅ تم تأمين مسارات النظام ومحاذاة الـ 
 ui_print "- 🩺 إصلاح مفاتيح RKP لأجهزة Red Magic مضمن (يُنفَّذ تلقائياً" ; delay
 ui_print "   مرة واحدة عند أول إقلاع — أو يدوياً من زر WebUI)." ; delay
 
+# ==============================================================================
+# 🔄 (v3.17) تهيئة مزامنة الكيبوكس التلقائية (FALCON KEYSYNC)
+# ==============================================================================
+mkdir -p /data/adb/falcon_keysync 2>/dev/null
+if [ ! -f /data/adb/falcon_keysync/sources.conf ] && [ -f "$MODPATH/sources.conf" ]; then
+    cp -f "$MODPATH/sources.conf" /data/adb/falcon_keysync/sources.conf 2>/dev/null
+fi
+if [ ! -f /data/adb/falcon_keysync/interval ]; then
+    echo 3600 > /data/adb/falcon_keysync/interval 2>/dev/null
+fi
+ui_print "- 🔄 مزامنة الكيبوكس التلقائية جاهزة (فحص CRL كل ساعة بعد الإقلاع)" ; delay
+ui_print "- ℹ المصادر: /data/adb/falcon_keysync/sources.conf — السجل: kb_sync.log" ; delay
+ui_print "- ℹ للإيقاف: touch /data/adb/falcon_keysync/disable_auto" ; delay
 ui_print " " ; delay
 ui_print "- تم التثبيت بنجاح! 🦅🔥" ; delay
 ui_print "- المطور: ABUFARID" ; delay

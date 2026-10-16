@@ -188,6 +188,21 @@ else
     step_info "تنبيه: لم يتم العثور على أي ملف keybox.xml صالح."
 fi
 
+# --- 1.5 (v3.17) المزامنة الذكية للكيبوكس: فحص CRL + جلب تلقائي إن كان مُبطَلاً ---
+step_item "جاري الفحص الذكي للكيبوكس (قائمة إبطال جوجل CRL)..."
+if [ -f "$MODDIR/kb_sync.sh" ]; then
+  KS_OUT=$(sh "$MODDIR/kb_sync.sh" --auto 2>&1)
+  KS_RES=$(printf '%s\n' "$KS_OUT" | grep -o 'FALCON_KS_RESULT=[A-Z]*' | head -n 1 | cut -d= -f2)
+  case "$KS_RES" in
+    OK)       step_success "الكيبوكس كان مُبطَلاً/مفقوداً — تم جلب كيبوكس جديد سليم وتثبيته تلقائياً" ;;
+    NOCHANGE) step_success "الكيبوكس الحالي سليم لدى جوجل — لا حاجة لجلب جديد" ;;
+    FAIL)     step_info "تعذّر الفحص الآن (لا إنترنت؟) — ستُعاد المحاولة تلقائياً بعد الإقلاع" ;;
+    *)        step_info "لم يكتمل الفحص الذكي — تخطّي (راجع /data/adb/falcon_keysync/kb_sync.log)" ;;
+  esac
+else
+  step_info "سكربت المزامنة الذكية غير موجود — تخطّي."
+fi
+
 # --- 2. قراءة بصمة التمويه (PIF) من custom.pif.prop ---
 # ⚠️ (v3.04) كان هذا الزر يكتب «بصمة الجهاز الحقيقية» (Red Magic/OnePlus) فيُتلف
 #    تمويه Play Integrity بالكامل! الآن يقرأ البصمة المزيفة (Pixel 6a) من
