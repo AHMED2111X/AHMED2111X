@@ -159,6 +159,11 @@
     .segments button.on { color: #04070a; background: var(--neon); font-weight: 700; }
     .segments button b { font-size: 0.66rem; opacity: .85; margin-inline-start: 4px; }
 
+    /* (v3.14) شريط التحديد الجماعي */
+    .selbar { margin-top: 8px; }
+    .selbar button { flex: 1 1 128px; }
+    .selcnt { flex: 1 1 100%; font-size: 0.68rem; color: var(--muted); }
+
     .list { margin-top: 10px; }
     .item {
         display: flex; align-items: center; gap: 10px;
@@ -325,6 +330,12 @@
             <button data-f="user"><span data-i18n="segUser"></span> <b id="cUser">0</b></button>
         </div>
     </div>
+    <!-- (v3.14) زرّا التحديد الجماعي: إخفاء كل المعروض أو إظهاره بضغطة واحدة -->
+    <div class="row selbar">
+        <button id="btnSelAll" class="amber" data-i18n="btnSelAll"></button>
+        <button id="btnSelNone" class="ghost" data-i18n="btnSelNone"></button>
+        <div class="selcnt tok" id="selCount"></div>
+    </div>
     <div id="list" class="list"></div>
 </section>
 
@@ -363,7 +374,7 @@
 
 <script>
 /* =============================================================================
-   FALCON TRICKY — WebUI (Stealth Radar)
+   FALCON TRICKY — WebUI (Stealth Radar) — v3.14
    Languages: العربية · English · Türkçe · Русский
    المطوّر / Developer: ABUFARID | Telegram: @falcon_kernel
 
@@ -373,6 +384,12 @@
      3) Watchdog releases the UI even if the bridge never returns.
      4) ⛔ The engine is NEVER started from here (double injection = device freeze).
      5) Writes are limited to /data/adb/tricky_store/target.txt only.
+
+   ⚡ Instant-response rules (v3.14 — never regress):
+     6) لا يُنفَّذ `pm list packages` إلا بضغطة «⟳ تحديث» أو بعد الإقلاع بصمت.
+     7) بعد أي إخفاء/إظهار: تحديث محلي فوري + كتابة فقط. ممنوع readState.
+     8) استخراج الأيقونات يجري منفصلاً تماماً عن الجسر `( … & )` لحزم الجديد فقط.
+     9) الأيقونات تُقرأ كملفات HTTP من webroot — صفر استدعاءات للجسر.
    ============================================================================= */
 
 var TARGET_FILE = '/data/adb/tricky_store/target.txt';
@@ -435,6 +452,14 @@ var I18N = {
         logInstalledOk: '✔ «{a}» مثبّتة على الجهاز فعلاً — سيُطبَّق الإخفاء فوراً',
         logCacheUsed: '⚡ قائمة التطبيقات محمّلة من الذاكرة المؤقتة',
         logPkgLoaded: '📦 تم تحميل {a} تطبيقاً من الجهاز',
+        btnSelAll: '✔ تحديد الكل',
+        btnSelNone: '✖ إلغاء الكل',
+        selBarCount: 'قابل للإخفاء: {a} · قابل للإظهار: {b}',
+        selNothing: 'لا شيء لتغييره في العرض الحالي.',
+        confirmSelAll: 'سيتم إخفاء {a} تطبيقاً عن المتجر (الأساسي يبقى محميّاً). متابعة؟',
+        confirmSelNone: 'سيتم إظهار {a} تطبيقاً للمتجر. متابعة؟',
+        logSelAll: '✔ تم تحديد {a} تطبيقاً للإخفاء',
+        logSelNone: '✖ تم إلغاء تحديد {a} تطبيقاً',
         logBridgeName: '🔌 الجسر: وضع KsuWebUI / MMRL (اسم دالة عامة)',
         logBridgeFn: '🔌 الجسر: وضع KernelSU (دالة مباشرة)',
         btnKeyboxImport: '📥 استيراد كيبوكس',
@@ -550,6 +575,14 @@ var I18N = {
         logInstalledOk: '✔ “{a}” is actually installed on the device — hiding applies immediately',
         logCacheUsed: '⚡ App list loaded from cache',
         logPkgLoaded: '📦 Loaded {a} apps from the device',
+        btnSelAll: '✔ Select all',
+        btnSelNone: '✖ Clear all',
+        selBarCount: 'Can hide: {a} · Can show: {b}',
+        selNothing: 'Nothing to change in the current view.',
+        confirmSelAll: 'Hide {a} apps from the store? (Essentials stay protected.)',
+        confirmSelNone: 'Show {a} apps to the store?',
+        logSelAll: '✔ Marked {a} apps to hide',
+        logSelNone: '✖ Cleared {a} apps',
         logBridgeName: '🔌 Bridge: KsuWebUI / MMRL mode (global function name)',
         logBridgeFn: '🔌 Bridge: KernelSU mode (direct function)',
         btnKeyboxImport: '📥 Import keybox',
@@ -665,6 +698,14 @@ var I18N = {
         logInstalledOk: '✔ “{a}” cihazda gerçekten yüklü — gizleme hemen uygulanır',
         logCacheUsed: '⚡ Uygulama listesi önbellekten yüklendi',
         logPkgLoaded: '📦 Cihazdan {a} uygulama yüklendi',
+        btnSelAll: '✔ Tümünü seç',
+        btnSelNone: '✖ Tümünü kaldır',
+        selBarCount: 'Gizlenebilir: {a} · Gösterilebilir: {b}',
+        selNothing: 'Geçerli görünümde değiştirilecek bir şey yok.',
+        confirmSelAll: '{a} uygulama mağazadan gizlensin mi? (Temel olanlar korunur.)',
+        confirmSelNone: '{a} uygulama mağazaya gösterilsin mi?',
+        logSelAll: '✔ {a} uygulama gizlenmek üzere işaretlendi',
+        logSelNone: '✖ {a} uygulamanın işareti kaldırıldı',
         logBridgeName: '🔌 Köprü: KsuWebUI / MMRL modu (genel fonksiyon adı)',
         logBridgeFn: '🔌 Köprü: KernelSU modu (doğrudan fonksiyon)',
         btnKeyboxImport: '📥 Keybox içe aktar',
@@ -780,6 +821,14 @@ var I18N = {
         logInstalledOk: '✔ «{a}» действительно установлено на устройстве — скрытие применяется сразу',
         logCacheUsed: '⚡ Список приложений загружен из кэша',
         logPkgLoaded: '📦 Загружено {a} приложений с устройства',
+        btnSelAll: '✔ Выбрать всё',
+        btnSelNone: '✖ Снять всё',
+        selBarCount: 'Можно скрыть: {a} · Можно показать: {b}',
+        selNothing: 'В текущем виде нечего менять.',
+        confirmSelAll: 'Скрыть {a} приложений из магазина? (Базовые защищены.)',
+        confirmSelNone: 'Показать {a} приложений магазину?',
+        logSelAll: '✔ Отмечено {a} приложений для скрытия',
+        logSelNone: '✖ Снято {a} приложений',
         logBridgeName: '🔌 Мост: режим KsuWebUI / MMRL (имя глобальной функции)',
         logBridgeFn: '🔌 Мост: режим KernelSU (прямая функция)',
         btnKeyboxImport: '📥 Импорт keybox',
@@ -1364,7 +1413,7 @@ function loadDemo() {
     state.engine = 'RUNNING';
     state.patch = 'all=2026-09-05';
     state.auto = 'on';
-    state.ver = 'v3.13';
+    state.ver = 'v3.14';
     state.loaded = true;
 }
 
@@ -1446,6 +1495,8 @@ function readCore(cb) {
 /* قائمة التطبيقات: من الذاكرة المؤقتة أولاً (لحظي)، ثم تحديث من الجهاز في الخلفية.
    bg=true ⇒ لا تُقفل الواجهة مهما طال الأمر. */
 function loadPackages() {
+    // (v3.14) القراءة من الذاكرة المؤقتة فوراً (لحظي)، ثم تحديث صامت من الجهاز
+    // بعد مهلة قصيرة — حتى لا يزاحم الجسر أول تفاعل من المستخدم.
     sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
         + 'echo "###C"; cat ' + PKG_CACHE + ' 2>/dev/null; echo "###CU"; cat ' + PKG_CACHE_USER + ' 2>/dev/null',
         function (ec, out) {
@@ -1459,23 +1510,28 @@ function loadPackages() {
                 if (state.loaded) render();
                 logLine(t('logCacheUsed'));
             }
-            // تحديث من الجهاز — مهلة قصيرة حتى لا يعلّق شيء
-            var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
-                + 'echo "###J"; L=$(timeout 12 pm list packages 2>/dev/null | cut -d: -f2); if [ -z "$L" ]; then L=$(cut -d" " -f1 /data/system/packages.list 2>/dev/null); fi; echo "$L"; '
-                + 'echo "###U"; U=$(timeout 12 pm list packages -3 2>/dev/null | cut -d: -f2); if [ -z "$U" ]; then U=$(awk \'$2>=10000{print $1}\' /data/system/packages.list 2>/dev/null); fi; echo "$U"';
-            sh(cmd, function (ec2, out2) {
-                if (out2 === '__TIMEOUT__') return;
-                var s2 = parseSections(out2);
-                var all = cleanLines(s2.J);
-                var user = cleanLines(s2.U);
-                if (!all.length) return;
-                state.all = all;
-                state.user = user;
-                writePkgCache(all, user);
-                if (state.loaded) render();
-                logLine(tf('logPkgLoaded', { a: all.length }));
-            }, 20, true);
+            // بلا ذاكرة مؤقتة ⇒ حدّث فوراً. ومعها ⇒ انتظر 8 ثوانٍ ثم حدّث بصمت.
+            setTimeout(refreshPkgList, cachedAll.length ? 8000 : 0);
         }, 20, true);
+}
+
+/* تحديث قائمة التطبيقات من الجهاز (في الخلفية — لا يقفل الواجهة) */
+function refreshPkgList() {
+    var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+        + 'echo "###J"; L=$(timeout 12 pm list packages 2>/dev/null | cut -d: -f2); if [ -z "$L" ]; then L=$(cut -d" " -f1 /data/system/packages.list 2>/dev/null); fi; echo "$L"; '
+        + 'echo "###U"; U=$(timeout 12 pm list packages -3 2>/dev/null | cut -d: -f2); if [ -z "$U" ]; then U=$(awk \'$2>=10000{print $1}\' /data/system/packages.list 2>/dev/null); fi; echo "$U"';
+    sh(cmd, function (ec2, out2) {
+        if (out2 === '__TIMEOUT__') return;
+        var s2 = parseSections(out2);
+        var all = cleanLines(s2.J);
+        var user = cleanLines(s2.U);
+        if (!all.length) return;
+        state.all = all;
+        state.user = user;
+        writePkgCache(all, user);
+        if (state.loaded) render();
+        logLine(tf('logPkgLoaded', { a: all.length }));
+    }, 20, true);
 }
 
 function writePkgCache(all, user) {
@@ -1504,7 +1560,7 @@ function readState(cb) {
                 writePkgCache(all, user);
             }
             render();
-            loadIcons();
+            loadIconIndex();
             if (cb) cb(true);
         }, 25);
     });
@@ -1513,6 +1569,9 @@ function readState(cb) {
 /* ------------------------------ الكتابة ------------------------------ */
 function saveTarget(list, note, cb, verifyPkg) {
     if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    var prev = {};
+    state.target.forEach(function (l) { prev[stripBang(l)] = true; });
+
     var out = [];
     MANDATORY.forEach(function (m) { if (out.indexOf(m) === -1) out.push(m); });
     (list || []).forEach(function (p) {
@@ -1520,6 +1579,16 @@ function saveTarget(list, note, cb, verifyPkg) {
         if (out.indexOf(p) === -1) out.push(p);
     });
     if (!out.length) { toast(t('logEmptyRefuse')); return; }
+
+    // (v3.14) تحديث الواجهة فوراً بلا أي انتظار — التطبيق يُخفى أمام عينك
+    // لحظياً، والكتابة تجري في الخلف. ولهذا لا نستدعي readState بعد الحفظ
+    // (كان ينفّذ pm list packages فيقفل الواجهة عشر ثوانٍ مع كل ضغطة).
+    var added = out.filter(function (p) {
+        var b = stripBang(p);
+        return !prev[b] && MANDATORY.indexOf(b) === -1;
+    });
+    state.target = out.slice();
+    render();
 
     var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; mkdir -p /data/adb/tricky_store; chmod 755 /data/adb/tricky_store 2>/dev/null; '
         + 'printf "%s\\n" ' + out.map(function (p) { return "'" + p + "'"; }).join(' ') + ' > ' + TARGET_FILE + '; '
@@ -1536,6 +1605,7 @@ function saveTarget(list, note, cb, verifyPkg) {
         if (txt.indexOf('WRITE_DONE') === -1) {
             toast(t('logSaveFail'));
             logLine(esc(txt.slice(0, 400) || '(no output)'));
+            readCore(function () { render(); });   // إعادة مزامنة سريعة من القرص
             return;
         }
         var rb = /READBACK_COUNT=(\d+)/.exec(txt);
@@ -1552,12 +1622,11 @@ function saveTarget(list, note, cb, verifyPkg) {
             }
             toast(tf('logSaved', { a: out.length }) + (note ? ' · ' + note : ''));
         }
-        // (v3.13) استخراج أيقونات ما أخفيناه حديثاً ثم تحديث العرض
-        sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
-            + 'sh /data/adb/modules/playintegrityfix/icons.sh ' + out.join(' ') + ' >/dev/null 2>&1; echo ICONS_REFRESHED',
-            function () { loadIcons(); }, 60, true);
-        readState(function () { render(); if (cb) cb(); });
-    }, 40);
+        // (v3.14) أيقونات التطبيقات التي أخفيناها للتوّ فقط — منفصلة تماماً عن
+        // الجسر (تسحب نفسها في الخلفية) فلا تعلّق الواجهة ولا تنتظر شيئاً.
+        if (added.length) extractIconsDetached(added);
+        if (cb) cb();
+    }, 30);
 }
 
 function toggleHidden(pkg) {
@@ -1577,6 +1646,58 @@ function toggleHidden(pkg) {
 function essentialOnly() {
     confirmAction(t('confirmEssential'), function () {
         saveTarget(MANDATORY.slice(), t('logEssential'));
+    });
+}
+
+/* =============================================================================
+   (v3.14) التحديد الجماعي: «تحديد الكل» و«إلغاء الكل» بضغطة واحدة
+   -----------------------------------------------------------------------------
+   يعملان على ما يراه المستخدم بالضبط في هذه اللحظة (نفس التصفية ونفس البحث)،
+   والحزم الثلاث الإلزامية محميّة دائماً ولا تُلمس.
+   ============================================================================= */
+function selTargets() {
+    var rows = state.rows || [];
+    var hide = [], show = [];
+    rows.forEach(function (r) {
+        var p = stripBang(r.pkg);
+        if (MANDATORY.indexOf(p) !== -1) return;
+        if (r.hidden && !r.bang) show.push(p);   // مخفي ⇒ يمكن إظهاره
+        else hide.push(p);                        // ظاهر أو مستثنى ⇒ يمكن إخفاؤه
+    });
+    return { hide: hide, show: show };
+}
+
+function renderSelBar() {
+    var el = $('selCount');
+    var b1 = $('btnSelAll');
+    var b2 = $('btnSelNone');
+    if (!b1 || !b2 || !el) return;
+    var g = selTargets();
+    b1.disabled = (g.hide.length === 0);
+    b2.disabled = (g.show.length === 0);
+    el.textContent = tf('selBarCount', { a: g.hide.length, b: g.show.length });
+}
+
+function selectAll(on) {
+    var g = selTargets();
+    var list = state.target.slice();
+    var changed = 0;
+    if (on) {
+        g.hide.forEach(function (p) {
+            var bi = list.indexOf(p + '!');
+            if (bi !== -1) list.splice(bi, 1);
+            if (list.indexOf(p) === -1) { list.push(p); changed++; }
+            else if (bi !== -1) changed++;
+        });
+    } else {
+        g.show.forEach(function (p) {
+            var i = list.indexOf(p);
+            if (i !== -1) { list.splice(i, 1); changed++; }
+        });
+    }
+    if (!changed) { toast(t('selNothing')); return; }
+    confirmAction(tf(on ? 'confirmSelAll' : 'confirmSelNone', { a: changed }), function () {
+        saveTarget(list, tf(on ? 'logSelAll' : 'logSelNone', { a: changed }));
     });
 }
 
@@ -1882,38 +2003,137 @@ function appRow(pkg, hidden, banged) {
         + '</div>';
 }
 
-/* (v3.13) أيقونة التطبيق الحقيقية إن وُجدت، وإلا حرف ملوّن بديل */
-var iconMap = {};
+/* =============================================================================
+   (v3.14) الأيقونات — بلا جسر إطلاقاً
+   -----------------------------------------------------------------------------
+   سبب التغيير: في v3.13 كانت الأيقونات تُقرأ base64 عبر الجسر، وكان كل ضغطة
+   تشغّل icons.sh لكل التطبيقات ثم readState (‏pm list packages) — فيبقى الجسر
+   مشغولاً عشر ثوانٍ وتظهر رسالة «هناك عملية قيد التنفيذ».
+
+   الحل: icons.sh يكتب الأيقونات في webroot هذه الواجهة نفسها + ملف فهرس
+   icons/_index.txt، فتُقرأ الصور كملفات HTTP عادية — صفر استدعاءات للجسر.
+   ولو تعذّر ذلك لأي سبب نعود تلقائياً مرة واحدة إلى الجسر (base64).
+   ============================================================================= */
+var icoSet = {};          // الحزم التي لها أيقونة فعلية (من الفهرس)
+var icoMap = {};          // بديل base64
+var icoMode = 'http';     // http | b64
+var icoB64Tried = false;
+var icoFails = 0;
+
+function hueOf(pkg) {
+    var hue = 0;
+    for (var i = 0; i < pkg.length; i++) hue = (hue * 31 + pkg.charCodeAt(i)) % 360;
+    return hue;
+}
 
 function avatarHtml(pkg) {
     var nice = nameOf(pkg) || pkg;
     var ch = (String(nice).trim().charAt(0) || '?').toUpperCase();
-    var hue = 0;
-    for (var i = 0; i < pkg.length; i++) hue = (hue * 31 + pkg.charCodeAt(i)) % 360;
-    return '<span class="avatar" style="background:hsl(' + hue + ',60%,34%)">' + esc(ch) + '</span>';
+    return '<span class="avatar" style="background:hsl(' + hueOf(pkg) + ',60%,34%)">' + esc(ch) + '</span>';
 }
 
 function iconHtml(pkg) {
-    if (iconMap[pkg]) {
-        return '<img class="appic" src="' + iconMap[pkg] + '" alt="" draggable="false">';
+    if (icoMode === 'http' && icoSet[pkg]) {
+        return '<img class="appic" src="icons/' + pkg + '.png" alt="" draggable="false" loading="lazy" '
+            + 'onerror="falconIcoFail(this,\'' + pkg + '\')">';
+    }
+    if (icoMode === 'b64' && icoMap[pkg]) {
+        return '<img class="appic" src="' + icoMap[pkg] + '" alt="" draggable="false">';
     }
     return avatarHtml(pkg);
 }
 
-/* جلب كل الأيقونات المستخرجة على الجهاز دفعة واحدة (في الخلفية، بلا قفل) */
-function loadIcons() {
+/* استبدال الصورة الفاشلة بحرف ملوّن، ولو فشلت ثلاث صور نجرب مسار الجسر */
+function falconIcoFail(img, pkg) {
+    img.onerror = null;
+    var nice = nameOf(pkg) || pkg;
+    var span = document.createElement('span');
+    span.className = 'avatar';
+    span.style.background = 'hsl(' + hueOf(pkg) + ',60%,34%)';
+    span.textContent = (String(nice).trim().charAt(0) || '?').toUpperCase();
+    if (img.parentNode) img.parentNode.replaceChild(span, img);
+    icoFails++;
+    if (icoFails >= 3 && !icoB64Tried) { icoB64Tried = true; icoMode = 'b64'; loadIconsB64(); }
+}
+
+/* قراءة فهرس الأيقونات — طلب ملف عادي، لا يلمس الجسر ولا يُقفل شيئاً */
+function loadIconIndex(after) {
+    try {
+        fetch('icons/_index.txt?t=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
+            .then(function (txt) {
+                var s = {};
+                txt.split(/\r?\n/).forEach(function (l) {
+                    l = l.trim();
+                    if (l && l.charAt(0) !== '#') s[l] = true;
+                });
+                // لا نعيد الرسم إلا إذا تغيّرت المجموعة فعلاً — حتى لا يرتجف العرض
+                var a = Object.keys(s).sort().join(',');
+                var b = Object.keys(icoSet).sort().join(',');
+                icoSet = s;
+                icoMode = 'http';
+                icoFails = 0;
+                if (state.loaded && a !== b) render();
+                if (after) after(true);
+            })
+            .catch(function () {
+                if (icoB64Tried) { if (after) after(false); return; }
+                icoB64Tried = true;
+                icoMode = 'b64';
+                loadIconsB64(after);
+            });
+    } catch (e) {
+        if (!icoB64Tried) { icoB64Tried = true; icoMode = 'b64'; loadIconsB64(after); }
+        else if (after) after(false);
+    }
+}
+
+/* (v3.14) تحديث الفهرس تلقائياً بعد الإقلاع — طلبات ملفات صغيرة بلا جسر،
+   فتظهر أيقونات الاستخراج التدريجي (الذي يجري في الخلفية عند الإقلاع). */
+function pollIconIndex() {
+    [5000, 15000, 30000, 60000, 120000].forEach(function (ms) {
+        setTimeout(function () { loadIconIndex(); }, ms);
+    });
+}
+
+/* احتياطي نادر: جلب الأيقونات base64 عبر الجسر — مرة واحدة فقط لكل جلسة */
+function loadIconsB64(after) {
+    if (!bridgeAvailable()) { if (after) after(false); return; }
     sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
         + 'for F in /data/adb/falcon_icons/*.png; do [ -f "$F" ] || continue; echo "###$(basename "$F" .png)"; base64 "$F" 2>/dev/null; echo; done; echo ICONS_END',
         function (ec, out) {
-            if (out === '__TIMEOUT__') return;
+            if (out === '__TIMEOUT__') { if (after) after(false); return; }
             var s = parseSections(out);
             var keys = Object.keys(s);
             for (var i = 0; i < keys.length; i++) {
                 var b64 = (s[keys[i]] || []).join('').replace(/\s+/g, '');
-                if (b64) iconMap[keys[i]] = 'data:image/png;base64,' + b64;
+                if (b64) icoMap[keys[i]] = 'data:image/png;base64,' + b64;
             }
             if (state.loaded) render();
+            if (after) after(true);
         }, 45, true);
+}
+
+/* (v3.14) استخراج أيقونات حزم محددة فقط — منفصل تماماً عن الجسر:
+   الأمر يسحب نفسه في الخلفية ويعود فوراً، فلا يُقفل الواجهة ولا يزاحم أي ضغطة */
+function extractIconsDetached(pkgs) {
+    if (!pkgs || !pkgs.length || !bridgeAvailable()) return;
+    var uniq = {};
+    pkgs.forEach(function (p) { uniq[stripBang(p)] = true; });
+    var list = Object.keys(uniq).slice(0, 220);
+    var args = list.map(function (p) { return "'" + p + "'"; }).join(' ');
+    var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+        + 'S=/data/adb/modules/playintegrityfix/icons.sh; [ -f "$S" ] || S=/data/adb/modules_update/playintegrityfix/icons.sh; '
+        + 'if [ -f "$S" ]; then ( sh "$S" ' + args + ' >/dev/null 2>&1 & ) ; echo ICONS_STARTED; else echo ICONS_NOSCRIPT; fi';
+    sh(cmd, function () {
+        // الفهرس ملف HTTP عادي — تحديثه لا يكلّف الجسر شيئاً، فنكرّره بفواصل
+        // قصيرة لتظهر الأيقونات تدريجياً دون أن ينتظر المستخدم شيئاً.
+        setTimeout(function () { loadIconIndex(); }, 2500);
+        if (list.length > 6) {
+            setTimeout(function () { loadIconIndex(); }, 9000);
+            setTimeout(function () { loadIconIndex(); }, 22000);
+        }
+    }, 12, true);
 }
 
 function renderSegs() {
@@ -1974,6 +2194,11 @@ function render() {
 
     rows.sort(function (a, b) { return a.pkg < b.pkg ? -1 : (a.pkg > b.pkg ? 1 : 0); });
 
+    // (v3.14) نحفظ القائمة المعروضة حالياً ليستخدمها زرّ «تحديد الكل / إلغاء الكل»
+    // فيعملان على ما يراه المستخدم بالضبط (نفس التصفية ونفس البحث).
+    state.rows = rows;
+    renderSelBar();
+
     var hiddenCount = 0;
     state.target.forEach(function (p) { if (p.charAt(p.length - 1) !== '!') hiddenCount++; });
     var visibleCount = 0;
@@ -2009,6 +2234,8 @@ $('btnSaveCfg').onclick = saveCfg;
 $('btnBaseline').onclick = resetBaseline;
 $('btnAutoLog').onclick = readAutoLog;
 $('btnKeyboxImport').onclick = importKeybox;
+$('btnSelAll').onclick = function () { selectAll(true); };
+$('btnSelNone').onclick = function () { selectAll(false); };
 $('logClose').onclick = closeLog;
 $('chkAuto').onchange = function () { setCfgStatus('dirty'); saveCfg(); };
 $('q').oninput = function () { render(); };
@@ -2041,7 +2268,7 @@ if (bridgeAvailable()) {
             updateBridgeTag();
             if (NEED_SU) logLine(t('logSuMode'));
             // فتح لحظي: قراءة نواة سريعة (بلا pm) ثم قائمة التطبيقات في الخلفية
-            readCore(function () { render(); loadPackages(); loadIcons(); });
+            readCore(function () { render(); loadPackages(); loadIconIndex(); pollIconIndex(); });
         }, 15);
     });
 } else {

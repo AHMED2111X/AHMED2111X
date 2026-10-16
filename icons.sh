@@ -4,25 +4,38 @@
 # المطور: ABUFARID | تليجرام: @FALCON_KERNEL
 #
 # الغرض:
-#   تُنشئ /data/adb/falcon_icons/<package>.png لكل تطبيق مخفي، بحيث تعرضه
-#   واجهة FALCON TRICKY كصورة حقيقية بدل الحرف الأول — ليستطيع المستخدم
-#   التعرف على التطبيق من شكله لا من اسم الحزمة.
+#   تُنشئ أيقونة PNG لكل تطبيق مخفي، بحيث تعرضها واجهة FALCON TRICKY كصورة
+#   حقيقية بدل الحرف الأول — ليستطيع المستخدم التعرف على التطبيق من شكله.
+#
+# أين تُكتب الأيقونات؟
+#   1) webroot الوحدة المرافقة  ← تقرأها الواجهة مباشرة عبر HTTP (بلا جسر وبلا تعليق)
+#      /data/adb/modules/falcon_tricky/webroot/icons/
+#   2) نسخة أرشيفية في /data/adb/falcon_icons
 #
 # طريقة العمل:
 #   1) pm path <الحزمة>  ← مسار ملف APK
 #   2) نبحث داخل الـ APK عن مورد أيقونة المشغّل (ic_launcher)
 #   3) نفضّل أعلى دقة متاحة، ونفضّل PNG على WEBP
-#   4) نستخرجها إلى مجلد الأيقونات
+#   4) نستخرجها إلى مجلد الأيقونات ثم نحدّث ملف الفهرس
 #
 # الاستخدام:
 #   sh icons.sh                  ← لكل التطبيقات الموجودة في target.txt
 #   sh icons.sh pkg1 pkg2 ...    ← لحزم محددة
+#
+# (v3.14) الفهرس _index.txt يجعل الواجهة تعرف أي أيقونة موجودة فعلاً
+#         فلا تطلب صوراً غير موجودة ولا تحتاج أي استدعاء للجسر.
 # ==============================================================================
 
 ICON_DIR="/data/adb/falcon_icons"
+ICON_WEB="/data/adb/modules/falcon_tricky/webroot/icons"
 TARGET_FILE="/data/adb/tricky_store/target.txt"
 
 mkdir -p "$ICON_DIR" 2>/dev/null
+if [ -d "/data/adb/modules/falcon_tricky/webroot" ]; then
+    mkdir -p "$ICON_WEB" 2>/dev/null
+else
+    ICON_WEB=""
+fi
 
 extract_one() {
     _pkg="$1"
@@ -58,11 +71,34 @@ extract_one() {
     return 1
 }
 
+# نسخ الأيقونات إلى webroot الوحدة المرافقة + كتابة الفهرس للواجهة
+publish_icons() {
+    [ -n "$ICON_WEB" ] || return 0
+    for _f in "$ICON_DIR"/*.png; do
+        [ -s "$_f" ] || continue
+        _b=$(basename "$_f")
+        [ -s "$ICON_WEB/$_b" ] && continue
+        cp -f "$_f" "$ICON_WEB/$_b" 2>/dev/null
+    done
+    # الفهرس: أسماء الحزم التي لها أيقونة فعلية (من ملفات .png فقط)
+    {
+        echo "# falcon-icons-index"
+        for _g in "$ICON_WEB"/*.png; do
+            [ -s "$_g" ] || continue
+            basename "$_g" .png
+        done
+    } > "$ICON_WEB/.idx.tmp" 2>/dev/null
+    mv -f "$ICON_WEB/.idx.tmp" "$ICON_WEB/_index.txt" 2>/dev/null || cp -f "$ICON_WEB/.idx.tmp" "$ICON_WEB/_index.txt" 2>/dev/null
+    chmod 644 "$ICON_WEB/_index.txt" 2>/dev/null
+    chmod 755 "$ICON_WEB" 2>/dev/null
+}
+
 # وضع الحزم المحددة
 if [ "$#" -gt 0 ]; then
     for _p in "$@"; do
         extract_one "$_p"
     done
+    publish_icons
     echo "ICONS_DONE"
     exit 0
 fi
@@ -78,4 +114,5 @@ if [ -f "$TARGET_FILE" ]; then
     done < "$TARGET_FILE"
 fi
 
+publish_icons
 echo "ICONS_DONE"
