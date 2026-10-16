@@ -37,13 +37,27 @@ pkill -f "io.github.beakthoven.TrickyStoreOSS" 2>/dev/null || true
 
 # --- إلغاء أي حذف معلّق للوحدات المتعارضة (احترام ممتلكات المستخدم) ---
 # إن أزلت موديولنا قبل إعادة التشغيل، نُلغي علامة الحذف التي وضعناها على
-# tricky_store / safetynet-fix حتى لا تُمسح وحدات المستخدم بلا سبب.
-for RID in tricky_store safetynet-fix; do
-    for RBASE in /data/adb/modules /data/adb/modules_update; do
-        [ -d "$RBASE/$RID" ] || continue
-        rm -f "$RBASE/$RID/remove" "$RBASE/$RID/disable" 2>/dev/null
+# وحدات التعتيد القديمة حتى لا تُمسح وحدات المستخدم بلا سبب.
+# نستثني صراحةً وحدتينا (الأم والمرتبطة falcon_tricky) — حذف المرتبطة مقصود بالأسفل.
+for RBASE in /data/adb/modules /data/adb/modules_update; do
+    [ -d "$RBASE" ] || continue
+    for RDIR in "$RBASE"/*; do
+        [ -d "$RDIR" ] || continue
+        RNAME="${RDIR##*/}"
+        case "$RNAME" in
+            playintegrityfix|falcon_tricky) continue ;;
+        esac
+        case "$RNAME" in
+            *[Tt]ricky*|*TRICKY*|*[Ss]afety[Nn]et*|*SAFETYNET*) ;;
+            *) continue ;;
+        esac
+        rm -f "$RDIR/remove" "$RDIR/disable" 2>/dev/null
     done
 done
+
+# --- ربط مزدوج مع وحدة FALCON TRICKY المرئية ---
+# حذفنا هذا الموديول يحذف وحدة FALCON TRICKY معه بعد إعادة التشغيل.
+touch /data/adb/modules/falcon_tricky/remove 2>/dev/null
 
 # --- تنظيف ملفات حالة المحرك ---
 # ⛔ لا نحذف /data/adb/tricky_store إطلاقاً: قد يحتوي كيبوكس/إعدادات شخصية

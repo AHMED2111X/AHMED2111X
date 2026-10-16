@@ -100,10 +100,126 @@ else
     ui_print "- ⚠️ لم يتم العثور على محرك التعتيد ($ABI)" ; delay
 fi
 
+# --- نقل تلقائي مباشر لكيبوكس صالح من إضافة قديمة (TrickyStore / SafetyNet) ---
+# المشكلة: المستخدم يثبّت الإضافة العاملة (PlayIntegrity_19.7.7) ثم وحدتنا تحذفها
+# لمنع الحقن المزدوج ⇒ يُفقد الكيبوكس السليم الذي كانت تعمل به ويضطر لنقله يدوياً.
+# الحل: نبحث عن أي كيبوكس صالح في مجلدات الإضافات القديمة/المتعارضة وننسخه فوراً
+# إلى مسار المستخدم الدائم (الأولوية القصوى في service.sh) قبل حذف الإضافة القديمة.
+FALCON_KB_DIR="/data/adb/falcon"
+FALCON_KB_USER="$FALCON_KB_DIR/keybox.xml"
+mkdir -p "$FALCON_KB_DIR" 2>/dev/null
+
+falcon_kb_ok() { [ -s "$1" ] && grep -q "<AndroidAttestation" "$1" 2>/dev/null; }
+falcon_kb_ours() {
+    case "$1" in
+        /data/adb/modules/playintegrityfix/*|/data/adb/modules_update/playintegrityfix/*|\
+        /data/adb/modules/falcon_tricky/*|/data/adb/modules_update/falcon_tricky/*) return 0 ;;
+    esac
+    return 1
+}
+falcon_kb_copy() {
+    [ -n "$1" ] || return 1
+    falcon_kb_ok "$1" || return 1
+    falcon_kb_ours "$1" && return 1
+    cp -f "$1" "$FALCON_KB_USER" 2>/dev/null || return 1
+    return 0
+}
+
+if ! falcon_kb_ok "$FALCON_KB_USER"; then
+    FALCON_KB_FROM=""
+    if falcon_kb_copy /data/adb/tricky_store/keybox.xml; then
+        FALCON_KB_FROM="/data/adb/tricky_store/keybox.xml"
+    fi
+    if [ -z "$FALCON_KB_FROM" ]; then
+        for D in /data/adb/modules /data/adb/modules_update; do
+            for C in "$D"/*tricky* "$D"/*safetynet* "$D"/*layIntegrity* "$D"/*layintegrity*; do
+                [ -n "$FALCON_KB_FROM" ] && break
+                for K in "$C/keybox.xml" "$C/zygisk/keybox.xml" "$C/payload/keybox.xml"; do
+                    [ -n "$FALCON_KB_FROM" ] && break
+                    if falcon_kb_copy "$K"; then FALCON_KB_FROM="$K"; fi
+                done
+            done
+            [ -n "$FALCON_KB_FROM" ] && break
+        done
+    fi
+    if [ -z "$FALCON_KB_FROM" ]; then
+        for K in /data/adb/modules/*/keybox.xml /data/adb/modules/*/*/keybox.xml /data/adb/modules/*/*/*/keybox.xml \
+                 /data/adb/modules/*/keybox/*.xml /data/adb/modules/*/*/keybox/*.xml \
+                 /data/adb/modules_update/*/keybox.xml /data/adb/modules_update/*/*/keybox.xml \
+                 /data/adb/modules_update/*/keybox/*.xml \
+                 /data/misc/keybox/keybox.xml /data/misc/keybox/keybox.xml \
+                 /sdcard/Download/keybox.xml /sdcard/Download/*.xml \
+                 /storage/emulated/0/Download/keybox.xml /storage/emulated/0/Download/*.xml; do
+            [ -n "$FALCON_KB_FROM" ] && break
+            if falcon_kb_copy "$K"; then FALCON_KB_FROM="$K"; fi
+        done
+    fi
+    if [ -n "$FALCON_KB_FROM" ]; then
+        chmod 600 "$FALCON_KB_USER" 2>/dev/null
+        chown root:root "$FALCON_KB_USER" 2>/dev/null
+        ui_print "- 🔑 تم نقل الكيبوكس تلقائياً من: $FALCON_KB_FROM" ; delay
+        ui_print "   سيُستخدم دائماً ولن يُستبدل بكيبوكس الإضافة المرفق." ; delay
+    else
+        ui_print "- ℹ️ لم يُعثر على كيبوكس خارجي صالح — سيُستخدم الكيبوكس المرفق." ; delay
+    fi
+fi
+
+# --- نسخ مباشر للكيبوكس إلى مسار TrickyStore (يعمل فوراً دون انتظار الإقلاع) ---
+# المسار المحدد: /data/adb/tricky_store/keybox.xml
+mkdir -p /data/adb/tricky_store 2>/dev/null
+KB_SOURCE=""
+if [ -s "$FALCON_KB_USER" ]; then
+    KB_SOURCE="$FALCON_KB_USER"
+elif [ -s "$MODPATH/keybox.xml" ]; then
+    KB_SOURCE="$MODPATH/keybox.xml"
+fi
+if [ -n "$KB_SOURCE" ]; then
+    cp -f "$KB_SOURCE" /data/adb/tricky_store/keybox.xml 2>/dev/null
+    chmod 644 /data/adb/tricky_store/keybox.xml 2>/dev/null
+    chown root:root /data/adb/tricky_store/keybox.xml 2>/dev/null
+    ui_print "- 🔑 تم نقل الكيبوكس إلى:" ; delay
+    ui_print "     /data/adb/tricky_store/keybox.xml" ; delay
+    ui_print "     المصدر: $KB_SOURCE" ; delay
+else
+    ui_print "- ⚠️ لم يُعثر على أي كيبوكس للنقل." ; delay
+fi
+
+# --- (v3.10) تعبئة target.txt بكل التطبيقات المثبتة على الجهاز عند التثبيت ---
+# طلب المستخدم: لا يريد إضافة أسماء الحزم يدوياً — نضم كل التطبيقات الموجودة على
+# الجهاز مباشرة، مع الإبقاء على الإدخالات الثلاثة الإلزامية في المقدمة.
+# للعودة لتطبيقات جوجل الثلاثة فقط: زر «🎯 الإبقاء على الأساسي فقط» في الواجهة.
+# ⚠️ نزرع مرة واحدة فقط (علامة falcon_seeded) حتى لا تُمسح قائمة المستخدم
+#    عند تحديث الإضافة إلى نسخة أحدث.
+TS_TARGET="/data/adb/tricky_store/target.txt"
+SEED_MARK="/data/adb/falcon_seeded_v310"
+if [ ! -f "$SEED_MARK" ]; then
+    touch "$TS_TARGET" 2>/dev/null
+    for P in com.google.android.gms com.google.android.gms.unstable com.android.vending; do
+        grep -qx "$P" "$TS_TARGET" 2>/dev/null || echo "$P" >> "$TS_TARGET"
+    done
+    pm list packages 2>/dev/null | cut -d':' -f2 | while read -r P; do
+        [ -z "$P" ] && continue
+        grep -qx "$P" "$TS_TARGET" 2>/dev/null || echo "$P" >> "$TS_TARGET"
+    done
+    sort -u "$TS_TARGET" > "$TS_TARGET.tmp" 2>/dev/null && mv -f "$TS_TARGET.tmp" "$TS_TARGET" 2>/dev/null
+    chmod 644 "$TS_TARGET" 2>/dev/null
+    chown root:root "$TS_TARGET" 2>/dev/null
+    touch "$SEED_MARK" 2>/dev/null
+    TS_COUNT=$(grep -c . "$TS_TARGET" 2>/dev/null)
+    ui_print "- 📦 تم ضم ${TS_COUNT:-0} تطبيقاً إلى target.txt (كل تطبيقات جهازك)." ; delay
+    ui_print "   لتطبيقات جوجل الثلاثة فقط: زر «🎯 الإبقاء على الأساسي فقط»." ; delay
+else
+    ui_print "- ℹ️ قائمة target.txt موجودة مسبقاً — لم تُمس (تحديث للإضافة)." ; delay
+fi
+
 # --- حذف الوحدات المتعارضة (TrickyStore المستقلة + SafetyNet Fix) ---
 # المحرك (Tricky Store OSS) مدمج بالكامل داخل هذه الإضافة، فوجود وحدة tricky_store
 # منفصلة مفعّلة يعني محرّكين يحقنان في keystore2 ⇒ تعارض يكسر Play Integrity
 # وقد يعلّق الجهاز. الإضافة العاملة (PlayIntegrity_19.7.7_r2) تحذفها بنفس الطريقة.
+#
+# نضع العلامتين معاً:
+#   disable ← حتى لا يُقلع محركها القديم في نفس الإقلاع (يمنع الحقن المزدوج فوراً)
+#   remove  ← ليحذفها مدير الروت نهائياً عند إعادة التشغيل
 CONFLICT_IDS="tricky_store safetynet-fix"
 for RID in $CONFLICT_IDS; do
     for RBASE in /data/adb/modules /data/adb/modules_update; do
@@ -111,6 +227,26 @@ for RID in $CONFLICT_IDS; do
             touch "$RBASE/$RID/disable" "$RBASE/$RID/remove" 2>/dev/null
             ui_print "- 🗑️ سيُحذف الموديول المتعارض ($RID) عند إعادة التشغيل" ; delay
         fi
+    done
+done
+
+# --- مسح شامل بأي تسمية: أي وحدة اسمها يحتوي tricky أو safetynet ---
+# (tricky_store / TrickyStore / tricky_store_oss / safetynet-fix / USNF ... إلخ)
+# تُعطَّل وتُعلَّم للحذف — مع استثناء وحدتينا صراحةً: playintegrityfix و falcon_tricky.
+for RBASE in /data/adb/modules /data/adb/modules_update; do
+    [ -d "$RBASE" ] || continue
+    for RDIR in "$RBASE"/*; do
+        [ -d "$RDIR" ] || continue
+        RNAME="${RDIR##*/}"
+        case "$RNAME" in
+            playintegrityfix|falcon_tricky) continue ;;
+        esac
+        case "$RNAME" in
+            *[Tt]ricky*|*TRICKY*|*[Ss]afety[Nn]et*|*SAFETYNET*) ;;
+            *) continue ;;
+        esac
+        touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
+        ui_print "- 🗑️ وحدة متعارضة ($RNAME) ستُحذف عند إعادة التشغيل" ; delay
     done
 done
 
@@ -154,6 +290,32 @@ if [ -d "$MODPATH/tricky" ]; then
     chmod 644 "$MODPATH/tricky/libTrickyStoreOSS.so" 2>/dev/null
     chmod 644 "$MODPATH/tricky/module.prop" 2>/dev/null
     ui_print "- 🔐 تم ضبط صلاحيات المحرك التنفيذية (755)" ; delay
+fi
+
+# ==============================================================================
+# 🔗 إنشاء وحدة FALCON TRICKY المرئية في مدير الروت (ملحق مربوطة بالأم)
+#    تظهر في قائمة الوحدات باسم FALCON TRICKY وتعمل بنفس غرض وحدة
+#    Tricky Store المستقلة لكن من ملفات إضافتنا. رابط مزدوج:
+#    حذف أحدهما يحذف الآخر تلقائياً بعد إعادة التشغيل.
+#    ⚠️ لا تحمل نسخة ثانية من المحرك — المحرك مملوك للأم فقط،
+#       لأن تشغيله مرتين يحقن keystore2 مرتين ويجمّد الجهاز.
+# ==============================================================================
+if [ -f "$MODPATH/falcon_tricky/module.prop" ]; then
+    FT_DIR="/data/adb/modules/falcon_tricky"
+    rm -rf "$FT_DIR" 2>/dev/null
+    mkdir -p "$FT_DIR" 2>/dev/null
+    cp -rf "$MODPATH/falcon_tricky/." "$FT_DIR/" 2>/dev/null
+    chown -R 0:0 "$FT_DIR" 2>/dev/null
+    chmod 755 "$FT_DIR" 2>/dev/null
+    chmod 644 "$FT_DIR/module.prop" 2>/dev/null
+    chmod 755 "$FT_DIR/service.sh" "$FT_DIR/uninstall.sh" 2>/dev/null
+    # واجهة FALCON TRICKY (WebUI) — تظهر بزر مستقل داخل مدير الروت
+    if [ -d "$FT_DIR/webroot" ]; then
+        chmod 755 "$FT_DIR/webroot" 2>/dev/null
+        chmod 644 "$FT_DIR/webroot/index.html" 2>/dev/null
+    fi
+    rm -rf "$MODPATH/falcon_tricky" 2>/dev/null
+    ui_print "- 🔗 FALCON TRICKY: وحدة مرئية مربوطة بالأم (حذف أحدهما يحذف الآخر)" ; delay
 fi
 
 # 2. نشر ملفات التمويه والـ Keybox (إصلاح TEE Attestation)

@@ -588,7 +588,22 @@
             cmds.push('echo "### [7] logcat (TrickyStore/keystore/attest)"');
             cmds.push('timeout 20 logcat -d -t 1500 2>/dev/null | grep -iE "TrickyStore|keystore2|attestation|Injection" | tail -40');
             cmds.push('echo "### [8] حالة البوت"');
-            cmds.push('getprop ro.boot.verifiedbootstate; getprop ro.boot.flash.locked');
+            cmds.push('getprop ro.boot.verifiedbootstate; getprop ro.boot.flash.locked; getprop ro.boot.vbmeta.device_state');
+            cmds.push('echo "### [9] أي كيبوكس نشط فعلاً (الحاسمة للمقارنة)"');
+            cmds.push('for f in /data/adb/tricky_store/keybox.xml /data/adb/falcon/keybox.xml /data/adb/modules/playintegrityfix/keybox.xml; do if [ -s "$f" ]; then N=$(wc -c < "$f"); C=$(grep -c "BEGIN CERT" "$f" 2>/dev/null); echo "   $f -> $N bytes | شهادات=$C"; else echo "   $f -> غير موجود"; fi; done');
+            cmds.push('cmp -s /data/adb/tricky_store/keybox.xml /data/adb/falcon/keybox.xml 2>/dev/null && echo "   النشط == كيبوكس المستخدم المحفوظ ✔" || echo "   ⚠️ النشط يختلف عن كيبوكس المستخدم المحفوظ"');
+            cmds.push('cmp -s /data/adb/tricky_store/keybox.xml /data/adb/modules/playintegrityfix/keybox.xml 2>/dev/null && echo "   النشط == كيبوكس الإضافة المرفق (الافتراضي)" || echo "   النشط != كيبوكس الإضافة المرفق (أنت تستخدم كيبوكساً خاصاً)"');
+            cmds.push('echo "### [10] حالة مفاتيح التحقق RKP"');
+            cmds.push('ls -l /vendor/bin/KmInstallKeybox /system/bin/KmInstallKeybox 2>&1 | head -3');
+            cmds.push('if [ -f /data/adb/falcon/rkp_fix_done ]; then echo "   علامة الإصلاح التلقائي: $(cat /data/adb/falcon/rkp_fix_done)"; else echo "   لم يُنفَّذ الإصلاح التلقائي بعد"; fi');
+            cmds.push('tail -n 20 /data/adb/falcon_rkp_fix.log 2>/dev/null || echo "   لا يوجد سجل RKP"');
+            cmds.push('echo "### [11] البصمة الحقيقية مقابل المزيفة"');
+            cmds.push('echo "   الحقيقية: $(getprop ro.build.fingerprint)"');
+            cmds.push('echo "   المزيفة:   $(grep "^FINGERPRINT=" /data/adb/modules/playintegrityfix/custom.pif.prop 2>/dev/null)"');
+            cmds.push('echo "   الرقعة الحقيقية: $(getprop ro.build.version.security_patch)"');
+            cmds.push('echo "### [12] target.txt"');
+            cmds.push('echo "   عدد الصفوف: $(grep -c "" /data/adb/tricky_store/target.txt 2>/dev/null)"');
+            cmds.push('grep -E "com.google.android.gms|com.android.vending" /data/adb/tricky_store/target.txt 2>/dev/null | sort -u | head -6 || echo "   ⚠️ GMS/Vending غير موجودين"');
             const full = cmds.join('; ');
             falconRun(full, function(r) {
                 if (r === '__NO_SHELL__') {

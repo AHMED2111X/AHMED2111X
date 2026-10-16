@@ -217,6 +217,23 @@ if [ ! -d "$TARGET_DIR" ]; then
     chown root:root "$TARGET_DIR"
 fi
 
+# --- 3.1 ضمان وجود الكيبوكس في مسار TrickyStore دائماً (طلب المستخدم الصريح) ---
+# المسار المحدد: /data/adb/tricky_store/keybox.xml
+# نملأه من كيبوكس المستخدم الدائم إن وجد، وإلا من كيبوكس الوحدة المرفق.
+# إن كان موجوداً وصالحاً لا نمسه إطلاقاً.
+if [ -s /data/adb/falcon/keybox.xml ] && grep -q "<AndroidAttestation" /data/adb/falcon/keybox.xml 2>/dev/null; then
+    cp -f /data/adb/falcon/keybox.xml "$TARGET_FILE" 2>/dev/null
+elif [ ! -s "$TARGET_FILE" ] || ! grep -q "<AndroidAttestation" "$TARGET_FILE" 2>/dev/null; then
+    if [ -s "$MODPATH/keybox.xml" ]; then
+        cp -f "$MODPATH/keybox.xml" "$TARGET_FILE" 2>/dev/null
+    fi
+fi
+if [ -s "$TARGET_FILE" ]; then
+    chmod 644 "$TARGET_FILE" 2>/dev/null
+    chown root:root "$TARGET_FILE" 2>/dev/null
+    log -t "$LOG_TAG" "🔑 Keybox موجود في مسار TrickyStore: $TARGET_FILE ($(stat -c '%s' "$TARGET_FILE" 2>/dev/null || echo 0) بايت)"
+fi
+
 # --- 4. التحديث التلقائي لملف Keybox من الإنترنت في الخلفية ---
 (
     # الانتظار حتى يكتمل إقلاع النظام

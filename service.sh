@@ -9,6 +9,31 @@
 MODPATH="${0%/*}"
 MODDIR="$MODPATH"
 
+# --- ربط وحدة FALCON TRICKY المرئية (رابط مزدوج: حذف أحدهما يحذف الآخر) ---
+# إذا أزال المستخدم وحدة FALCON TRICKY من مدير الروت فنعلّم أنفسنا للحذف
+# أيضاً حتى يختفي الاثنان معاً بعد إعادة التشغيل.
+FT_DIR="/data/adb/modules/falcon_tricky"
+[ -f "$FT_DIR/remove" ] && touch "$MODDIR/remove" 2>/dev/null
+
+# --- مسح وقائي عند كل إقلاع: أي وحدة TrickyStore/SafetyNet قديمة تُعطَّل وتُحذف ---
+# يمنع الحقن المزدوج في keystore2 لو ثبّت المستخدم وحدة تعتيد مستقلة بعدنا.
+# يستثني وحدتينا صراحةً: playintegrityfix و falcon_tricky.
+for RBASE in /data/adb/modules /data/adb/modules_update; do
+    [ -d "$RBASE" ] || continue
+    for RDIR in "$RBASE"/*; do
+        [ -d "$RDIR" ] || continue
+        RNAME="${RDIR##*/}"
+        case "$RNAME" in
+            playintegrityfix|falcon_tricky) continue ;;
+            *[Tt]ricky*|*TRICKY*|*[Ss]afety[Nn]et*|*SAFETYNET*) ;;
+            *) continue ;;
+        esac
+        [ -f "$RDIR/remove" ] && continue
+        touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
+        echo "$(date '+%Y-%m-%d %H:%M:%S') 🗑️ وحدة تعتيد متعارضة مُعطَّلة ومعلَّمة للحذف: $RNAME" >> "$MODDIR/falcon_integrity_fix.log" 2>/dev/null
+    done
+done
+
 # --- تطبيق سياسات وأحكام SELinux ---
 if [ -f "$MODPATH/sepolicy.rule" ]; then
     # تطبيق قواعد SELinux المخصصة بشكل مباشر في الذاكرة
@@ -301,6 +326,54 @@ if [ -n "$BUNDLED_SRC" ] && cmp -s "$TS_KEYBOX" "$BUNDLED_SRC" 2>/dev/null; then
 fi
 cmp -s "$TS_KEYBOX" "$BUNDLE_COPY" 2>/dev/null && TS_IS_BUNDLE=1
 
+# (v3.09) نقل تلقائي مباشر لكيبوكس صالح من إضافة TrickyStore/SafetyNet قديمة.
+# كان المستخدم يضطر لنقله يدوياً (نقل يدوي = يعمل) ⇒ نعمله آلياً قبل حذف الإضافة
+# القديمة، مرة عند التثبيت (customize.sh) ومرة كل إقلاع هنا (يلتقط الإضافات الجديدة).
+if ! keybox_valid "$USER_KEYBOX"; then
+    FALCON_KB_FROM=""
+    falcon_kb_ours() {
+        case "$1" in
+            /data/adb/modules/playintegrityfix/*|/data/adb/modules_update/playintegrityfix/*|\
+            /data/adb/modules/falcon_tricky/*|/data/adb/modules_update/falcon_tricky/*) return 0 ;;
+        esac
+        return 1
+    }
+    falcon_kb_copy() {
+        [ -n "$1" ] || return 1
+        keybox_valid "$1" || return 1
+        falcon_kb_ours "$1" && return 1
+        cp -f "$1" "$USER_KEYBOX" 2>/dev/null || return 1
+        return 0
+    }
+    for D in /data/adb/modules /data/adb/modules_update; do
+        for C in "$D"/*tricky* "$D"/*safetynet* "$D"/*layIntegrity* "$D"/*layintegrity*; do
+            [ -n "$FALCON_KB_FROM" ] && break
+            for K in "$C/keybox.xml" "$C/zygisk/keybox.xml" "$C/payload/keybox.xml"; do
+                [ -n "$FALCON_KB_FROM" ] && break
+                if falcon_kb_copy "$K"; then FALCON_KB_FROM="$K"; fi
+            done
+        done
+        [ -n "$FALCON_KB_FROM" ] && break
+    done
+    if [ -z "$FALCON_KB_FROM" ]; then
+        for K in /data/adb/modules/*/keybox.xml /data/adb/modules/*/*/keybox.xml /data/adb/modules/*/*/*/keybox.xml \
+                 /data/adb/modules/*/keybox/*.xml /data/adb/modules/*/*/keybox/*.xml \
+                 /data/adb/modules_update/*/keybox.xml /data/adb/modules_update/*/*/keybox.xml \
+                 /data/adb/modules_update/*/keybox/*.xml \
+                 /data/misc/keybox/keybox.xml /data/misc/keybox/keybox.xml \
+                 /sdcard/Download/keybox.xml /sdcard/Download/*.xml \
+                 /storage/emulated/0/Download/keybox.xml /storage/emulated/0/Download/*.xml; do
+            [ -n "$FALCON_KB_FROM" ] && break
+            if falcon_kb_copy "$K"; then FALCON_KB_FROM="$K"; fi
+        done
+    fi
+    if [ -n "$FALCON_KB_FROM" ]; then
+        chmod 600 "$USER_KEYBOX" 2>/dev/null
+        chown root:root "$USER_KEYBOX" 2>/dev/null
+        log -t "FALCON_FIX" "🔑 نقل تلقائي للكيبوكس من الإضافة القديمة: $FALCON_KB_FROM"
+    fi
+fi
+
 if keybox_valid "$USER_KEYBOX"; then
     # 1) كيبوكس المستخدم المحفوظ — الأعلى أولوية ولا يُستبدل أبداً
     cp -f "$USER_KEYBOX" "$TS_KEYBOX" 2>/dev/null
@@ -377,15 +450,52 @@ chown root:root "$USER_KEYBOX" 2>/dev/null
         grep -qx "$P" "$TARGET_FILE" 2>/dev/null || echo "$P" >> "$TARGET_FILE"
     done
 
-    # جلب قائمة الحزم والتطبيقات المثبتة حالياً وتخزينها
+    # (v3.05) قائمة الحزم المعروفة + مفتاح الإخفاء التلقائي (يُدار من واجهة FALCON TRICKY)
     KNOWN_PACKAGES_FILE="/data/adb/falcon_known_packages.txt"
-    pm list packages | cut -d':' -f2 | sort -u > "$KNOWN_PACKAGES_FILE"
+    AUTO_HIDE_FLAG="/data/adb/falcon/auto_hide_new"
+    CURRENT_PACKAGES_FILE="/data/adb/falcon_current_packages.txt"
+    AUTO_LOG="/data/adb/falcon/auto_hide.log"
 
-    # دمج الحزم الجديدة فقط — لا إعادة بناء ولا over-write للمحتوى الموجود
-    while read -r P; do
-        [ -z "$P" ] && continue
-        grep -qx "$P" "$TARGET_FILE" 2>/dev/null || echo "$P" >> "$TARGET_FILE"
-    done < "$KNOWN_PACKAGES_FILE"
+    # تسجيل كل إخفاء تلقائي في ملف يقرؤه المستخدم من الواجهة (إثبات أن الخيار يعمل فعلاً)
+    falcon_log_auto() {
+        [ -n "$1" ] || return 0
+        mkdir -p /data/adb/falcon 2>/dev/null
+        echo "$(date '+%Y-%m-%d %H:%M:%S') ✅ إخفاء تلقائي: $1" >> "$AUTO_LOG" 2>/dev/null
+        falcon_log_lines=$(wc -l < "$AUTO_LOG" 2>/dev/null)
+        case "$falcon_log_lines" in ''|*[!0-9]*) falcon_log_lines=0 ;; esac
+        if [ "$falcon_log_lines" -gt 400 ]; then
+            tail -n 200 "$AUTO_LOG" > "$AUTO_LOG.tmp" 2>/dev/null && mv -f "$AUTO_LOG.tmp" "$AUTO_LOG" 2>/dev/null
+        fi
+    }
+
+    # ⚠️ تغيير مهم (v3.05): لم نعد نُضيف «كل» تطبيقات الجهاز إلى target.txt كل إقلاع.
+    #    المشكلة القديمة: القائمة كانت تتضخّم لتشمل كل تطبيق مثبَّت ⇒ كل التطبيقات
+    #    «مخفية» بلا أي سيطرة، ولا يمكن معرفة ما هو مخفي فعلاً، وأي إزالة يدوية
+    #    كانت تُلغى عند الإقلاع التالي.
+    #    السلوك الجديد:
+    #      • الإدخالات الثلاثة الإلزامية تُضمَن دائماً (في الأعلى).
+    #      • أول إقلاع بعد التثبيت: نحفظ حالة الحزم فقط — دون إضافة أي تطبيق.
+    #      • بعد ذلك: تُضاف الحزم المُثبَّتة حديثاً فقط، ويمكن للمستخدم إلغاء ذلك
+    #        من واجهة FALCON TRICKY (زر الإخفاء التلقائي).
+    if [ ! -f "$KNOWN_PACKAGES_FILE" ]; then
+        pm list packages 2>/dev/null | cut -d':' -f2 | sort -u > "$KNOWN_PACKAGES_FILE" 2>/dev/null
+    else
+        pm list packages 2>/dev/null | cut -d':' -f2 | sort -u > "$CURRENT_PACKAGES_FILE" 2>/dev/null
+        if [ -s "$CURRENT_PACKAGES_FILE" ]; then
+            if [ ! -f "$AUTO_HIDE_FLAG" ] || [ "$(cat "$AUTO_HIDE_FLAG" 2>/dev/null)" != "off" ]; then
+                comm -13 "$KNOWN_PACKAGES_FILE" "$CURRENT_PACKAGES_FILE" 2>/dev/null | while read -r P; do
+                    [ -z "$P" ] && continue
+                    if ! grep -qx "$P" "$TARGET_FILE" 2>/dev/null; then
+                        echo "$P" >> "$TARGET_FILE"
+                        falcon_log_auto "$P"
+                    fi
+                done
+            fi
+            cp -f "$CURRENT_PACKAGES_FILE" "$KNOWN_PACKAGES_FILE" 2>/dev/null
+        fi
+        rm -f "$CURRENT_PACKAGES_FILE" 2>/dev/null
+    fi
+
     # ملف مؤقت باسم خاص بالموديول (لا يمسه تنظيف *.tmp الخاص بـ TrickyStore)
     sort -u "$TARGET_FILE" > "$TARGET_FILE.falcon_merge" 2>/dev/null
     if [ -s "$TARGET_FILE.falcon_merge" ]; then
@@ -404,27 +514,44 @@ chown root:root "$USER_KEYBOX" 2>/dev/null
         rm -f /data/adb/tricky_store/*.falcon_merge 2>/dev/null
 
         # جلب قائمة التطبيقات الحالية ومقارنتها عبر ملف مؤقت آمن
-        CURRENT_PACKAGES=$(pm list packages | cut -d':' -f2 | sort -u)
+        pm list packages 2>/dev/null | cut -d':' -f2 | sort -u > "$CURRENT_PACKAGES_FILE" 2>/dev/null
 
-        CURRENT_PACKAGES_FILE="/data/adb/falcon_current_packages.txt"
-        printf '%s\n' "$CURRENT_PACKAGES" > "$CURRENT_PACKAGES_FILE"
+        # إن لم توجد قائمة أساس سابقة (حُذفت مثلاً) نعيد بناؤها دون إخفاء أي شيء
+        if [ ! -s "$KNOWN_PACKAGES_FILE" ] && [ -s "$CURRENT_PACKAGES_FILE" ]; then
+            cp -f "$CURRENT_PACKAGES_FILE" "$KNOWN_PACKAGES_FILE" 2>/dev/null
+        fi
 
-        NEW_PACKAGES=$(comm -13 "$KNOWN_PACKAGES_FILE" "$CURRENT_PACKAGES_FILE")
-
-        # إذا تم كشف تطبيق جديد، يُضاف تلقائياً لملف التمويه target.txt
-        if [ -n "$NEW_PACKAGES" ]; then
-            for pkg in $NEW_PACKAGES; do
-                if ! grep -q "^$pkg$" "$TARGET_FILE"; then
-                    echo "$pkg" >> "$TARGET_FILE"
+        # (v3.05) تُضاف الحزم الجديدة تلقائياً فقط إن كان خيار الإخفاء التلقائي مُفعَّلاً.
+        # ونُحدِّث ملف الحزم المعروفة دائماً حتى لا تُعتبر حزمة أزالها المستخدم «جديدة»
+        # فتُعاد إلى target.txt من تلقاء نفسها.
+        if [ -s "$CURRENT_PACKAGES_FILE" ]; then
+            if [ ! -f "$AUTO_HIDE_FLAG" ] || [ "$(cat "$AUTO_HIDE_FLAG" 2>/dev/null)" != "off" ]; then
+                NEW_PACKAGES=$(comm -13 "$KNOWN_PACKAGES_FILE" "$CURRENT_PACKAGES_FILE" 2>/dev/null)
+                if [ -n "$NEW_PACKAGES" ]; then
+                    for pkg in $NEW_PACKAGES; do
+                        if ! grep -qx "$pkg" "$TARGET_FILE" 2>/dev/null; then
+                            echo "$pkg" >> "$TARGET_FILE"
+                            falcon_log_auto "$pkg"
+                        fi
+                    done
+                    chmod 644 "$TARGET_FILE" 2>/dev/null
                 fi
-            done
-
-            echo "$CURRENT_PACKAGES" > "$KNOWN_PACKAGES_FILE"
-            chmod 644 "$TARGET_FILE" 2>/dev/null
+            fi
+            cp -f "$CURRENT_PACKAGES_FILE" "$KNOWN_PACKAGES_FILE" 2>/dev/null
         fi
 
         rm -f "$CURRENT_PACKAGES_FILE" 2>/dev/null
     done
+) &
+
+# --- 3.5 استخراج أيقونات التطبيقات المخفية (لعرضها في واجهة FALCON TRICKY) ---
+# يُشغَّل في الخلفية بعد اكتمال الإقلاع حتى لا يؤثر على سرعة الإقلاع.
+(
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do
+        sleep 5
+    done
+    sleep 20
+    [ -f "$MODDIR/icons.sh" ] && sh "$MODDIR/icons.sh" >/dev/null 2>&1
 ) &
 
 # --- 4. حلقة مزامنة العداد السريعة والحديثة مباشرة مع السيرفر ---

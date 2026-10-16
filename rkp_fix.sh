@@ -20,6 +20,8 @@
 #   sh rkp_fix.sh manual  ← فحص + إصلاح يدوي (بدون تصفير أو إعادة تشغيل)
 #   sh rkp_fix.sh full    ← الإصلاح الكامل (إصلاح + إعادة تشغيل تلقائية)
 #   sh rkp_fix.sh google  ← إعادة تشغيل خدمات جوجل الثلاث (بدون مسح أي بيانات)
+#   sh rkp_fix.sh force   ← إجبار إعادة التزوير حتى لو كانت المفاتيح سليمة
+#                            (مخصّص لأجهزة Red Magic التي تتجاهل الكيبوكس المسروق)
 #
 # ⛔ سياسة صارمة: لا يُنفَّذ pm clear ولا أي مسح لبيانات جوجل في أي وضع إطلاقاً.
 #    السبب: pm clear com.google.android.gms يُخرج كل حسابات جوجل من متجر Play.
@@ -31,7 +33,7 @@ LOGFILE="/data/adb/falcon_rkp_fix.log"
 
 MODE="$1"
 case "$MODE" in
-    manual|full|google) ;;
+    manual|full|google|force) ;;
     *) MODE="auto" ;;
 esac
 
@@ -148,7 +150,7 @@ fi
 # --- 3. إعادة طلب شهادات جديدة من جوجل (وضع RKP) ---
 say ""
 SKIPPED=0
-if [ "$CSR_STATE" = "healthy" ]; then
+if [ "$CSR_STATE" = "healthy" ] && [ "$MODE" != "force" ]; then
     # 🛡️ حماية حرجة: إعادة التزوير على مفاتيح سليمة لا تفيد إطلاقاً،
     # وهي عملية خطيرة على TEE/keystore2 وقد تعلّق الجهاز بلا سبب.
     # لذلك نتخطّاها دائماً ونسلك مسار إعادة التشغيل فقط.
@@ -158,6 +160,10 @@ if [ "$CSR_STATE" = "healthy" ]; then
     INSTALL_OUT=""
     RC=0
 else
+    if [ "$CSR_STATE" = "healthy" ]; then
+        say "⚠️ وضع الإجبار (force): إعادة التزوير رغم أن المفاتيح سليمة —"
+        say "   (مطلوب لأجهزة Red Magic التي تتجاهل الكيبوكس المسروق بعد تحديث RKP)."
+    fi
     say "🛠️ الخطوة 3: تنفيذ إعادة التزوير عبر KmInstallKeybox بوضع RKP..."
     say "   (الأداة تتجاهل ملف الـ XML وتطلب من TEE شهادات جديدة من جوجل)"
     say "   ⏳ مهلة قصوى 90 ثانية حمايةً للجهاز من التعليق."
@@ -224,8 +230,21 @@ else
     if [ "$MODE" != "auto" ]; then
         say "  تحقق من: جهاز Red Magic بروم أصلي + اتصال إنترنت + حساب جوجل نشط."
     fi
-    # في الوضع التلقائي نكتب العلامة أيضاً لمنع تكرار المحاولة الفاشلة كل إقلاع
-    [ "$MODE" = "auto" ] && date '+%Y-%m-%d %H:%M:%S' > "$MARKER" 2>/dev/null
+    # 🔄 (v3.04) لا نكتب علامة النجاح عند الفشل — نكتفي بحد المحاولات حتى يستطيع
+    #    المستخدم إعادة المحاولة بعد إصلاح السبب (كوايرن/إنترنت/روم أصلي).
+    if [ "$MODE" = "auto" ]; then
+        FAILS=0
+        [ -f "$FALCON_DIR/rkp_fix_fail" ] && FAILS=$(cat "$FALCON_DIR/rkp_fix_fail" 2>/dev/null)
+        case "$FAILS" in ''|*[!0-9]*) FAILS=0 ;; esac
+        FAILS=$((FAILS + 1))
+        echo "$FAILS" > "$FALCON_DIR/rkp_fix_fail" 2>/dev/null
+        if [ "$FAILS" -ge 3 ]; then
+            say "ℹ️ توقفت المحاولة التلقائية بعد $FAILS محاولات فاشلة — استخدم الزر اليدوي."
+            date '+%Y-%m-%d %H:%M:%S' > "$MARKER" 2>/dev/null
+        else
+            say "🔄 المحاولة رقم $FAILS من 3 — ستُعاد تلقائياً في الإقلاع القادم."
+        fi
+    fi
 fi
 
 say "════════ انتهى التقرير ════════"

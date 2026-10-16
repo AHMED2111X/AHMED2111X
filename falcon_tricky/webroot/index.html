@@ -1,0 +1,2057 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>FALCON TRICKY</title>
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+    :root {
+        --bg: #04070a;
+        --grid: rgba(43, 255, 136, 0.05);
+        --neon: #2bff88;
+        --neon-dim: rgba(43, 255, 136, 0.35);
+        --amber: #ffc247;
+        --red: #ff4d5e;
+        --cyan: #4de3ff;
+        --panel: rgba(8, 16, 14, 0.72);
+        --line: rgba(43, 255, 136, 0.22);
+        --text: #d8ffe9;
+        --muted: #6f8f83;
+        --font: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Courier New", monospace;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+        margin: 0; padding: 0; min-height: 100vh;
+        background-color: var(--bg);
+        background-image:
+            linear-gradient(var(--grid) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 34px 34px, 34px 34px;
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 14px;
+        padding: 14px 12px 60px;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .scanlines {
+        position: fixed; inset: 0; pointer-events: none; z-index: 90;
+        background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.16) 2px 3px);
+        mix-blend-mode: multiply;
+    }
+
+    /* ============ اتجاهات النصوص المختلطة (bidi) ============ */
+    /* أي رمز لاتيني/حزمة/معرّف تيليجرام: يُعزل LTR فيبقى الرمز في بدايته دائماً */
+    .tok { direction: ltr; unicode-bidi: isolate; text-align: left; }
+    .auto { unicode-bidi: isolate; }
+
+    header {
+        display: flex; align-items: center; gap: 14px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(43,255,136,0.07), rgba(0,0,0,0.25));
+        padding: 12px 14px; margin-bottom: 10px;
+        position: relative; overflow: hidden;
+    }
+    header:before {
+        content: ""; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(43,255,136,0.12), transparent);
+        animation: sweepX 5s linear infinite;
+    }
+    @keyframes sweepX { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+    .radar {
+        width: 62px; height: 62px; flex: 0 0 62px; border-radius: 50%;
+        border: 1px solid var(--neon-dim); position: relative; overflow: hidden;
+        background: radial-gradient(circle, rgba(43,255,136,0.10) 0%, rgba(4,7,10,0.9) 70%);
+        box-shadow: 0 0 18px rgba(43,255,136,0.25) inset;
+    }
+    .radar:before, .radar:after { content: ""; position: absolute; background: var(--neon-dim); }
+    .radar:before { left: 50%; top: 0; width: 1px; height: 100%; }
+    .radar:after { top: 50%; left: 0; height: 1px; width: 100%; }
+    .sweep {
+        position: absolute; inset: 0; border-radius: 50%;
+        background: conic-gradient(from 0deg, rgba(43,255,136,0.55) 0deg, rgba(43,255,136,0) 70deg, rgba(43,255,136,0) 360deg);
+        animation: spin 2.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .blip {
+        position: absolute; width: 5px; height: 5px; border-radius: 50%;
+        background: var(--neon); box-shadow: 0 0 8px var(--neon);
+        animation: blip 2.6s linear infinite;
+    }
+    @keyframes blip { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
+    .brand { flex: 1 1 auto; min-width: 0; }
+    .brand h1 {
+        margin: 0; font-size: 1.32rem; letter-spacing: 1.5px; direction: ltr;
+        unicode-bidi: isolate; color: #eafff3; text-shadow: 0 0 12px rgba(43,255,136,0.5);
+    }
+    .brand h1 em { font-style: normal; color: var(--neon); }
+    .brand p { margin: 3px 0 0; color: var(--muted); font-size: 0.76rem; }
+
+    /* شريط اللغات */
+    .langbar {
+        display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .langbar button {
+        flex: 1 1 auto; min-width: 74px; text-align: center;
+        font-size: 0.74rem; padding: 7px 8px;
+    }
+    .langbar button.on { color: #04070a; background: var(--neon); font-weight: 700; border-color: var(--neon); }
+
+    .panel {
+        border: 1px solid var(--line); background: var(--panel);
+        padding: 12px; margin-bottom: 12px;
+    }
+    .panel > h2 {
+        margin: 0 0 10px; font-size: 0.82rem; letter-spacing: 1px;
+        color: var(--neon); text-transform: uppercase;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .panel > h2:before { content: "▚"; color: var(--amber); }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    @media (max-width: 620px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+    .kpi {
+        border: 1px solid var(--line); background: rgba(4,7,10,0.6);
+        padding: 10px; text-align: center;
+    }
+    .kpi b { display: block; font-size: 1.18rem; color: var(--neon); text-shadow: 0 0 10px rgba(43,255,136,0.4); }
+    .kpi b.warn { color: var(--amber); text-shadow: 0 0 10px rgba(255,194,71,0.4); }
+    .kpi b.bad { color: var(--red); text-shadow: 0 0 10px rgba(255,77,94,0.4); }
+    .kpi span { display: block; color: var(--muted); font-size: 0.68rem; margin-top: 3px; }
+
+    button {
+        font-family: var(--font); font-size: 0.78rem; cursor: pointer;
+        color: var(--neon); background: rgba(43,255,136,0.06);
+        border: 1px solid var(--neon-dim); padding: 8px 11px;
+        transition: background .15s, box-shadow .15s;
+    }
+    button:hover:not(:disabled) { background: rgba(43,255,136,0.16); box-shadow: 0 0 12px rgba(43,255,136,0.22); }
+    button:disabled { opacity: .35; cursor: not-allowed; }
+    button.amber { color: var(--amber); border-color: rgba(255,194,71,0.4); background: rgba(255,194,71,0.07); }
+    button.danger { color: var(--red); border-color: rgba(255,77,94,0.4); background: rgba(255,77,94,0.07); }
+    button.ghost { color: var(--muted); border-color: rgba(111,143,131,0.35); background: transparent; }
+    input[type=text] {
+        font-family: var(--font); font-size: 0.78rem; color: var(--text);
+        background: rgba(0,0,0,0.5); border: 1px solid var(--line);
+        padding: 8px 10px; width: 100%;
+    }
+    input[type=text]:focus { outline: none; border-color: var(--neon); box-shadow: 0 0 10px rgba(43,255,136,0.2); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .row.grow > * { flex: 1 1 auto; }
+
+    .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.76rem; color: var(--muted); }
+    .switch input { display: none; }
+    .switch i {
+        width: 40px; height: 20px; border: 1px solid var(--line); background: rgba(0,0,0,0.6);
+        position: relative; display: inline-block; flex: 0 0 40px;
+    }
+    .switch i:after {
+        content: ""; position: absolute; top: 2px; inset-inline-end: 2px; width: 14px; height: 14px;
+        background: var(--muted); transition: .18s;
+    }
+    .switch input:checked + i { border-color: var(--neon); box-shadow: 0 0 10px rgba(43,255,136,0.25); }
+    .switch input:checked + i:after { background: var(--neon); inset-inline-end: 22px; }
+
+    .segments { display: flex; border: 1px solid var(--line); overflow: hidden; flex-wrap: wrap; }
+    .segments button { border: none; border-inline-start: 1px solid var(--line); padding: 7px 10px; color: var(--muted); background: transparent; }
+    .segments button:first-child { border-inline-start: none; }
+    .segments button.on { color: #04070a; background: var(--neon); font-weight: 700; }
+    .segments button b { font-size: 0.66rem; opacity: .85; margin-inline-start: 4px; }
+
+    .list { margin-top: 10px; }
+    .item {
+        display: flex; align-items: center; gap: 10px;
+        border: 1px solid rgba(43,255,136,0.12); border-inline-start: 3px solid var(--muted);
+        background: rgba(0,0,0,0.42); padding: 8px 10px; margin-bottom: 6px;
+    }
+    .item.hidden { border-inline-start-color: var(--neon); background: rgba(43,255,136,0.07); }
+    .item.locked { border-inline-start-color: var(--amber); }
+    .item .info { flex: 1 1 auto; min-width: 0; }
+    .item .pkg { direction: ltr; unicode-bidi: isolate; text-align: left; font-size: 0.8rem; color: #eafff3; word-break: break-all; }
+    .item .nice { color: var(--muted); font-size: 0.7rem; margin-top: 2px; }
+    .tag {
+        display: inline-block; font-size: 0.6rem; padding: 1px 5px; margin-inline-start: 6px;
+        border: 1px solid currentColor; vertical-align: middle; white-space: nowrap;
+    }
+    .tag.must { color: var(--amber); }
+    .tag.user { color: var(--cyan); }
+    .tag.sys { color: var(--muted); }
+    .tag.gone { color: var(--red); }
+    .tag.bang { color: var(--amber); }
+    .item .acts { display: flex; gap: 6px; flex: 0 0 auto; }
+    .item .acts button { padding: 6px 8px; font-size: 0.72rem; }
+
+    #log {
+        margin: 0; max-height: 250px; overflow: auto;
+        background: rgba(0,0,0,0.62); border: 1px solid var(--line); padding: 8px;
+        font-size: 0.72rem; user-select: text;
+    }
+    #log .logrow { display: flex; gap: 6px; align-items: flex-start; }
+    #log .ts { direction: ltr; unicode-bidi: isolate; color: var(--muted); flex: 0 0 auto; }
+    #log .msg { flex: 1 1 auto; min-width: 0; unicode-bidi: isolate; word-break: break-word; }
+    .hint { color: var(--muted); font-size: 0.7rem; margin-top: 8px; line-height: 1.7; }
+    .hint b { color: var(--neon); }
+    #demoBar {
+        display: none; border: 1px solid rgba(255,194,71,0.5); background: rgba(255,194,71,0.1);
+        color: var(--amber); font-size: 0.72rem; padding: 8px 10px; margin-bottom: 12px; text-align: center;
+    }
+    #confirmBar {
+        position: fixed; inset-inline: 0; bottom: 0; z-index: 100;
+        background: rgba(30,10,12,0.97); border-top: 2px solid var(--red);
+        padding: 12px; display: none; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+    #confirmBar.on { display: flex; }
+    #confirmBar span { flex: 1 1 220px; font-size: 0.76rem; color: #ffd9dd; }
+    #toast {
+        position: fixed; inset-inline: 0; top: 0; z-index: 110;
+        background: var(--neon); color: #04070a; font-weight: 700;
+        padding: 9px 12px; text-align: center; font-size: 0.78rem;
+        transform: translateY(-120%); transition: transform .25s;
+        unicode-bidi: isolate;
+    }
+    #toast.on { transform: translateY(0); }
+    footer { text-align: center; color: var(--muted); font-size: 0.68rem; margin-top: 18px; line-height: 2; }
+    .warnbar {
+        border: 1px solid rgba(255,194,71,0.5); background: rgba(255,194,71,0.1);
+        color: var(--amber); font-size: 0.74rem; padding: 9px 10px; margin-bottom: 8px; line-height: 1.7;
+    }
+    #bridgeTag b { color: var(--neon); }
+    #bridgeTag i { color: var(--red); font-style: normal; }
+    #cfgStatus.okmark { color: var(--neon); }
+    #cfgStatus.warnmark { color: var(--amber); }
+    #cfgStatus.badmark { color: var(--red); }
+    .savebig {
+        display: block; width: 100%; margin: 10px 0 6px; padding: 13px 10px;
+        font-size: 0.95rem; font-weight: 800; letter-spacing: 0.5px;
+        color: #04110c; background: linear-gradient(180deg, var(--neon), #0a8f6a);
+        border: none; border-radius: 6px; cursor: pointer;
+        box-shadow: 0 0 16px rgba(0,255,170,0.35);
+    }
+    .savebig:active { transform: translateY(1px); }
+    .savebig:disabled { opacity: 0.45; box-shadow: none; }
+    .dot { flex: 0 0 auto; font-size: 0.58rem; line-height: 1; }
+    .appic {
+        width: 34px; height: 34px; flex: 0 0 auto; border-radius: 9px;
+        object-fit: contain; background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(0,255,170,0.12);
+    }
+    .avatar {
+        width: 34px; height: 34px; flex: 0 0 auto; border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+        color: #eafff6; font-weight: 800; font-size: 0.95rem;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    #logOverlay {
+        position: fixed; inset: 0; z-index: 120; display: none;
+        background: rgba(2,6,5,0.96); padding: 14px; flex-direction: column; gap: 10px;
+        padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    }
+    #logOverlay.on { display: flex; }
+    #logOverlay h3 { margin: 0; color: var(--neon); font-size: 0.82rem; letter-spacing: 1px; }
+    #logArea {
+        flex: 1 1 auto; width: 100%; min-height: 40vh; resize: none;
+        background: #03110c; color: var(--text); border: 1px solid var(--line);
+        font-family: var(--font); font-size: 0.72rem; padding: 8px;
+        direction: ltr; unicode-bidi: plaintext; white-space: pre; overflow: auto;
+    }
+    footer a { color: var(--cyan); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div id="toast"></div>
+<div id="demoBar" data-i18n="demo"></div>
+
+<header>
+    <div class="radar">
+        <div class="sweep"></div>
+        <div class="blip" style="top:22%;right:26%;animation-delay:.4s"></div>
+        <div class="blip" style="top:58%;right:64%;animation-delay:1.2s"></div>
+        <div class="blip" style="top:36%;right:48%;animation-delay:2s"></div>
+    </div>
+    <div class="brand">
+        <h1>FALCON <em>TRICKY</em></h1>
+        <p data-i18n="subtitle"></p>
+    </div>
+    <button id="btnRefresh" data-i18n="btnRefresh"></button>
+</header>
+
+<div class="langbar" id="langbar">
+    <button data-lang="ar">العربية</button>
+    <button data-lang="en">English</button>
+    <button data-lang="tr">Türkçe</button>
+    <button data-lang="ru">Русский</button>
+</div>
+
+<div class="hint" id="bridgeTag"></div>
+
+<section class="kpis">
+    <div class="kpi"><b id="kHidden">–</b><span data-i18n="kpiHidden"></span></div>
+    <div class="kpi"><b id="kMust">–</b><span data-i18n="kpiMust"></span></div>
+    <div class="kpi"><b id="kKey">–</b><span data-i18n="kpiKey"></span></div>
+    <div class="kpi"><b id="kEngine">–</b><span data-i18n="kpiEngine"></span></div>
+</section>
+
+<section class="panel">
+    <h2 data-i18n="panelControl"></h2>
+    <div class="row">
+        <label class="switch"><input type="checkbox" id="chkAuto"><i></i> <span data-i18n="lblAuto"></span></label>
+        <button id="btnEssOnly" class="amber" data-i18n="btnEssOnly"></button>
+        <button id="btnBaseline" class="ghost" data-i18n="btnBaseline"></button>
+        <button id="btnAutoLog" class="ghost" data-i18n="btnAutoLog"></button>
+    </div>
+    <button id="btnSaveCfg" class="savebig" data-i18n="btnSaveCfg"></button>
+    <div class="hint" id="cfgStatus"></div>
+    <div class="row">
+        <button id="btnKeyboxImport" class="amber" data-i18n="btnKeyboxImport"></button>
+        <button id="btnDiag" class="ghost" data-i18n="btnDiag"></button>
+        <button id="btnCopyLog" class="ghost" data-i18n="btnCopyLog"></button>
+        <button id="btnDump" class="ghost" data-i18n="btnDump"></button>
+    </div>
+    <div class="hint" data-i18n="hintEssential"></div>
+</section>
+
+<section class="panel" id="appsPanel">
+    <h2 data-i18n="panelApps"></h2>
+    <div class="row grow">
+        <input type="text" id="q" data-i18n-ph="phSearch">
+    </div>
+    <div class="row" style="margin-top:8px">
+        <div class="segments" id="segments">
+            <button data-f="hidden"><span data-i18n="segHidden"></span> <b id="cHidden">0</b></button>
+            <button data-f="installed"><span data-i18n="segInstalled"></span> <b id="cInstalled">0</b></button>
+            <button data-f="all"><span data-i18n="segAll"></span> <b id="cAll">0</b></button>
+            <button data-f="user"><span data-i18n="segUser"></span> <b id="cUser">0</b></button>
+        </div>
+    </div>
+    <div id="list" class="list"></div>
+</section>
+
+<section class="panel">
+    <h2 data-i18n="panelAdd"></h2>
+    <div class="row grow">
+        <input type="text" id="pkgInput" placeholder="com.example.app" class="tok">
+        <button id="btnAdd" style="flex:0 0 auto" data-i18n="btnAdd"></button>
+    </div>
+    <div class="hint" data-i18n="hintAdd"></div>
+</section>
+
+<section class="panel">
+    <h2 data-i18n="panelLog"></h2>
+    <div id="log"></div>
+    <div class="hint" data-i18n="hintLog"></div>
+</section>
+
+<footer>
+    <div data-i18n="footerTop"></div>
+    <div id="verTag" class="tok" style="color:var(--neon)"></div>
+    <div><a class="tok" href="https://t.me/FALCON_KERNEL_PRO" data-i18n="footerChannel"></a> · <a class="tok" href="https://t.me/falcon_kernel" data-i18n="footerDev"></a></div>
+</footer>
+
+<div id="confirmBar">
+    <span id="confirmMsg" class="auto"></span>
+    <button id="confirmYes" class="danger" data-i18n="btnConfirm"></button>
+    <button id="confirmNo" class="ghost" data-i18n="btnCancel"></button>
+</div>
+
+<div id="logOverlay">
+    <h3 data-i18n="copyLogTitle"></h3>
+    <textarea id="logArea" readonly></textarea>
+    <button id="logClose" class="ghost" data-i18n="btnClose"></button>
+</div>
+
+<script>
+/* =============================================================================
+   FALCON TRICKY — WebUI (Stealth Radar)
+   Languages: العربية · English · Türkçe · Русский
+   المطوّر / Developer: ABUFARID | Telegram: @falcon_kernel
+
+   🛡️ Freeze-safety rules (mandatory):
+     1) Every command is wrapped in `timeout`.
+     2) Single-command lock (busy) — no parallel execution.
+     3) Watchdog releases the UI even if the bridge never returns.
+     4) ⛔ The engine is NEVER started from here (double injection = device freeze).
+     5) Writes are limited to /data/adb/tricky_store/target.txt only.
+   ============================================================================= */
+
+var TARGET_FILE = '/data/adb/tricky_store/target.txt';
+var KEYBOX_FILE = '/data/adb/tricky_store/keybox.xml';
+var MAIN_KEYBOX = '/data/adb/modules/playintegrityfix/keybox.xml';
+var LANG_FILE = '/data/adb/falcon/tr_lang';
+var LANG_KEY = 'falcon_tricky_lang';
+// (v3.10) ذاكرة مؤقتة لقائمة التطبيقات — تجعل فتح الواجهة لحظياً ولا تُقفل الأزرار
+var PKG_CACHE = '/data/adb/falcon_pkg_cache.txt';
+var PKG_CACHE_USER = '/data/adb/falcon_pkg_user_cache.txt';
+var MANDATORY = ['com.google.android.gms', 'com.google.android.gms.unstable', 'com.android.vending'];
+var TIMEOUT = 60;
+
+/* ------------------------------- الترجمة ------------------------------- */
+var I18N = {
+    ar: {
+        subtitle: 'مرصد التخفي — من الذي يرى جهازاً نظيفاً الآن؟',
+        btnRefresh: '⟳ تحديث',
+        kpiHidden: 'تطبيق مخفي',
+        kpiMust: 'حماية Google',
+        kpiKey: 'الكيبوكس',
+        kpiEngine: 'المحرك',
+        panelControl: 'لوحة التحكم',
+        btnEssOnly: '🎯 الإبقاء على الأساسي فقط',
+        lblAuto: 'إخفاء التطبيقات الجديدة تلقائياً',
+        btnDump: '📋 استعراض القائمة الخام',
+        hintEssential: 'الأساسي = خدمات Google Play + متجر Play (لا يمكن إخفاؤها أو إزالتها لأن Play Integrity يعتمد عليها).',
+        panelApps: 'التطبيقات',
+        phSearch: 'ابحث باسم الحزمة أو اسم التطبيق…',
+        segHidden: 'مخفي',
+        segInstalled: 'المثبتة',
+        btnDiag: '🩺 فحص الجسر',
+        btnCopyLog: '📄 نسخ السجل',
+        btnClose: 'إغلاق',
+        copyLogTitle: 'سجل العمليات — حدّده وانسخه وأرسله للمطوّر',
+        bridgeOn: 'الجسر: <b>متصل</b> ({a})',
+        bridgeOff: '⚠️ <i>لا يوجد جسر جذر في هذه النافذة</i> — افتح الواجهة من مدير الجذر (KernelSU / KernelSU-Next / KsuWebUI / MMRL)',
+        warnNoPkgs: '⚠️ تعذّرت قراءة قائمة التطبيقات المثبّتة. اضغط «🩺 فحص الجسر» ثم انسخ السجل وأرسله لتشخيص السبب.',
+        logDup: 'ℹ️ «{a}» مخفية بالفعل — تجدها في تبويب «مخفي»',
+        logNotInstalled: '⚠️ «{a}» غير مثبّتة على الجهاز الآن — سيطبَّق الإخفاء عند تثبيتها',
+        logVerified: '✔ تم التحقق من الملف: {a} إدخال',
+        logWriteMismatch: '⚠️ عدد الأسطر غير مطابق ({a} ≠ {b}) — تحقّق من الصلاحيات',
+        logDiagDone: '🩺 انتهى الفحص — انسخ الأسطر أعلاه وأرسلها للمطوّر',
+        btnSaveCfg: '💾 حفظ الإعدادات',
+        cfgSaved: '✔ الإعدادات محفوظة في الذاكرة الدائمة',
+        cfgDirty: '• تغييرات غير محفوظة — اضغط «حفظ الإعدادات»',
+        cfgFail: '✖ فشل حفظ الإعدادات — راجع السجل ثم اضغط «🩺 فحص الجسر»',
+        logCfgWrite: '💾 كتابة الإعدادات في الذاكرة الدائمة…',
+        logCfgSaved: '💾 تم حفظ الإعدادات والتحقق منها بنجاح',
+        logCfgFail: '✖ لم تُحفظ الإعدادات — تحقّق من الصلاحيات في فحص الجسر',
+        logSuMode: '🔐 الواجهة تعمل بصلاحيات غير الجذر — سيتم استخدام su للكتابة',
+        btnBaseline: '🔄 تصفير المراقبة',
+        btnAutoLog: '📜 سجل الإخفاء',
+        confirmBaseline: 'سيتم اعتبار كل التطبيقات المثبّتة الآن «أساساً»، فلن يُخفَى تلقائياً إلا ما تُثبّته من هذه اللحظة فصاعداً. متابعة؟',
+        logBaselineWrite: '🔄 تصفير قائمة التطبيقات المعروفة…',
+        logBaselineDone: '✔ تم التصفير — أساس المراقبة الآن {a} تطبيقاً. أي تطبيق جديد سيُخفَى تلقائياً خلال 10 ثوانٍ.',
+        logBaselineFail: '✖ فشل التصفير — راجع السجل',
+        logAutoLogHead: '📜 آخر عمليات الإخفاء التلقائي المسجّلة على الجهاز:',
+        logAutoLogEmpty: '(لا يوجد سجل بعد — سيُكتب هنا عند إخفاء أي تطبيق جديد)',
+        logInstalledOk: '✔ «{a}» مثبّتة على الجهاز فعلاً — سيُطبَّق الإخفاء فوراً',
+        logCacheUsed: '⚡ قائمة التطبيقات محمّلة من الذاكرة المؤقتة',
+        logPkgLoaded: '📦 تم تحميل {a} تطبيقاً من الجهاز',
+        logBridgeName: '🔌 الجسر: وضع KsuWebUI / MMRL (اسم دالة عامة)',
+        logBridgeFn: '🔌 الجسر: وضع KernelSU (دالة مباشرة)',
+        btnKeyboxImport: '📥 استيراد كيبوكس',
+        logKeyboxScanHead: '🔍 البحث عن ملف كيبوكس صالح على الجهاز…',
+        logKeyboxImported: '✅ تم نسخ الكيبوكس إلى TrickyStore: {a}',
+        logKeyboxNone: '✖ لم يُعثر على أي كيبوكس صالح على الجهاز',
+        logKeyboxFail: '✖ فشل الاستيراد — راجع السجل',
+        segAll: 'الكل',
+        segUser: 'مستخدم',
+        panelAdd: 'إضافة حزمة يدوياً',
+        btnAdd: '＋ إضافة',
+        hintAdd: 'أضف اسم الحزمة لتُخفي هوية الجهاز عنها. مثال: com.netflix.mediaclient',
+        panelLog: 'سجل العمليات',
+        hintLog: 'كل أمر مُغلَّف بمهلة زمنية — لا يمكن أن يعلّق الجهاز. الكتابة محصورة في ملف واحد فقط: /data/adb/tricky_store/target.txt',
+        btnConfirm: 'تأكيد التنفيذ',
+        btnCancel: 'إلغاء',
+        btnHide: 'إخفاء',
+        btnUnhide: 'إظهار',
+        btnRestore: 'استعادة',
+        btnStop: '⏹️',
+        tagMust: 'إلزامي',
+        tagBang: 'مستثنى !',
+        tagUser: 'مستخدم',
+        tagSys: 'نظام',
+        tagGone: 'غير مثبّت',
+        tagSub: 'عملية فرعية',
+        stRun: 'يعمل',
+        stStop: 'متوقف',
+        keyCustom: 'مخصّص ✔',
+        keyBundled: 'مرفق ⚠',
+        keyMissing: 'مفقود',
+        demo: 'وضع المعاينة — لا يوجد جذر في هذه النافذة (البيانات تجريبية للعرض فقط)',
+        footerTop: 'FALCON TRICKY · ملحق وحدة FALCON INTEGRITY FIX',
+        footerChannel: '@FALCON_KERNEL_PRO',
+        footerDev: '@falcon_kernel',
+        noResults: 'لا نتائج مطابقة.',
+        showingOf: 'تم عرض {a} من {b} — استخدم البحث للتضييق.',
+        logReady: 'FALCON TRICKY · مرصد التخفي — جاهز.',
+        logNoStart: '⛔ لن يُشغَّل المحرك من هذه الواجهة إطلاقاً (حماية من الحقن المزدوج).',
+        logDemo: '⚠️ وضع المعاينة: لا يوجد جسر أوامر في هذه النافذة — البيانات تجريبية.',
+        logRead: '✔ تمت القراءة — مخفي: {a} | مثبّت: {b} | محرك: {c}',
+        logPatch: '🔧 سطر الرقعة الأمنية المسجَّل: {a}',
+        logKeybox: '🔑 الكيبوكس: {a} ({b} بايت · {c} شهادة)',
+        logTimeout: '⚠️ انتهت المهلة ({a}ث) — تم تحرير الواجهة.',
+        logWrite: '⏳ كتابة القائمة ({a} إدخال)…',
+        logSaved: '✔ تم الحفظ ({a} إدخال)',
+        logSaveFail: '✖ فشل الحفظ — راجع السجل',
+        logEmptyRefuse: '✖ رُفض الحفظ: القائمة فارغة',
+        logBadEntry: '⚠️ تم تجاهل إدخال غير صالح: {a}',
+        logHidden: 'أُخفي التطبيق: {a}',
+        logShown: 'أُظهر التطبيق: {a}',
+        logAdded: 'أُضيفت: {a}',
+        logEssential: 'تم الحصر على الأساسي فقط',
+        logAutoOn: 'سيُخفى كل تطبيق جديد تلقائياً',
+        logAutoOff: 'لن يُخفى أي تطبيق جديد تلقائياً',
+        logAutoFail: '✖ فشل تغيير الخيار',
+        logStop: '⏹️ أُوقف: {a}',
+        logDup: 'ℹ️ موجودة في القائمة بالفعل',
+        logInvalidPkg: '✖ اسم حزمة غير صالح',
+        logMustLocked: '⛔ إدخال إلزامي — Play Integrity يعتمد عليه',
+        logRawHead: '===== القائمة الخام (target.txt) =====',
+        logRawEnd: '===== نهاية القائمة =====',
+        logRawInLog: '📋 القائمة في السجل بالأسفل',
+        logDemoAction: 'ℹ️ وضع المعاينة — لا يتم تنفيذ أوامر فعلية',
+        logRefused: '⚠️ هناك عملية قيد التنفيذ — انتظر انتهاءها.',
+        logLang: '🌐 اللغة: {a}',
+        confirmEssential: 'سيتم حصر قائمة التخفي على الإدخالات الأساسية الثلاثة فقط، ويُظهر كل تطبيق آخر على الجهاز. متابعة؟'
+    },
+    en: {
+        subtitle: 'Stealth Radar — who sees a clean device right now?',
+        btnRefresh: '⟳ Refresh',
+        kpiHidden: 'Hidden apps',
+        kpiMust: 'Google protection',
+        kpiKey: 'Keybox',
+        kpiEngine: 'Engine',
+        panelControl: 'Control Panel',
+        btnEssOnly: '🎯 Essential only',
+        lblAuto: 'Auto-hide new apps',
+        btnDump: '📋 Show raw list',
+        hintEssential: 'Essential = Google Play services + Play Store (cannot be hidden or removed, Play Integrity depends on them).',
+        panelApps: 'Applications',
+        phSearch: 'Search by package or app name…',
+        segHidden: 'Hidden',
+        segInstalled: 'Installed',
+        btnDiag: '🩺 Bridge check',
+        btnCopyLog: '📄 Copy log',
+        btnClose: 'Close',
+        copyLogTitle: 'Operation log — select, copy and send it to the developer',
+        bridgeOn: 'Bridge: <b>connected</b> ({a})',
+        bridgeOff: '⚠️ <i>No root bridge in this window</i> — open this UI from your root manager (KernelSU / KernelSU-Next / KsuWebUI / MMRL)',
+        warnNoPkgs: '⚠️ Could not read the installed apps list. Press “🩺 Bridge check”, then copy the log and send it so we can diagnose.',
+        logDup: 'ℹ️ “{a}” is already hidden — find it in the “Hidden” tab',
+        logNotInstalled: '⚠️ “{a}” is not installed right now — it will be hidden once installed',
+        logVerified: '✔ File verified: {a} entries',
+        logWriteMismatch: '⚠️ Line count mismatch ({a} ≠ {b}) — check permissions',
+        logDiagDone: '🩺 Check finished — copy the lines above and send them to the developer',
+        btnSaveCfg: '💾 Save settings',
+        cfgSaved: '✔ Settings saved permanently',
+        cfgDirty: '• Unsaved changes — press “Save settings”',
+        cfgFail: '✖ Failed to save settings — check the log, then press “🩺 Bridge check”',
+        logCfgWrite: '💾 Writing settings to permanent storage…',
+        logCfgSaved: '💾 Settings saved and verified successfully',
+        logCfgFail: '✖ Settings were not saved — check permissions in the bridge check',
+        logSuMode: '🔐 UI is not running as root — writes will use su',
+        btnBaseline: '🔄 Reset watch',
+        btnAutoLog: '📜 Hide log',
+        confirmBaseline: 'All currently installed apps will be treated as the “baseline”, so only apps you install from now on will be hidden automatically. Continue?',
+        logBaselineWrite: '🔄 Resetting the known-apps list…',
+        logBaselineDone: '✔ Reset done — the watch baseline is now {a} apps. Any new app will be hidden automatically within 10 seconds.',
+        logBaselineFail: '✖ Reset failed — check the log',
+        logAutoLogHead: '📜 Latest automatic-hide events recorded on the device:',
+        logAutoLogEmpty: '(no log yet — entries appear here whenever a new app is hidden)',
+        logInstalledOk: '✔ “{a}” is actually installed on the device — hiding applies immediately',
+        logCacheUsed: '⚡ App list loaded from cache',
+        logPkgLoaded: '📦 Loaded {a} apps from the device',
+        logBridgeName: '🔌 Bridge: KsuWebUI / MMRL mode (global function name)',
+        logBridgeFn: '🔌 Bridge: KernelSU mode (direct function)',
+        btnKeyboxImport: '📥 Import keybox',
+        logKeyboxScanHead: '🔍 Searching the device for a valid keybox…',
+        logKeyboxImported: '✅ Keybox copied into TrickyStore: {a}',
+        logKeyboxNone: '✖ No valid keybox found on the device',
+        logKeyboxFail: '✖ Import failed — check the log',
+        segAll: 'All',
+        segUser: 'User',
+        panelAdd: 'Add package manually',
+        btnAdd: '＋ Add',
+        hintAdd: 'Add a package name to hide the device identity from it. Example: com.netflix.mediaclient',
+        panelLog: 'Operation log',
+        hintLog: 'Every command is wrapped in a timeout — the device can never freeze. Writes are limited to one file only: /data/adb/tricky_store/target.txt',
+        btnConfirm: 'Confirm',
+        btnCancel: 'Cancel',
+        btnHide: 'Hide',
+        btnUnhide: 'Unhide',
+        btnRestore: 'Restore',
+        btnStop: '⏹️',
+        tagMust: 'Required',
+        tagBang: 'Excluded !',
+        tagUser: 'User',
+        tagSys: 'System',
+        tagGone: 'Not installed',
+        tagSub: 'Sub-process',
+        stRun: 'Running',
+        stStop: 'Stopped',
+        keyCustom: 'Custom ✔',
+        keyBundled: 'Bundled ⚠',
+        keyMissing: 'Missing',
+        demo: 'Preview mode — no root in this window (sample data for display only)',
+        footerTop: 'FALCON TRICKY · companion of FALCON INTEGRITY FIX',
+        footerChannel: '@FALCON_KERNEL_PRO',
+        footerDev: '@falcon_kernel',
+        noResults: 'No matching results.',
+        showingOf: 'Showing {a} of {b} — use search to narrow down.',
+        logReady: 'FALCON TRICKY · Stealth Radar — ready.',
+        logNoStart: '⛔ The engine is never started from this UI (double-injection protection).',
+        logDemo: '⚠️ Preview mode: no command bridge in this window — sample data.',
+        logRead: '✔ Loaded — hidden: {a} | installed: {b} | engine: {c}',
+        logPatch: '🔧 Recorded security patch line: {a}',
+        logKeybox: '🔑 Keybox: {a} ({b} bytes · {c} certs)',
+        logTimeout: '⚠️ Timeout ({a}s) — UI released.',
+        logWrite: '⏳ Writing list ({a} entries)…',
+        logSaved: '✔ Saved ({a} entries)',
+        logSaveFail: '✖ Save failed — check the log',
+        logEmptyRefuse: '✖ Save refused: the list is empty',
+        logBadEntry: '⚠️ Ignored invalid entry: {a}',
+        logHidden: 'Hidden: {a}',
+        logShown: 'Unhidden: {a}',
+        logAdded: 'Added: {a}',
+        logEssential: 'Reduced to essentials only',
+        logAutoOn: 'Every new app will be hidden automatically',
+        logAutoOff: 'New apps will not be hidden automatically',
+        logAutoFail: '✖ Failed to change the option',
+        logStop: '⏹️ Stopped: {a}',
+        logDup: 'ℹ️ Already in the list',
+        logInvalidPkg: '✖ Invalid package name',
+        logMustLocked: '⛔ Required entry — Play Integrity depends on it',
+        logRawHead: '===== Raw list (target.txt) =====',
+        logRawEnd: '===== End of list =====',
+        logRawInLog: '📋 The list is in the log below',
+        logDemoAction: 'ℹ️ Preview mode — no real commands are executed',
+        logRefused: '⚠️ Another operation is running — please wait.',
+        logLang: '🌐 Language: {a}',
+        confirmEssential: 'The hidden list will be reduced to the three essential entries, and every other app becomes visible. Continue?'
+    },
+    tr: {
+        subtitle: 'Gizlilik Radarı — cihazı şu anda kim temiz görüyor?',
+        btnRefresh: '⟳ Yenile',
+        kpiHidden: 'Gizli uygulama',
+        kpiMust: 'Google koruması',
+        kpiKey: 'Keybox',
+        kpiEngine: 'Motor',
+        panelControl: 'Kontrol Paneli',
+        btnEssOnly: '🎯 Yalnızca temel',
+        lblAuto: 'Yeni uygulamaları otomatik gizle',
+        btnDump: '📋 Ham listeyi göster',
+        hintEssential: 'Temel = Google Play hizmetleri + Play Store (gizlenemez veya kaldırılamaz, Play Integrity bunlara bağlıdır).',
+        panelApps: 'Uygulamalar',
+        phSearch: 'Paket veya uygulama adı ara…',
+        segHidden: 'Gizli',
+        segInstalled: 'Yüklü',
+        btnDiag: '🩺 Köprü kontrolü',
+        btnCopyLog: '📄 Kaydı kopyala',
+        btnClose: 'Kapat',
+        copyLogTitle: 'İşlem kaydı — seçip kopyalayın ve geliştiriciye gönderin',
+        bridgeOn: 'Köprü: <b>bağlı</b> ({a})',
+        bridgeOff: '⚠️ <i>Bu pencerede root köprüsü yok</i> — arayüzü root yöneticinizden açın (KernelSU / KernelSU-Next / KsuWebUI / MMRL)',
+        warnNoPkgs: '⚠️ Yüklü uygulama listesi okunamadı. “🩺 Köprü kontrolü” düğmesine basın, kaydı kopyalayıp gönderin.',
+        logDup: 'ℹ️ “{a}” zaten gizli — “Gizli” sekmesinde bulabilirsiniz',
+        logNotInstalled: '⚠️ “{a}” şu anda yüklü değil — yüklendiğinde gizlenecek',
+        logVerified: '✔ Dosya doğrulandı: {a} kayıt',
+        logWriteMismatch: '⚠️ Satır sayısı uyuşmuyor ({a} ≠ {b}) — izinleri kontrol edin',
+        logDiagDone: '🩺 Kontrol bitti — yukarıdaki satırları kopyalayıp geliştiriciye gönderin',
+        btnSaveCfg: '💾 Ayarları kaydet',
+        cfgSaved: '✔ Ayarlar kalıcı olarak kaydedildi',
+        cfgDirty: '• Kaydedilmemiş değişiklikler — “Ayarları kaydet”e basın',
+        cfgFail: '✖ Ayarlar kaydedilemedi — kaydı kontrol edip “🩺 Köprü kontrolü”ne basın',
+        logCfgWrite: '💾 Ayarlar kalıcı depolamaya yazılıyor…',
+        logCfgSaved: '💾 Ayarlar kaydedildi ve doğrulandı',
+        logCfgFail: '✖ Ayarlar kaydedilmedi — köprü kontrolünde izinleri kontrol edin',
+        logSuMode: '🔐 Arayüz root olarak çalışmıyor — yazma işlemleri için su kullanılacak',
+        btnBaseline: '🔄 İzlemeyi sıfırla',
+        btnAutoLog: '📜 Gizleme kaydı',
+        confirmBaseline: 'Şu anda yüklü olan tüm uygulamalar “temel” kabul edilecek; yalnızca bundan sonra yükledikleriniz otomatik gizlenecek. Devam edilsin mi?',
+        logBaselineWrite: '🔄 Bilinen uygulamalar listesi sıfırlanıyor…',
+        logBaselineDone: '✔ Sıfırlandı — izleme temeli artık {a} uygulama. Yeni bir uygulama 10 saniye içinde otomatik gizlenecek.',
+        logBaselineFail: '✖ Sıfırlama başarısız — kayda bakın',
+        logAutoLogHead: '📜 Cihazda kaydedilen son otomatik gizleme işlemleri:',
+        logAutoLogEmpty: '(henüz kayıt yok — yeni bir uygulama gizlenince buraya yazılır)',
+        logInstalledOk: '✔ “{a}” cihazda gerçekten yüklü — gizleme hemen uygulanır',
+        logCacheUsed: '⚡ Uygulama listesi önbellekten yüklendi',
+        logPkgLoaded: '📦 Cihazdan {a} uygulama yüklendi',
+        logBridgeName: '🔌 Köprü: KsuWebUI / MMRL modu (genel fonksiyon adı)',
+        logBridgeFn: '🔌 Köprü: KernelSU modu (doğrudan fonksiyon)',
+        btnKeyboxImport: '📥 Keybox içe aktar',
+        logKeyboxScanHead: '🔍 Cihazda geçerli bir keybox aranıyor…',
+        logKeyboxImported: '✅ Keybox TrickyStore içine kopyalandı: {a}',
+        logKeyboxNone: '✖ Cihazda geçerli keybox bulunamadı',
+        logKeyboxFail: '✖ İçe aktarma başarısız — kayda bakın',
+        segAll: 'Tümü',
+        segUser: 'Kullanıcı',
+        panelAdd: 'Paket elle ekle',
+        btnAdd: '＋ Ekle',
+        hintAdd: 'Cihaz kimliğini gizlemek için paket adı ekleyin. Örnek: com.netflix.mediaclient',
+        panelLog: 'İşlem kaydı',
+        hintLog: 'Her komut zaman aşımıyla sarmalanır — cihaz asla donmaz. Yazma yalnızca tek dosyaya yapılır: /data/adb/tricky_store/target.txt',
+        btnConfirm: 'Onayla',
+        btnCancel: 'İptal',
+        btnHide: 'Gizle',
+        btnUnhide: 'Göster',
+        btnRestore: 'Geri al',
+        btnStop: '⏹️',
+        tagMust: 'Zorunlu',
+        tagBang: 'Hariç !',
+        tagUser: 'Kullanıcı',
+        tagSys: 'Sistem',
+        tagGone: 'Yüklü değil',
+        tagSub: 'Alt süreç',
+        stRun: 'Çalışıyor',
+        stStop: 'Durdu',
+        keyCustom: 'Özel ✔',
+        keyBundled: 'Paket ⚠',
+        keyMissing: 'Eksik',
+        demo: 'Önizleme modu — bu pencerede root yok (veriler örnek amaçlıdır)',
+        footerTop: 'FALCON TRICKY · FALCON INTEGRITY FIX eklentisi',
+        footerChannel: '@FALCON_KERNEL_PRO',
+        footerDev: '@falcon_kernel',
+        noResults: 'Eşleşen sonuç yok.',
+        showingOf: '{b} sonuçtan {a} tanesi gösteriliyor — aramayı daraltın.',
+        logReady: 'FALCON TRICKY · Gizlilik Radarı — hazır.',
+        logNoStart: '⛔ Motor bu arayüzden asla başlatılmaz (çift enjeksiyon koruması).',
+        logDemo: '⚠️ Önizleme modu: bu pencerede komut köprüsü yok — veriler örnek.',
+        logRead: '✔ Okundu — gizli: {a} | yüklü: {b} | motor: {c}',
+        logPatch: '🔧 Kayıtlı güvenlik yaması satırı: {a}',
+        logKeybox: '🔑 Keybox: {a} ({b} bayt · {c} sertifika)',
+        logTimeout: '⚠️ Zaman aşımı ({a}sn) — arayüz serbest bırakıldı.',
+        logWrite: '⏳ Liste yazılıyor ({a} kayıt)…',
+        logSaved: '✔ Kaydedildi ({a} kayıt)',
+        logSaveFail: '✖ Kaydetme başarısız — kaydı kontrol edin',
+        logEmptyRefuse: '✖ Kaydetme reddedildi: liste boş',
+        logBadEntry: '⚠️ Geçersiz kayıt yok sayıldı: {a}',
+        logHidden: 'Gizlendi: {a}',
+        logShown: 'Gösterildi: {a}',
+        logAdded: 'Eklendi: {a}',
+        logEssential: 'Yalnızca temel girdilere indirildi',
+        logAutoOn: 'Her yeni uygulama otomatik gizlenecek',
+        logAutoOff: 'Yeni uygulamalar otomatik gizlenmeyecek',
+        logAutoFail: '✖ Seçenek değiştirilemedi',
+        logStop: '⏹️ Durduruldu: {a}',
+        logDup: 'ℹ️ Zaten listede',
+        logInvalidPkg: '✖ Geçersiz paket adı',
+        logMustLocked: '⛔ Zorunlu kayıt — Play Integrity buna bağlıdır',
+        logRawHead: '===== Ham liste (target.txt) =====',
+        logRawEnd: '===== Liste sonu =====',
+        logRawInLog: '📋 Liste aşağıdaki kayıtta',
+        logDemoAction: 'ℹ️ Önizleme modu — gerçek komut çalıştırılmaz',
+        logRefused: '⚠️ Başka bir işlem sürüyor — bekleyin.',
+        logLang: '🌐 Dil: {a}',
+        confirmEssential: 'Gizli liste yalnızca üç temel kayda indirilecek ve diğer tüm uygulamalar görünür olacak. Devam?'
+    },
+    ru: {
+        subtitle: 'Радар скрытности — кто сейчас видит чистое устройство?',
+        btnRefresh: '⟳ Обновить',
+        kpiHidden: 'Скрытых приложений',
+        kpiMust: 'Защита Google',
+        kpiKey: 'Keybox',
+        kpiEngine: 'Движок',
+        panelControl: 'Панель управления',
+        btnEssOnly: '🎯 Только базовые',
+        lblAuto: 'Автоскрытие новых приложений',
+        btnDump: '📋 Показать сырой список',
+        hintEssential: 'Базовые = Сервисы Google Play + Play Маркет (их нельзя скрыть или удалить, Play Integrity зависит от них).',
+        panelApps: 'Приложения',
+        phSearch: 'Поиск по пакету или имени приложения…',
+        segHidden: 'Скрытые',
+        segInstalled: 'Установленные',
+        btnDiag: '🩺 Проверка моста',
+        btnCopyLog: '📄 Копировать журнал',
+        btnClose: 'Закрыть',
+        copyLogTitle: 'Журнал операций — выделите, скопируйте и отправьте разработчику',
+        bridgeOn: 'Мост: <b>подключён</b> ({a})',
+        bridgeOff: '⚠️ <i>В этом окне нет root-моста</i> — откройте интерфейс из менеджера root (KernelSU / KernelSU-Next / KsuWebUI / MMRL)',
+        warnNoPkgs: '⚠️ Не удалось прочитать список установленных приложений. Нажмите «🩺 Проверка моста», скопируйте журнал и отправьте его.',
+        logDup: 'ℹ️ «{a}» уже скрыто — смотрите вкладку «Скрытые»',
+        logNotInstalled: '⚠️ «{a}» сейчас не установлено — будет скрыто после установки',
+        logVerified: '✔ Файл проверен: {a} записей',
+        logWriteMismatch: '⚠️ Число строк не совпадает ({a} ≠ {b}) — проверьте права',
+        logDiagDone: '🩺 Проверка завершена — скопируйте строки выше и отправьте разработчику',
+        btnSaveCfg: '💾 Сохранить настройки',
+        cfgSaved: '✔ Настройки сохранены постоянно',
+        cfgDirty: '• Несохранённые изменения — нажмите «Сохранить настройки»',
+        cfgFail: '✖ Не удалось сохранить настройки — проверьте журнал и нажмите «🩺 Проверка моста»',
+        logCfgWrite: '💾 Запись настроек в постоянное хранилище…',
+        logCfgSaved: '💾 Настройки сохранены и проверены',
+        logCfgFail: '✖ Настройки не сохранены — проверьте права в проверке моста',
+        logSuMode: '🔐 Интерфейс работает не от root — для записи будет использован su',
+        btnBaseline: '🔄 Сбросить наблюдение',
+        btnAutoLog: '📜 Журнал скрытия',
+        confirmBaseline: 'Все установленные сейчас приложения будут считаться «базой», поэтому автоматически будут скрываться только приложения, установленные с этого момента. Продолжить?',
+        logBaselineWrite: '🔄 Сброс списка известных приложений…',
+        logBaselineDone: '✔ Сброс выполнен — база наблюдения теперь {a} приложений. Любое новое приложение будет скрыто автоматически в течение 10 секунд.',
+        logBaselineFail: '✖ Сброс не удался — проверьте журнал',
+        logAutoLogHead: '📜 Последние события автоскрытия, записанные на устройстве:',
+        logAutoLogEmpty: '(записей пока нет — они появятся здесь при скрытии нового приложения)',
+        logInstalledOk: '✔ «{a}» действительно установлено на устройстве — скрытие применяется сразу',
+        logCacheUsed: '⚡ Список приложений загружен из кэша',
+        logPkgLoaded: '📦 Загружено {a} приложений с устройства',
+        logBridgeName: '🔌 Мост: режим KsuWebUI / MMRL (имя глобальной функции)',
+        logBridgeFn: '🔌 Мост: режим KernelSU (прямая функция)',
+        btnKeyboxImport: '📥 Импорт keybox',
+        logKeyboxScanHead: '🔍 Поиск подходящего keybox на устройстве…',
+        logKeyboxImported: '✅ Keybox скопирован в TrickyStore: {a}',
+        logKeyboxNone: '✖ Подходящий keybox на устройстве не найден',
+        logKeyboxFail: '✖ Импорт не удался — проверьте журнал',
+        segAll: 'Все',
+        segUser: 'Пользователь',
+        panelAdd: 'Добавить пакет вручную',
+        btnAdd: '＋ Добавить',
+        hintAdd: 'Добавьте имя пакета, чтобы скрыть от него данные устройства. Пример: com.netflix.mediaclient',
+        panelLog: 'Журнал операций',
+        hintLog: 'Каждая команда ограничена тайм-аутом — устройство не зависнет. Запись только в один файл: /data/adb/tricky_store/target.txt',
+        btnConfirm: 'Подтвердить',
+        btnCancel: 'Отмена',
+        btnHide: 'Скрыть',
+        btnUnhide: 'Показать',
+        btnRestore: 'Восстановить',
+        btnStop: '⏹️',
+        tagMust: 'Обязательно',
+        tagBang: 'Исключено !',
+        tagUser: 'Пользователь',
+        tagSys: 'Система',
+        tagGone: 'Не установлено',
+        tagSub: 'Подпроцесс',
+        stRun: 'Работает',
+        stStop: 'Остановлен',
+        keyCustom: 'Свой ✔',
+        keyBundled: 'Встроенный ⚠',
+        keyMissing: 'Отсутствует',
+        demo: 'Режим предпросмотра — нет root в этом окне (данные только для показа)',
+        footerTop: 'FALCON TRICKY · дополнение к FALCON INTEGRITY FIX',
+        footerChannel: '@FALCON_KERNEL_PRO',
+        footerDev: '@falcon_kernel',
+        noResults: 'Совпадений нет.',
+        showingOf: 'Показано {a} из {b} — уточните поиск.',
+        logReady: 'FALCON TRICKY · Радар скрытности — готов.',
+        logNoStart: '⛔ Движок никогда не запускается из этого интерфейса (защита от двойной инъекции).',
+        logDemo: '⚠️ Режим предпросмотра: в этом окне нет моста команд — данные примерные.',
+        logRead: '✔ Загружено — скрыто: {a} | установлено: {b} | движок: {c}',
+        logPatch: '🔧 Записанная строка патча безопасности: {a}',
+        logKeybox: '🔑 Keybox: {a} ({b} байт · {c} сертификатов)',
+        logTimeout: '⚠️ Тайм-аут ({a}с) — интерфейс освобождён.',
+        logWrite: '⏳ Запись списка ({a} записей)…',
+        logSaved: '✔ Сохранено ({a} записей)',
+        logSaveFail: '✖ Не удалось сохранить — проверьте журнал',
+        logEmptyRefuse: '✖ Сохранение отклонено: список пуст',
+        logBadEntry: '⚠️ Пропущена неверная запись: {a}',
+        logHidden: 'Скрыто: {a}',
+        logShown: 'Показано: {a}',
+        logAdded: 'Добавлено: {a}',
+        logEssential: 'Оставлены только базовые записи',
+        logAutoOn: 'Каждое новое приложение будет скрываться автоматически',
+        logAutoOff: 'Новые приложения не будут скрываться автоматически',
+        logAutoFail: '✖ Не удалось изменить параметр',
+        logStop: '⏹️ Остановлено: {a}',
+        logDup: 'ℹ️ Уже в списке',
+        logInvalidPkg: '✖ Неверное имя пакета',
+        logMustLocked: '⛔ Обязательная запись — Play Integrity зависит от неё',
+        logRawHead: '===== Сырой список (target.txt) =====',
+        logRawEnd: '===== Конец списка =====',
+        logRawInLog: '📋 Список в журнале ниже',
+        logDemoAction: 'ℹ️ Режим предпросмотра — команды не выполняются',
+        logRefused: '⚠️ Уже выполняется другая операция — подождите.',
+        logLang: '🌐 Язык: {a}',
+        confirmEssential: 'Список скрытых будет сведён к трём базовым записям, а все остальные приложения станут видимыми. Продолжить?'
+    }
+};
+
+/* أسماء الحزم: دولية (مشتركة) + أسماء مترجمة لكل لغة */
+var INTL_NAMES = {
+    'com.whatsapp': 'WhatsApp',
+    'com.whatsapp.w4b': 'WhatsApp Business',
+    'org.telegram.messenger': 'Telegram',
+    'com.instagram.android': 'Instagram',
+    'com.facebook.katana': 'Facebook',
+    'com.facebook.orca': 'Messenger',
+    'com.snapchat.android': 'Snapchat',
+    'com.zhiliaoapp.musically': 'TikTok',
+    'com.ss.android.ugc.trill': 'TikTok',
+    'com.twitter.android': 'X (Twitter)',
+    'com.discord': 'Discord',
+    'com.netflix.mediaclient': 'Netflix',
+    'com.spotify.music': 'Spotify',
+    'com.amazon.avod.thirdpartyclient': 'Prime Video',
+    'com.microsoft.teams': 'Microsoft Teams',
+    'us.zoom.videomeetings': 'Zoom',
+    'com.mojang.minecraftpe': 'Minecraft',
+    'com.tencent.ig': 'PUBG Mobile',
+    'com.dts.freefireth': 'Free Fire',
+    'com.activision.callofduty.shooter': 'Call of Duty',
+    'com.riotgames.league.wildrift': 'Wild Rift',
+    'com.supercell.clashofclans': 'Clash of Clans',
+    'com.supercell.brawlstars': 'Brawl Stars',
+    'com.supercell.clashroyale': 'Clash Royale',
+    'com.roblox.client': 'Roblox',
+    'com.king.candycrushsaga': 'Candy Crush',
+    'com.termux': 'Termux',
+    'org.videolan.vlc': 'VLC',
+    'bin.mt.plus': 'MT Manager',
+    'com.topjohnwu.magisk': 'Magisk',
+    'me.weishu.kernelsu': 'KernelSU',
+    'com.rifsxd.ksunext': 'KernelSU Next',
+    'com.dergoogler.mmrl': 'MMRL',
+    'com.keramidas.TitaniumBackup': 'Titanium Backup',
+    'com.shahid.app': 'Shahid'
+};
+
+var LANG_NAMES = {
+    ar: {
+        'com.google.android.gms': 'خدمات Google Play',
+        'com.google.android.gms.unstable': 'خدمات Google Play (قناة غير مستقرة)',
+        'com.android.vending': 'متجر Google Play',
+        'com.google.android.gsf': 'خدمات إطار Google',
+        'com.google.android.apps.photos': 'صور Google',
+        'com.google.android.apps.maps': 'خرائط Google',
+        'com.google.android.youtube': 'يوتيوب',
+        'com.google.android.apps.youtube.music': 'يوتيوب ميوزك',
+        'com.google.android.googlequicksearchbox': 'بحث Google',
+        'com.google.android.dialer': 'هاتف Google',
+        'com.google.android.apps.messaging': 'رسائل Google',
+        'com.google.android.calendar': 'تقويم Google',
+        'com.google.android.keep': 'ملاحظات Google',
+        'com.google.android.gm': 'جيميل',
+        'com.google.android.apps.docs': 'درايف',
+        'com.google.android.apps.walletnfcrel': 'محفظة Google',
+        'com.google.android.apps.tachyon': 'Google Meet',
+        'com.android.chrome': 'متصفح كروم',
+        'com.android.settings': 'الإعدادات',
+        'com.android.systemui': 'واجهة النظام',
+        'com.whatsapp': 'واتساب',
+        'com.whatsapp.w4b': 'واتساب الأعمال',
+        'org.telegram.messenger': 'تيليجرام',
+        'com.instagram.android': 'إنستغرام',
+        'com.facebook.katana': 'فيسبوك',
+        'com.facebook.orca': 'ماسنجر',
+        'com.snapchat.android': 'سناب شات',
+        'com.zhiliaoapp.musically': 'تيك توك',
+        'com.ss.android.ugc.trill': 'تيك توك',
+        'com.twitter.android': 'إكس (تويتر)',
+        'com.discord': 'ديسكورد',
+        'com.netflix.mediaclient': 'نتفليكس',
+        'com.spotify.music': 'سبوتيفاي',
+        'com.amazon.avod.thirdpartyclient': 'برايم فيديو',
+        'com.microsoft.teams': 'مايكروسوفت تيمز',
+        'us.zoom.videomeetings': 'زووم',
+        'com.mojang.minecraftpe': 'ماين كرافت',
+        'com.tencent.ig': 'ببجي موبايل',
+        'com.dts.freefireth': 'فري فاير',
+        'com.activision.callofduty.shooter': 'كول أوف ديوتي',
+        'com.riotgames.league.wildrift': 'وايلد رفت',
+        'com.supercell.clashofclans': 'كلاش أوف كلانس',
+        'com.supercell.brawlstars': 'براول ستارز',
+        'com.supercell.clashroyale': 'كلاش رويال',
+        'com.roblox.client': 'روبلوكس',
+        'com.king.candycrushsaga': 'كاندي كراش',
+        'bin.mt.plus': 'مدير MT',
+        'com.termux': 'تيرمكس',
+        'com.topjohnwu.magisk': 'ماجيسك',
+        'me.weishu.kernelsu': 'كيرنل إس يو',
+        'com.rifsxd.ksunext': 'كيرنل إس يو نكست',
+        'com.keramidas.TitaniumBackup': 'تيتانيوم باك أب',
+        'com.shahid.app': 'شاهد',
+        catBank: 'تطبيق بنكي / دفع',
+        catNubia: 'تطبيق نوبيا (Red Magic)',
+        catZte: 'تطبيق ZTE',
+        catOneplus: 'تطبيق OnePlus / OPPO',
+        catGoogle: 'تطبيق Google',
+        catSamsung: 'تطبيق سامسونج',
+        catXiaomi: 'تطبيق شاومي',
+        catAndroid: 'تطبيق أندرويد النظامي'
+    },
+    en: {
+        'com.google.android.gms': 'Google Play services',
+        'com.google.android.gms.unstable': 'Google Play services (unstable)',
+        'com.android.vending': 'Google Play Store',
+        'com.google.android.gsf': 'Google Services Framework',
+        'com.google.android.apps.photos': 'Google Photos',
+        'com.google.android.apps.maps': 'Google Maps',
+        'com.google.android.youtube': 'YouTube',
+        'com.google.android.apps.youtube.music': 'YouTube Music',
+        'com.google.android.googlequicksearchbox': 'Google Search',
+        'com.google.android.dialer': 'Google Phone',
+        'com.google.android.apps.messaging': 'Google Messages',
+        'com.google.android.calendar': 'Google Calendar',
+        'com.google.android.keep': 'Google Keep',
+        'com.google.android.gm': 'Gmail',
+        'com.google.android.apps.docs': 'Google Drive',
+        'com.google.android.apps.walletnfcrel': 'Google Wallet',
+        'com.google.android.apps.tachyon': 'Google Meet',
+        'com.android.chrome': 'Chrome',
+        'com.android.settings': 'Settings',
+        'com.android.systemui': 'System UI',
+        catBank: 'Banking / payment app',
+        catNubia: 'Nubia app (Red Magic)',
+        catZte: 'ZTE app',
+        catOneplus: 'OnePlus / OPPO app',
+        catGoogle: 'Google app',
+        catSamsung: 'Samsung app',
+        catXiaomi: 'Xiaomi app',
+        catAndroid: 'Android system app'
+    },
+    tr: {
+        'com.google.android.gms': 'Google Play hizmetleri',
+        'com.google.android.gms.unstable': 'Google Play hizmetleri (kararsız)',
+        'com.android.vending': 'Google Play Store',
+        'com.google.android.gsf': 'Google Hizmetler Çerçevesi',
+        'com.google.android.apps.photos': 'Google Fotoğraflar',
+        'com.google.android.apps.maps': 'Google Haritalar',
+        'com.google.android.youtube': 'YouTube',
+        'com.google.android.apps.youtube.music': 'YouTube Music',
+        'com.google.android.googlequicksearchbox': 'Google Arama',
+        'com.google.android.dialer': 'Google Telefon',
+        'com.google.android.apps.messaging': 'Google Mesajlar',
+        'com.google.android.calendar': 'Google Takvim',
+        'com.google.android.keep': 'Google Keep',
+        'com.google.android.gm': 'Gmail',
+        'com.google.android.apps.docs': 'Google Drive',
+        'com.google.android.apps.walletnfcrel': 'Google Cüzdan',
+        'com.google.android.apps.tachyon': 'Google Meet',
+        'com.android.chrome': 'Chrome',
+        'com.android.settings': 'Ayarlar',
+        'com.android.systemui': 'Sistem Arayüzü',
+        catBank: 'Banka / ödeme uygulaması',
+        catNubia: 'Nubia uygulaması (Red Magic)',
+        catZte: 'ZTE uygulaması',
+        catOneplus: 'OnePlus / OPPO uygulaması',
+        catGoogle: 'Google uygulaması',
+        catSamsung: 'Samsung uygulaması',
+        catXiaomi: 'Xiaomi uygulaması',
+        catAndroid: 'Android sistem uygulaması'
+    },
+    ru: {
+        'com.google.android.gms': 'Сервисы Google Play',
+        'com.google.android.gms.unstable': 'Сервисы Google Play (нестабильные)',
+        'com.android.vending': 'Магазин Google Play',
+        'com.google.android.gsf': 'Фреймворк служб Google',
+        'com.google.android.apps.photos': 'Google Фото',
+        'com.google.android.apps.maps': 'Google Карты',
+        'com.google.android.youtube': 'YouTube',
+        'com.google.android.apps.youtube.music': 'YouTube Music',
+        'com.google.android.googlequicksearchbox': 'Поиск Google',
+        'com.google.android.dialer': 'Телефон Google',
+        'com.google.android.apps.messaging': 'Сообщения Google',
+        'com.google.android.calendar': 'Google Календарь',
+        'com.google.android.keep': 'Google Keep',
+        'com.google.android.gm': 'Gmail',
+        'com.google.android.apps.docs': 'Google Диск',
+        'com.google.android.apps.walletnfcrel': 'Google Кошелёк',
+        'com.google.android.apps.tachyon': 'Google Meet',
+        'com.android.chrome': 'Chrome',
+        'com.android.settings': 'Настройки',
+        'com.android.systemui': 'Системный интерфейс',
+        catBank: 'Банковское / платёжное приложение',
+        catNubia: 'Приложение Nubia (Red Magic)',
+        catZte: 'Приложение ZTE',
+        catOneplus: 'Приложение OnePlus / OPPO',
+        catGoogle: 'Приложение Google',
+        catSamsung: 'Приложение Samsung',
+        catXiaomi: 'Приложение Xiaomi',
+        catAndroid: 'Системное приложение Android'
+    }
+};
+
+var LANG_LABELS = { ar: 'العربية', en: 'English', tr: 'Türkçe', ru: 'Русский' };
+var BANK_WORDS = ['bank', 'paypal', 'wallet', 'payment', 'visa', 'mastercard', 'stcpay',
+                  'mada', 'alrajhi', 'alinma', 'riyad', 'ahli', 'snb', 'sabb', 'qnb'];
+
+var lang = 'ar';
+var hadStoredLang = false;
+try {
+    var _sv = localStorage.getItem(LANG_KEY);
+    if (_sv && I18N[_sv]) { lang = _sv; hadStoredLang = true; }
+} catch (e) {}
+
+function t(key) {
+    var d = I18N[lang] || I18N.ar;
+    if (d[key] !== undefined) return d[key];
+    if (I18N.en[key] !== undefined) return I18N.en[key];
+    return key;
+}
+
+function tf(key, map) {
+    var s = t(key);
+    for (var k in map) {
+        if (Object.prototype.hasOwnProperty.call(map, k)) {
+            s = s.split('{' + k + '}').join(map[k]);
+        }
+    }
+    return s;
+}
+
+function nameOf(pkg) {
+    var per = LANG_NAMES[lang] || LANG_NAMES.ar;
+    if (per[pkg]) return per[pkg];
+    if (INTL_NAMES[pkg]) return INTL_NAMES[pkg];
+    if (LANG_NAMES.ar[pkg]) return LANG_NAMES.ar[pkg];
+
+    var low = String(pkg).toLowerCase();
+    for (var i = 0; i < BANK_WORDS.length; i++) {
+        if (low.indexOf(BANK_WORDS[i]) !== -1) return per.catBank;
+    }
+    if (low.indexOf('nubia') !== -1) return per.catNubia;
+    if (low.indexOf('com.zte') === 0) return per.catZte;
+    if (low.indexOf('oneplus') !== -1 || low.indexOf('oplus') !== -1) return per.catOneplus;
+    if (low.indexOf('com.google.') === 0) return per.catGoogle;
+    if (low.indexOf('com.samsung') === 0) return per.catSamsung;
+    if (low.indexOf('com.xiaomi') === 0 || low.indexOf('com.miui') === 0) return per.catXiaomi;
+    if (low.indexOf('com.android.') === 0) return per.catAndroid;
+    return '';
+}
+
+/* بحث ذكي: يطابق الاسم بأي لغة (فالبحث عن "واتساب" يعمل حتى بالواجهة الإنجليزية والعكس) */
+function namesAll(pkg) {
+    var s = '';
+    for (var k in LANG_NAMES) {
+        if (Object.prototype.hasOwnProperty.call(LANG_NAMES, k) && LANG_NAMES[k][pkg]) {
+            s += ' ' + LANG_NAMES[k][pkg];
+        }
+    }
+    if (INTL_NAMES[pkg]) s += ' ' + INTL_NAMES[pkg];
+    return s.toLowerCase();
+}
+
+/* ------------------------------ أدوات عامة ------------------------------ */
+function $(id) { return document.getElementById(id); }
+
+function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* عزل أي رمز لاتيني (حزمة / معرّف تيليجرام) كي يبقى الرمز في بدايته */
+function tok(s) { return '<span class="tok">' + esc(s) + '</span>'; }
+
+function applyStatic() {
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    document.title = 'FALCON TRICKY · ' + t('subtitle').split('—')[0].trim();
+
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) {
+        nodes[i].textContent = t(nodes[i].getAttribute('data-i18n'));
+    }
+    var phs = document.querySelectorAll('[data-i18n-ph]');
+    for (var j = 0; j < phs.length; j++) {
+        phs[j].setAttribute('placeholder', t(phs[j].getAttribute('data-i18n-ph')));
+    }
+    var lbs = document.querySelectorAll('#langbar button');
+    for (var k = 0; k < lbs.length; k++) {
+        lbs[k].className = (lbs[k].getAttribute('data-lang') === lang) ? 'on' : '';
+    }
+}
+
+function logLine(html) {
+    var box = $('log');
+    var row = document.createElement('div');
+    row.className = 'logrow';
+    var ts = document.createElement('span');
+    ts.className = 'ts';
+    ts.textContent = new Date().toTimeString().slice(0, 8);
+    var msg = document.createElement('span');
+    msg.className = 'msg';
+    msg.setAttribute('dir', 'auto');
+    msg.innerHTML = html;
+    row.appendChild(ts);
+    row.appendChild(msg);
+    box.appendChild(row);
+    box.scrollTop = box.scrollHeight;
+}
+
+var toastTimer = null;
+function toast(html) {
+    var el = $('toast');
+    el.innerHTML = html;
+    el.setAttribute('dir', 'auto');
+    el.className = 'on';
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.className = ''; }, 2800);
+    logLine('» ' + html);
+}
+
+function confirmAction(msg, fn) {
+    var bar = $('confirmBar');
+    $('confirmMsg').textContent = msg;
+    bar.className = 'on';
+    $('confirmYes').onclick = function () { bar.className = ''; fn(); };
+    $('confirmNo').onclick = function () { bar.className = ''; };
+}
+
+/* --------------------- جسر تنفيذ الأوامر (آمن) --------------------- */
+var busy = false;
+var DEMO = false;
+var NEED_SU = false;
+
+function bridgeAvailable() {
+    try { if (typeof ksu !== 'undefined' && ksu && typeof ksu.exec === 'function') return true; } catch (e) {}
+    try { if (typeof kernelsu !== 'undefined' && kernelsu && typeof kernelsu.exec === 'function') return true; } catch (e) {}
+    try { if (typeof shell === 'function') return true; } catch (e) {}
+    try { if (typeof exec === 'function') return true; } catch (e) {}
+    return false;
+}
+
+function wrap(cmd, secs) {
+    var lim = secs || TIMEOUT;
+    var safe = String(cmd).split("'").join("'\\''");
+    var inner = "sh -c '" + safe + "'";
+    var w = 'if command -v timeout >/dev/null 2>&1; then timeout ' + lim + ' ' + inner + '; else ' + inner + '; fi';
+    if (NEED_SU) {
+        w = "su -c '" + String(w).split("'").join("'\\''") + "' 2>&1";
+    }
+    return w;
+}
+
+function setBusy(on) {
+    var ids = ['btnRefresh', 'btnEssOnly', 'btnAdd', 'btnDump', 'btnDiag', 'btnCopyLog', 'btnSaveCfg', 'btnBaseline', 'btnAutoLog', 'btnKeyboxImport'];
+    for (var i = 0; i < ids.length; i++) { if ($(ids[i])) $(ids[i]).disabled = !!on; }
+}
+
+function bridgeName() {
+    try { if (typeof ksu !== 'undefined' && ksu && typeof ksu.exec === 'function') return 'ksu.exec'; } catch (e) {}
+    try { if (typeof kernelsu !== 'undefined' && kernelsu && typeof kernelsu.exec === 'function') return 'kernelsu.exec'; } catch (e) {}
+    try { if (typeof shell === 'function') return 'shell()'; } catch (e) {}
+    try { if (typeof exec === 'function') return 'exec()'; } catch (e) {}
+    return '';
+}
+
+function updateBridgeTag() {
+    var el = $('bridgeTag');
+    if (!el) return;
+    var n = bridgeName();
+    if (n) {
+        var m = NEED_SU ? ' + su' : '';
+        el.innerHTML = tf('bridgeOn', { a: tok(n + m) });
+    } else el.innerHTML = t('bridgeOff');
+}
+
+/* ============ دعوة الجسر — تدعم طريقتين ============
+   1) KsuWebUI Standalone / MMRL:  ksu.exec(cmd, opts, "اسم_دالة_عامة")
+   2) KernelSU الأصلي:             ksu.exec(cmd, opts, function)
+   الإضافة الرسمية لـ TrickyStore تستخدم الطريقة (1)، وكانت واجهتنا تستخدم (2) فقط
+   ⇒ الجسر لم يكن يعمل إطلاقاً على أجهزة المستخدمين (لا استجابة ولا خطأ). */
+var BRIDGE_MODE = '';
+var CB_SEQ = 0;
+
+function bridgeCall(cmd, onDone) {
+    var name = '__falcon_cb_' + (++CB_SEQ);
+    var settled = false;
+    function finish(ec, out, err) {
+        if (settled) return;
+        settled = true;
+        try { delete window[name]; } catch (e) {}
+        onDone(ec, out, err);
+    }
+    window[name] = function (ec, out, err) { finish(ec, out, err); };
+    var fn = function (ec, out, err) { finish(ec, out, err); };
+
+    var ksuObj = null;
+    try { if (typeof ksu !== 'undefined' && ksu && typeof ksu.exec === 'function') ksuObj = ksu; } catch (e) {}
+
+    if (ksuObj) {
+        if (BRIDGE_MODE === 'fn') {
+            try { ksuObj.exec(cmd, '{}', fn); } catch (e) {}
+            return;
+        }
+        try {
+            var ret = ksuObj.exec(cmd, '{}', name);
+            if (ret && typeof ret.then === 'function') {
+                ret.then(function (res) { if (res) finish(res.errno, res.stdout, res.stderr); });
+            }
+        } catch (e) {
+            try { ksuObj.exec(cmd, '{}', fn); } catch (e2) {}
+        }
+        return;
+    }
+
+    try {
+        if (typeof kernelsu !== 'undefined' && kernelsu && typeof kernelsu.exec === 'function') {
+            return kernelsu.exec(cmd, fn);
+        }
+    } catch (e) {}
+    try {
+        if (typeof shell === 'function') {
+            return shell(cmd, { root: true }, function (r) {
+                var txt = (typeof r === 'string') ? r : (r && (r.stdout || r.out || r.result)) || '';
+                finish(0, txt);
+            });
+        }
+    } catch (e) {}
+    try {
+        if (typeof exec === 'function') { return exec(cmd, fn); }
+    } catch (e) {}
+    finish(-1, '', 'no exec bridge');
+}
+
+/* فحص سريع لطريقة الجسر (أمر لا ضرر منه) ثم نبدأ التحميل */
+function probeBridge(cb) {
+    var done = false;
+    function finish(mode) { if (done) return; done = true; BRIDGE_MODE = mode; cb(mode); }
+    var name = '__falcon_probe';
+    window[name] = function (ec, out, err) {
+        if (String(out).indexOf('FALCON_PROBE_OK') !== -1) finish('name');
+    };
+    try {
+        var ret = ksu.exec('echo FALCON_PROBE_OK', '{}', name);
+        if (ret && typeof ret.then === 'function') {
+            ret.then(function (res) { if (res && String(res.stdout).indexOf('FALCON_PROBE_OK') !== -1) finish('promise'); });
+        }
+    } catch (e) {}
+    setTimeout(function () { finish('fn'); }, 2500);
+}
+
+function sh(cmd, cb, secs, bg) {
+    // bg = true ⇒ عملية خلفية: لا تُقفل الواجهة ولا تُعطّل الأزرار
+    if (busy && !bg) { toast(t('logRefused')); return; }
+    if (!bg) { busy = true; setBusy(true); }
+    var limit = secs || TIMEOUT;
+    var wrapped = wrap(cmd, limit);
+    var finished = false;
+    var watchdog = setTimeout(function () {
+        if (finished) return;
+        finished = true;
+        if (!bg) { busy = false; setBusy(false); }
+        logLine(tf('logTimeout', { a: limit }));
+        cb(-1, '__TIMEOUT__');
+    }, limit * 1000 + 15000);
+
+    function done(errno, out, err) {
+        if (finished) return;
+        finished = true;
+        clearTimeout(watchdog);
+        if (!bg) { busy = false; setBusy(false); }
+        cb(errno, (out || '') + (err ? ('\n' + err) : ''));
+    }
+
+    bridgeCall(wrapped, done);
+}
+
+/* ------------------------------ حالة الواجهة ------------------------------ */
+var state = {
+    target: [],
+    all: [],
+    user: [],
+    keybox: { size: 0, certs: 0, src: 'NONE' },
+    engine: 'STOPPED',
+    patch: '',
+    auto: 'on',
+    ver: '',
+    filter: 'installed',
+    loaded: false
+};
+
+function setLang(code, persist) {
+    if (!I18N[code]) return;
+    lang = code;
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    hadStoredLang = true;
+    applyStatic();
+    render();
+    if (persist && bridgeAvailable()) {
+        sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; mkdir -p /data/adb/falcon; echo ' + lang + ' > ' + LANG_FILE + '; echo LANG_OK', function () {}, 15);
+    }
+    logLine(tf('logLang', { a: LANG_LABELS[lang] }));
+}
+
+function loadDemo() {
+    state.target = ['com.google.android.gms', 'com.google.android.gms.unstable', 'com.android.vending',
+        'com.netflix.mediaclient', 'com.whatsapp', 'com.discord', 'com.roblox.client',
+        'com.spotify.music', 'com.shahid.app', 'com.tencent.ig', 'com.supercell.clashofclans'];
+    state.all = ['com.google.android.gms', 'com.android.vending', 'com.google.android.gms.unstable',
+        'com.netflix.mediaclient', 'com.whatsapp', 'com.discord', 'com.roblox.client',
+        'com.spotify.music', 'com.shahid.app', 'com.tencent.ig', 'com.supercell.clashofclans',
+        'com.android.chrome', 'com.google.android.youtube', 'com.instagram.android',
+        'bin.mt.plus', 'com.topjohnwu.magisk', 'com.rifsxd.ksunext', 'com.android.settings',
+        'com.android.systemui', 'com.nubia.launcher'];
+    state.user = ['com.netflix.mediaclient', 'com.whatsapp', 'com.discord', 'com.roblox.client',
+        'com.spotify.music', 'com.shahid.app', 'com.tencent.ig', 'com.supercell.clashofclans',
+        'com.instagram.android', 'bin.mt.plus', 'com.topjohnwu.magisk', 'com.rifsxd.ksunext',
+        'com.google.android.youtube'];
+    state.keybox = { size: 4310, certs: 3, src: 'CUSTOM' };
+    state.engine = 'RUNNING';
+    state.patch = 'all=2026-09-05';
+    state.auto = 'on';
+    state.ver = 'v3.13';
+    state.loaded = true;
+}
+
+/* ------------------------------ قراءة الحالة ------------------------------ */
+function parseSections(out) {
+    var secs = {};
+    var cur = null;
+    var lines = String(out).split('\n');
+    for (var i = 0; i < lines.length; i++) {
+        var m = /^###(\S+)\s*$/.exec(lines[i]);
+        if (m) { cur = m[1]; secs[cur] = []; continue; }
+        if (cur) secs[cur].push(lines[i]);
+    }
+    return secs;
+}
+
+function cleanLines(arr) {
+    var res = [];
+    (arr || []).forEach(function (l) {
+        var v = String(l).replace(/\r/g, '').trim();
+        if (!v) return;
+        if (v.charAt(0) === '#') return;
+        if (res.indexOf(v) === -1) res.push(v);
+    });
+    return res;
+}
+
+function stripBang(p) { return String(p).replace(/!$/, ''); }
+
+/* (v3.10) قراءة سريعة — بلا pm إطلاقاً: تفتح الواجهة خلال أقل من ثانية
+   ولا تُقفل الأزرار. قائمة التطبيقات تُحمَّل لاحقاً في الخلفية. */
+function readCore(cb) {
+    var cmd = [
+        'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH',
+        'echo "###T"; cat ' + TARGET_FILE + ' 2>/dev/null',
+        'echo "###K"; if [ -s ' + KEYBOX_FILE + ' ]; then echo "SIZE=$(wc -c < ' + KEYBOX_FILE + ' 2>/dev/null)"; echo "CERTS=$(grep -c "BEGIN CERT" ' + KEYBOX_FILE + ' 2>/dev/null)"; if cmp -s ' + KEYBOX_FILE + ' ' + MAIN_KEYBOX + ' 2>/dev/null; then echo "SRC=BUNDLED"; else echo "SRC=CUSTOM"; fi; else echo "SIZE=0"; echo "CERTS=0"; echo "SRC=NONE"; fi',
+        'echo "###E"; if pidof TrickyStoreOSS >/dev/null 2>&1; then echo RUNNING; else echo STOPPED; fi',
+        'echo "###P"; cat /data/adb/tricky_store/security_patch.txt 2>/dev/null',
+        'echo "###A"; if [ -f /data/adb/falcon/auto_hide_new ] && [ "$(cat /data/adb/falcon/auto_hide_new 2>/dev/null)" = "off" ]; then echo off; else echo on; fi',
+        'echo "###L"; cat ' + LANG_FILE + ' 2>/dev/null',
+        'echo "###V"; grep -m1 "^version=" /data/adb/modules/falcon_tricky/module.prop 2>/dev/null'
+    ].join('; ');
+
+    sh(cmd, function (ec, out) {
+        if (out === '__TIMEOUT__') { logLine(tf('logTimeout', { a: 30 })); if (cb) cb(false); return; }
+        var s = parseSections(out);
+        state.target = cleanLines(s.T);
+
+        var k = (s.K || []).join('\n');
+        var mSize = /SIZE=(\d+)/.exec(k);
+        var mCert = /CERTS=(\d+)/.exec(k);
+        var mSrc = /SRC=([A-Z]+)/.exec(k);
+        state.keybox = {
+            size: mSize ? parseInt(mSize[1], 10) : 0,
+            certs: mCert ? parseInt(mCert[1], 10) : 0,
+            src: mSrc ? mSrc[1] : 'NONE'
+        };
+        state.engine = ((s.E || []).join('').indexOf('RUNNING') !== -1) ? 'RUNNING' : 'STOPPED';
+        state.patch = (s.P || []).join(' ').trim();
+        state.auto = ((s.A || []).join('').trim() === 'off') ? 'off' : 'on';
+        state.ver = (s.V || []).join('').replace('version=', '').trim();
+
+        var fileLang = (s.L || []).join('').trim();
+        if (!hadStoredLang && I18N[fileLang] && fileLang !== lang) {
+            lang = fileLang;
+            applyStatic();
+        }
+
+        state.loaded = true;
+        setCfgStatus('saved');
+        var st = (state.engine === 'RUNNING') ? t('stRun') : t('stStop');
+        logLine(tf('logRead', { a: state.target.length, b: state.all.length, c: st }));
+        if (state.patch) logLine(tf('logPatch', { a: tok(state.patch) }));
+        logLine(tf('logKeybox', { a: tok(state.keybox.src), b: state.keybox.size, c: state.keybox.certs }));
+        if (cb) cb(true);
+    }, 30);
+}
+
+/* قائمة التطبيقات: من الذاكرة المؤقتة أولاً (لحظي)، ثم تحديث من الجهاز في الخلفية.
+   bg=true ⇒ لا تُقفل الواجهة مهما طال الأمر. */
+function loadPackages() {
+    sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+        + 'echo "###C"; cat ' + PKG_CACHE + ' 2>/dev/null; echo "###CU"; cat ' + PKG_CACHE_USER + ' 2>/dev/null',
+        function (ec, out) {
+            if (out === '__TIMEOUT__') return;
+            var s = parseSections(out);
+            var cachedAll = cleanLines(s.C);
+            var cachedUser = cleanLines(s.CU);
+            if (cachedAll.length) {
+                state.all = cachedAll;
+                state.user = cachedUser;
+                if (state.loaded) render();
+                logLine(t('logCacheUsed'));
+            }
+            // تحديث من الجهاز — مهلة قصيرة حتى لا يعلّق شيء
+            var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+                + 'echo "###J"; L=$(timeout 12 pm list packages 2>/dev/null | cut -d: -f2); if [ -z "$L" ]; then L=$(cut -d" " -f1 /data/system/packages.list 2>/dev/null); fi; echo "$L"; '
+                + 'echo "###U"; U=$(timeout 12 pm list packages -3 2>/dev/null | cut -d: -f2); if [ -z "$U" ]; then U=$(awk \'$2>=10000{print $1}\' /data/system/packages.list 2>/dev/null); fi; echo "$U"';
+            sh(cmd, function (ec2, out2) {
+                if (out2 === '__TIMEOUT__') return;
+                var s2 = parseSections(out2);
+                var all = cleanLines(s2.J);
+                var user = cleanLines(s2.U);
+                if (!all.length) return;
+                state.all = all;
+                state.user = user;
+                writePkgCache(all, user);
+                if (state.loaded) render();
+                logLine(tf('logPkgLoaded', { a: all.length }));
+            }, 20, true);
+        }, 20, true);
+}
+
+function writePkgCache(all, user) {
+    var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+        + 'printf "%s\\n" ' + all.map(function (p) { return "'" + p + "'"; }).join(' ') + ' > ' + PKG_CACHE + '; '
+        + 'printf "%s\\n" ' + (user.length ? user.map(function (p) { return "'" + p + "'"; }).join(' ') : "''") + ' > ' + PKG_CACHE_USER + '; '
+        + 'chmod 644 ' + PKG_CACHE + ' ' + PKG_CACHE_USER + ' 2>/dev/null; echo CACHE_OK';
+    sh(cmd, function () {}, 30, true);
+}
+
+/* تحديث كامل (زر ⟳) — يعيد قراءة النواة + قائمة التطبيقات من الجهاز */
+function readState(cb) {
+    readCore(function (ok) {
+        if (!ok) { if (cb) cb(false); return; }
+        var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+            + 'echo "###J"; L=$(timeout 15 pm list packages 2>/dev/null | cut -d: -f2); if [ -z "$L" ]; then L=$(cut -d" " -f1 /data/system/packages.list 2>/dev/null); fi; echo "$L"; '
+            + 'echo "###U"; U=$(timeout 15 pm list packages -3 2>/dev/null | cut -d: -f2); if [ -z "$U" ]; then U=$(awk \'$2>=10000{print $1}\' /data/system/packages.list 2>/dev/null); fi; echo "$U"';
+        sh(cmd, function (ec, out) {
+            if (out === '__TIMEOUT__') { render(); if (cb) cb(true); return; }
+            var s = parseSections(out);
+            var all = cleanLines(s.J);
+            var user = cleanLines(s.U);
+            if (all.length) {
+                state.all = all;
+                state.user = user;
+                writePkgCache(all, user);
+            }
+            render();
+            loadIcons();
+            if (cb) cb(true);
+        }, 25);
+    });
+}
+
+/* ------------------------------ الكتابة ------------------------------ */
+function saveTarget(list, note, cb, verifyPkg) {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    var out = [];
+    MANDATORY.forEach(function (m) { if (out.indexOf(m) === -1) out.push(m); });
+    (list || []).forEach(function (p) {
+        if (!/^[A-Za-z0-9._]+!?$/.test(p)) { logLine(tf('logBadEntry', { a: esc(p) })); return; }
+        if (out.indexOf(p) === -1) out.push(p);
+    });
+    if (!out.length) { toast(t('logEmptyRefuse')); return; }
+
+    var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; mkdir -p /data/adb/tricky_store; chmod 755 /data/adb/tricky_store 2>/dev/null; '
+        + 'printf "%s\\n" ' + out.map(function (p) { return "'" + p + "'"; }).join(' ') + ' > ' + TARGET_FILE + '; '
+        + 'chmod 644 ' + TARGET_FILE + ' 2>/dev/null; chown root:root ' + TARGET_FILE + ' 2>/dev/null; sync; '
+        + 'echo "SAVED_COUNT=' + out.length + '"; echo "READBACK_COUNT=$(grep -c . ' + TARGET_FILE + ' 2>/dev/null)"; echo "WRITE_DONE"'
+        // (v3.09) تحقّق مؤكد من تثبيت الحزمة عبر pm path — القائمة العامة قد تكون
+        // ناقصة فنُخطئ ونقول «غير مثبتة» بينما هي مثبتة فعلاً.
+        + (verifyPkg ? '; if timeout 25 pm path ' + verifyPkg + ' >/dev/null 2>&1; then echo "PKG_INSTALLED=yes"; else echo "PKG_INSTALLED=no"; fi' : '');
+
+    logLine(tf('logWrite', { a: out.length }));
+    sh(cmd, function (ec, otp) {
+        if (otp === '__TIMEOUT__') { toast(t('logSaveFail')); return; }
+        var txt = String(otp);
+        if (txt.indexOf('WRITE_DONE') === -1) {
+            toast(t('logSaveFail'));
+            logLine(esc(txt.slice(0, 400) || '(no output)'));
+            return;
+        }
+        var rb = /READBACK_COUNT=(\d+)/.exec(txt);
+        var back = rb ? parseInt(rb[1], 10) : -1;
+        if (back !== out.length) {
+            logLine(tf('logWriteMismatch', { a: out.length, b: back }));
+            toast(t('logSaveFail'));
+        } else {
+            logLine(tf('logVerified', { a: back }));
+            if (verifyPkg) {
+                logLine(/PKG_INSTALLED=yes/.test(txt)
+                    ? tf('logInstalledOk', { a: tok(verifyPkg) })
+                    : tf('logNotInstalled', { a: tok(verifyPkg) }));
+            }
+            toast(tf('logSaved', { a: out.length }) + (note ? ' · ' + note : ''));
+        }
+        // (v3.13) استخراج أيقونات ما أخفيناه حديثاً ثم تحديث العرض
+        sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+            + 'sh /data/adb/modules/playintegrityfix/icons.sh ' + out.join(' ') + ' >/dev/null 2>&1; echo ICONS_REFRESHED',
+            function () { loadIcons(); }, 60, true);
+        readState(function () { render(); if (cb) cb(); });
+    }, 40);
+}
+
+function toggleHidden(pkg) {
+    pkg = stripBang(pkg);
+    if (MANDATORY.indexOf(pkg) !== -1) { toast(t('logMustLocked')); return; }
+    var list = state.target.slice();
+    var i = list.indexOf(pkg);
+    if (i !== -1) {
+        list.splice(i, 1);
+        saveTarget(list, tf('logShown', { a: tok(pkg) }));
+    } else {
+        list.push(pkg);
+        saveTarget(list, tf('logHidden', { a: tok(pkg) }));
+    }
+}
+
+function essentialOnly() {
+    confirmAction(t('confirmEssential'), function () {
+        saveTarget(MANDATORY.slice(), t('logEssential'));
+    });
+}
+
+function setCfgStatus(kind) {
+    var el = $('cfgStatus');
+    if (!el) return;
+    el.className = 'hint ' + (kind === 'saved' ? 'okmark' : (kind === 'dirty' ? 'warnmark' : 'badmark'));
+    el.textContent = kind === 'saved' ? t('cfgSaved') : (kind === 'dirty' ? t('cfgDirty') : t('cfgFail'));
+}
+
+/* (v3.08) حفظ الإعدادات في الذاكرة الدائمة + قراءة راجعة للتحقق
+   السبب: المستخدم أبلغ أن تفعيل «إخفاء التطبيقات الجديدة» لا يبقى محفوظاً
+   بعد الخروج من الواجهة. الآن لا نُظهر «تم الحفظ» إلا بعد التأكد من الملف فعلياً. */
+function saveCfg() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); setCfgStatus('dirty'); return; }
+    var on = $('chkAuto').checked;
+    var flag = '/data/adb/falcon/auto_hide_new';
+
+    var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; mkdir -p /data/adb/falcon; '
+        + (on ? 'rm -f ' + flag : 'echo off > ' + flag) + '; '
+        + 'printf "%s\\n" ' + "'" + lang + "'" + ' > ' + LANG_FILE + ' 2>/dev/null; sync; '
+        + 'if [ -f ' + flag + ' ] && [ "$(cat ' + flag + ' 2>/dev/null)" = "off" ]; then echo "CFG_AUTO=off"; else echo "CFG_AUTO=on"; fi'
+        + '; echo "CFG_LANG=$(cat ' + LANG_FILE + ' 2>/dev/null)"'
+        + '; echo "CFG_DONE"';
+
+    logLine(t('logCfgWrite'));
+    sh(cmd, function (ec, out) {
+        if (out === '__TIMEOUT__') { setCfgStatus('fail'); toast(t('logCfgFail')); return; }
+        var txt = String(out);
+        var mA = /CFG_AUTO=(on|off)/.exec(txt);
+        var got = mA ? mA[1] : '';
+        var want = on ? 'on' : 'off';
+        if (txt.indexOf('CFG_DONE') === -1 || got !== want) {
+            setCfgStatus('fail');
+            toast(t('logCfgFail'));
+            logLine(esc(txt.slice(0, 400) || '(no output)'));
+            return;
+        }
+        state.auto = want;
+        $('chkAuto').checked = on;
+        setCfgStatus('saved');
+        logLine(t('logCfgSaved'));
+        logLine(on ? t('logAutoOn') : t('logAutoOff'));
+        toast(t('logCfgSaved'));
+        readState(function () { render(); });
+    }, 25);
+}
+
+/* (v3.09) تصفير المراقبة: يجعل كل التطبيقات الحالية «أساساً» حتى لا يُخفَى
+   إلا ما يُثبَّت لاحقاً — يحل لبس «التطبيقات المثبتة لم تُخفَ». */
+function resetBaseline() {
+    confirmAction(t('confirmBaseline'), function () {
+        if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+        var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; mkdir -p /data/adb/falcon; '
+            + 'timeout 25 pm list packages 2>/dev/null | cut -d: -f2 | sort -u > /data/adb/falcon_known_packages.txt; '
+            + 'echo "BASELINE_COUNT=$(grep -c . /data/adb/falcon_known_packages.txt 2>/dev/null)"; echo BASELINE_DONE';
+        logLine(t('logBaselineWrite'));
+        sh(cmd, function (ec, out) {
+            if (out === '__TIMEOUT__') { toast(t('logBaselineFail')); return; }
+            var txt = String(out);
+            if (txt.indexOf('BASELINE_DONE') === -1) { toast(t('logBaselineFail')); logLine(esc(txt.slice(0, 300))); return; }
+            var m = /BASELINE_COUNT=(\d+)/.exec(txt);
+            var n = m ? m[1] : '0';
+            toast(tf('logBaselineDone', { a: n }));
+            logLine(tf('logBaselineDone', { a: n }));
+        }, 35);
+    });
+}
+
+/* (v3.09) قراءة سجل الإخفاء التلقائي من الجهاز — إثبات للمستخدم أن الخيار يعمل */
+function readAutoLog() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    logLine(t('logAutoLogHead'));
+    sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+        + 'echo "=== AUTO LOG START ==="; tail -n 120 /data/adb/falcon/auto_hide.log 2>/dev/null; echo "=== AUTO LOG END ==="',
+        function (ec, out) {
+            if (out === '__TIMEOUT__') { logLine(tf('logTimeout', { a: 30 })); return; }
+            var lines = String(out).split('\n');
+            var any = false;
+            for (var i = 0; i < lines.length; i++) {
+                var l = lines[i].replace(/\r/g, '');
+                if (!l) continue;
+                if (l.indexOf('=== AUTO LOG') !== -1) continue;
+                logLine(tok(l));
+                any = true;
+            }
+            if (!any) logLine(t('logAutoLogEmpty'));
+        }, 30);
+}
+
+function addPkg() {
+    var v = $('pkgInput').value.trim();
+    if (!/^[A-Za-z0-9._]+$/.test(v)) { toast(t('logInvalidPkg')); return; }
+    if (MANDATORY.indexOf(v) !== -1 || state.target.indexOf(v) !== -1) {
+        toast(tf('logDup', { a: tok(v) }));
+        state.filter = 'hidden';
+        var qel = $('q');
+        qel.value = v;
+        render();
+        return;
+    }
+    var list = state.target.slice();
+    list.push(v);
+    $('pkgInput').value = '';
+    // (v3.09) التحقق من التثبيت يتم عبر pm path داخل أمر الحفظ نفسه، لأن قائمة
+    // الحزم العامة قد تكون ناقصة فكنّا نُخطئ ونقول «غير مثبتة» وهي مثبتة فعلاً.
+    saveTarget(list, tf('logAdded', { a: tok(v) }), null, v);
+}
+
+/* فحص تشخيصي شامل — يكشف سبب عدم عمل أي زر على أجهزة المستخدمين */
+function diagnose() {
+    if (!bridgeAvailable()) {
+        logLine(t('logDemoAction'));
+        updateBridgeTag();
+        return;
+    }
+    var cmd = [
+        'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH',
+        'echo "=== DIAG START ==="',
+        'echo "BRIDGE=' + bridgeName() + '"',
+        'echo "UID=$(id -u 2>/dev/null) USER=$(id -un 2>/dev/null)"',
+        'echo "CTX=$(cat /proc/self/attr/current 2>/dev/null)"',
+        'echo "TIMEOUT=$(command -v timeout 2>/dev/null || echo NONE)"',
+        'echo "TARGET_EXISTS=$([ -f ' + TARGET_FILE + ' ] && echo yes || echo no)"',
+        'echo "TARGET_LINES=$(grep -c . ' + TARGET_FILE + ' 2>/dev/null)"',
+        'echo "TARGET_PERM=$(ls -l ' + TARGET_FILE + ' 2>&1)"',
+        'echo "TRICKY_DIR=$([ -d /data/adb/tricky_store ] && echo yes || echo no)"',
+        'echo "PM_ALL=$(timeout 25 pm list packages 2>/dev/null | wc -l)"',
+        'echo "PM_USER=$(timeout 25 pm list packages -3 2>/dev/null | wc -l)"',
+        'echo "ENGINE=$(pidof TrickyStoreOSS >/dev/null 2>&1 && echo RUNNING || echo STOPPED)"',
+        'echo "KEYBOX=$(wc -c < ' + KEYBOX_FILE + ' 2>/dev/null || echo 0)"',
+        'if echo diag > /data/adb/tricky_store/.falcon_diag 2>/dev/null; then echo "WRITE_TEST=ok"; else echo "WRITE_TEST=fail"; fi',
+        'rm -f /data/adb/tricky_store/.falcon_diag 2>/dev/null',
+        'echo "=== DIAG END ==="'
+    ].join('; ');
+
+    logLine('🩺 …');
+    sh(cmd, function (ec, out) {
+        if (out === '__TIMEOUT__') { logLine(tf('logTimeout', { a: 45 })); return; }
+        var lines = String(out).split('\n');
+        for (var i = 0; i < lines.length; i++) {
+            var l = lines[i].replace(/\r/g, '');
+            if (!l) continue;
+            logLine(tok(l));
+        }
+        logLine(t('logDiagDone'));
+        updateBridgeTag();
+    }, 45);
+}
+
+function copyLog() {
+    var box = $('log');
+    var rows = box.querySelectorAll('.logrow');
+    var txt = '';
+    for (var i = 0; i < rows.length; i++) {
+        var ts = rows[i].querySelector('.ts');
+        var msg = rows[i].querySelector('.msg');
+        txt += (ts ? ts.textContent : '') + '  ' + (msg ? msg.textContent : '') + '\n';
+    }
+    var area = $('logArea');
+    area.value = txt || '(empty)';
+    $('logOverlay').className = 'on';
+    area.focus();
+    area.select();
+    try { area.setSelectionRange(0, area.value.length); } catch (e) {}
+}
+
+function closeLog() { $('logOverlay').className = ''; }
+
+/* (v3.11) استيراد كيبوكس من أي مكان على الجهاز — ينهي نهائياً مشكلة
+   «الكيبوكس يبقى في الإضافة ولا يصل إلى TrickyStore». */
+function importKeybox() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    logLine(t('logKeyboxScanHead'));
+    var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+        + 'F=""; '
+        + 'for C in /data/adb/modules/*/keybox.xml /data/adb/modules/*/*/keybox.xml /data/adb/modules/*/*/*/keybox.xml '
+        + '/data/adb/modules_update/*/keybox.xml /data/adb/modules_update/*/*/keybox.xml '
+        + '/data/misc/keybox/keybox.xml /data/misc/keybox/keybox.xml '
+        + '/sdcard/Download/keybox.xml /sdcard/Download/*.xml '
+        + '/storage/emulated/0/Download/keybox.xml /storage/emulated/0/Download/*.xml '
+        + '/data/adb/tricky_store/keybox.xml; do '
+        + '  if [ -z "$F" ] && [ -s "$C" ] && grep -q "<AndroidAttestation" "$C" 2>/dev/null; then '
+        + '    case "$C" in /data/adb/modules/playintegrityfix/*|/data/adb/modules_update/playintegrityfix/*|/data/adb/modules/falcon_tricky/*|/data/adb/modules_update/falcon_tricky/*) ;; *) F="$C";; esac; '
+        + '  fi; '
+        + 'done; '
+        + 'if [ -n "$F" ]; then '
+        + '  mkdir -p /data/adb/tricky_store /data/adb/falcon; '
+        + '  cp -f "$F" /data/adb/tricky_store/keybox.xml; cp -f "$F" /data/adb/falcon/keybox.xml; '
+        + '  chmod 644 /data/adb/tricky_store/keybox.xml 2>/dev/null; chmod 600 /data/adb/falcon/keybox.xml 2>/dev/null; '
+        + '  chown root:root /data/adb/tricky_store/keybox.xml /data/adb/falcon/keybox.xml 2>/dev/null; sync; '
+        + '  echo "KEYBOX_SRC=$F"; echo KEYBOX_DONE; '
+        + 'else echo KEYBOX_NONE; fi';
+    sh(cmd, function (ec, out) {
+        if (out === '__TIMEOUT__') { toast(t('logKeyboxFail')); return; }
+        var txt = String(out);
+        var m = /KEYBOX_SRC=(.*)/.exec(txt);
+        if (txt.indexOf('KEYBOX_DONE') !== -1 && m) {
+            logLine(tf('logKeyboxImported', { a: tok(m[1]) }));
+            toast(tf('logKeyboxImported', { a: tok(m[1]) }));
+        } else {
+            logLine(t('logKeyboxNone'));
+            toast(t('logKeyboxNone'));
+        }
+        readCore(function () { render(); });
+    }, 45);
+}
+
+function forceStop(pkg) {
+    if (!/^[A-Za-z0-9._]+$/.test(pkg)) return;
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; am force-stop ' + pkg + ' 2>&1; echo STOPPED', function (ec, out) {
+        if (out === '__TIMEOUT__') { toast(t('logSaveFail')); return; }
+        toast(tf('logStop', { a: tok(pkg) }));
+    }, 20);
+}
+
+function dumpRaw() {
+    logLine(t('logRawHead'));
+    logLine(state.target.length ? state.target.map(tok).join('<br>') : '—');
+    logLine(t('logRawEnd'));
+    toast(t('logRawInLog'));
+}
+
+/* ------------------------------ العرض ------------------------------ */
+var installedMap = null;
+function buildInstalled() {
+    installedMap = {};
+    state.all.forEach(function (p) { installedMap[p] = true; });
+}
+
+function isUser(p) { return state.user.indexOf(p) !== -1; }
+
+function renderKpis() {
+    var hiddenCount = 0;
+    state.target.forEach(function (p) { if (p.charAt(p.length - 1) !== '!') hiddenCount++; });
+
+    var hEl = $('kHidden');
+    hEl.textContent = String(hiddenCount);
+    hEl.className = hiddenCount > 60 ? 'warn' : '';
+
+    var must = 0;
+    MANDATORY.forEach(function (m) { if (state.target.indexOf(m) !== -1) must++; });
+    var mEl = $('kMust');
+    mEl.textContent = must + '/3';
+    mEl.className = (must === 3) ? '' : 'bad';
+
+    var kEl = $('kKey');
+    var src = state.keybox.src;
+    if (src === 'NONE' || !state.keybox.size) { kEl.textContent = t('keyMissing'); kEl.className = 'bad'; }
+    else if (src === 'CUSTOM') { kEl.textContent = t('keyCustom'); kEl.className = ''; }
+    else { kEl.textContent = t('keyBundled'); kEl.className = 'warn'; }
+
+    var eEl = $('kEngine');
+    if (state.engine === 'RUNNING') { eEl.textContent = t('stRun'); eEl.className = ''; }
+    else { eEl.textContent = t('stStop'); eEl.className = 'bad'; }
+
+    $('chkAuto').checked = (state.auto !== 'off');
+    var vt = $('verTag');
+    if (vt) vt.textContent = state.ver || '';
+}
+
+function appRow(pkg, hidden, banged) {
+    var must = MANDATORY.indexOf(pkg) !== -1;
+    var inst = installedMap && installedMap[pkg];
+    var partOf = false;
+    if (!inst && pkg.indexOf('.unstable') !== -1) {
+        var base = pkg.replace('.unstable', '');
+        if (installedMap && installedMap[base]) { inst = true; partOf = true; }
+    }
+    var nice = nameOf(pkg);
+
+    var tags = '';
+    if (must) tags += '<span class="tag must">' + esc(t('tagMust')) + '</span>';
+    if (banged) tags += '<span class="tag bang">' + esc(t('tagBang')) + '</span>';
+    if (inst) {
+        var cls = partOf ? 'sys' : (isUser(pkg) ? 'user' : 'sys');
+        var lbl = partOf ? t('tagSub') : (isUser(pkg) ? t('tagUser') : t('tagSys'));
+        tags += '<span class="tag ' + cls + '">' + esc(lbl) + '</span>';
+    } else {
+        tags += '<span class="tag gone">' + esc(t('tagGone')) + '</span>';
+    }
+
+    var btn;
+    if (must) {
+        btn = '<button class="ghost" disabled>🔒</button>';
+    } else if (hidden) {
+        btn = '<button class="danger" onclick="toggleHidden(\'' + pkg + '\')">' + esc(t('btnUnhide')) + '</button>';
+    } else {
+        btn = '<button onclick="toggleHidden(\'' + pkg + '\')">' + esc(t('btnHide')) + '</button>';
+    }
+
+    var stopBtn = (inst && !must)
+        ? '<button class="ghost" onclick="forceStop(\'' + pkg + '\')">' + esc(t('btnStop')) + '</button>'
+        : '';
+
+    return '<div class="item' + (hidden ? ' hidden' : '') + (must ? ' locked' : '') + '">'
+        + '<span class="dot" style="color:' + (hidden ? 'var(--neon)' : 'var(--muted)') + '">' + (hidden ? '◉' : '○') + '</span>'
+        + iconHtml(pkg)
+        + '<div class="info"><div class="pkg">' + esc(pkg) + '</div>'
+        + '<div class="nice" dir="auto">' + esc(nice || '—') + tags + '</div></div>'
+        + '<div class="acts">' + stopBtn + btn + '</div>'
+        + '</div>';
+}
+
+/* (v3.13) أيقونة التطبيق الحقيقية إن وُجدت، وإلا حرف ملوّن بديل */
+var iconMap = {};
+
+function avatarHtml(pkg) {
+    var nice = nameOf(pkg) || pkg;
+    var ch = (String(nice).trim().charAt(0) || '?').toUpperCase();
+    var hue = 0;
+    for (var i = 0; i < pkg.length; i++) hue = (hue * 31 + pkg.charCodeAt(i)) % 360;
+    return '<span class="avatar" style="background:hsl(' + hue + ',60%,34%)">' + esc(ch) + '</span>';
+}
+
+function iconHtml(pkg) {
+    if (iconMap[pkg]) {
+        return '<img class="appic" src="' + iconMap[pkg] + '" alt="" draggable="false">';
+    }
+    return avatarHtml(pkg);
+}
+
+/* جلب كل الأيقونات المستخرجة على الجهاز دفعة واحدة (في الخلفية، بلا قفل) */
+function loadIcons() {
+    sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
+        + 'for F in /data/adb/falcon_icons/*.png; do [ -f "$F" ] || continue; echo "###$(basename "$F" .png)"; base64 "$F" 2>/dev/null; echo; done; echo ICONS_END',
+        function (ec, out) {
+            if (out === '__TIMEOUT__') return;
+            var s = parseSections(out);
+            var keys = Object.keys(s);
+            for (var i = 0; i < keys.length; i++) {
+                var b64 = (s[keys[i]] || []).join('').replace(/\s+/g, '');
+                if (b64) iconMap[keys[i]] = 'data:image/png;base64,' + b64;
+            }
+            if (state.loaded) render();
+        }, 45, true);
+}
+
+function renderSegs() {
+    var segs = document.querySelectorAll('#segments button');
+    for (var i = 0; i < segs.length; i++) {
+        segs[i].className = (segs[i].getAttribute('data-f') === state.filter) ? 'on' : '';
+    }
+}
+
+function render() {
+    if (!state.loaded) return;
+    buildInstalled();
+    renderKpis();
+    renderSegs();
+
+    var hiddenSet = {};
+    state.target.forEach(function (l) { hiddenSet[stripBang(l)] = true; });
+
+    var q = $('q').value.trim().toLowerCase();
+    var rows = [];
+    var f = state.filter;
+
+    if (f === 'hidden') {
+        state.target.forEach(function (l) {
+            rows.push({ pkg: stripBang(l), bang: (l.charAt(l.length - 1) === '!'), hidden: true });
+        });
+    } else if (f === 'installed') {
+        state.all.forEach(function (p) {
+            rows.push({ pkg: p, bang: false, hidden: !!hiddenSet[p] });
+        });
+        state.target.forEach(function (l) {
+            var p = stripBang(l);
+            if (installedMap && installedMap[p]) return;
+            rows.push({ pkg: p, bang: (l.charAt(l.length - 1) === '!'), hidden: true });
+        });
+    } else if (f === 'user') {
+        state.user.forEach(function (p) { rows.push({ pkg: p, bang: false, hidden: !!hiddenSet[p] }); });
+    } else {
+        var seen = {};
+        state.target.forEach(function (l) {
+            var p = stripBang(l);
+            if (seen[p]) return; seen[p] = true;
+            rows.push({ pkg: p, bang: (l.charAt(l.length - 1) === '!'), hidden: true });
+        });
+        state.all.forEach(function (p) {
+            if (seen[p]) return; seen[p] = true;
+            rows.push({ pkg: p, bang: false, hidden: false });
+        });
+    }
+
+    if (q) {
+        rows = rows.filter(function (r) {
+            return r.pkg.toLowerCase().indexOf(q) !== -1
+                || nameOf(r.pkg).toLowerCase().indexOf(q) !== -1
+                || namesAll(r.pkg).indexOf(q) !== -1;
+        });
+    }
+
+    rows.sort(function (a, b) { return a.pkg < b.pkg ? -1 : (a.pkg > b.pkg ? 1 : 0); });
+
+    var hiddenCount = 0;
+    state.target.forEach(function (p) { if (p.charAt(p.length - 1) !== '!') hiddenCount++; });
+    var visibleCount = 0;
+    state.all.forEach(function (p) { if (!hiddenSet[p]) visibleCount++; });
+    $('cHidden').textContent = String(hiddenCount);
+    $('cInstalled').textContent = String(state.all.length);
+    $('cAll').textContent = String(state.target.length + visibleCount);
+    $('cUser').textContent = String(state.user.length);
+
+    var html = '';
+    if ((f === 'installed' || f === 'all') && state.all.length === 0) {
+        html += '<div class="warnbar">' + t('warnNoPkgs') + '</div>';
+    }
+    var MAX = 700;
+    var shown = 0;
+    for (var i = 0; i < rows.length && shown < MAX; i++) {
+        html += appRow(rows[i].pkg, rows[i].hidden, rows[i].bang);
+        shown++;
+    }
+    if (shown === 0) html += '<div class="hint">' + esc(t('noResults')) + '</div>';
+    if (rows.length > MAX) html += '<div class="hint">' + esc(tf('showingOf', { a: MAX, b: rows.length })) + '</div>';
+    $('list').innerHTML = html;
+}
+
+/* ------------------------------ الأحداث ------------------------------ */
+$('btnRefresh').onclick = function () { readState(function () { render(); }); };
+$('btnEssOnly').onclick = essentialOnly;
+$('btnAdd').onclick = addPkg;
+$('btnDump').onclick = dumpRaw;
+$('btnDiag').onclick = diagnose;
+$('btnCopyLog').onclick = copyLog;
+$('btnSaveCfg').onclick = saveCfg;
+$('btnBaseline').onclick = resetBaseline;
+$('btnAutoLog').onclick = readAutoLog;
+$('btnKeyboxImport').onclick = importKeybox;
+$('logClose').onclick = closeLog;
+$('chkAuto').onchange = function () { setCfgStatus('dirty'); saveCfg(); };
+$('q').oninput = function () { render(); };
+$('pkgInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') addPkg(); });
+
+var segs = document.querySelectorAll('#segments button');
+for (var si = 0; si < segs.length; si++) {
+    segs[si].onclick = function () {
+        state.filter = this.getAttribute('data-f');
+        render();
+    };
+}
+
+var langBtns = document.querySelectorAll('#langbar button');
+for (var li = 0; li < langBtns.length; li++) {
+    langBtns[li].onclick = function () { setLang(this.getAttribute('data-lang'), true); };
+}
+
+/* ------------------------------ الإقلاع ------------------------------ */
+applyStatic();
+updateBridgeTag();
+logLine(t('logReady'));
+logLine(t('logNoStart'));
+if (bridgeAvailable()) {
+    probeBridge(function (mode) {
+        logLine(mode === 'name' ? t('logBridgeName') : t('logBridgeFn'));
+        sh('id -u 2>/dev/null; echo "UID_DONE"', function (ec, out) {
+            var m = /(\d+)/.exec(String(out));
+            NEED_SU = m ? (m[1] !== '0') : false;
+            updateBridgeTag();
+            if (NEED_SU) logLine(t('logSuMode'));
+            // فتح لحظي: قراءة نواة سريعة (بلا pm) ثم قائمة التطبيقات في الخلفية
+            readCore(function () { render(); loadPackages(); loadIcons(); });
+        }, 15);
+    });
+} else {
+    DEMO = true;
+    $('demoBar').style.display = 'block';
+    loadDemo();
+    logLine(t('logDemo'));
+    setCfgStatus('dirty');
+    render();
+}
+</script>
+</body>
+</html>
