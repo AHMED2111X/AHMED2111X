@@ -55,9 +55,24 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
     done
 done
 
-# --- ربط مزدوج مع وحدة FALCON TRICKY المرئية ---
-# حذفنا هذا الموديول يحذف وحدة FALCON TRICKY معه بعد إعادة التشغيل.
-touch /data/adb/modules/falcon_tricky/remove 2>/dev/null
+# --- (v3.15) الرابط المزدوج: حذف الإضافة الأم يحذف ملحق FALCON TRICKY فوراً ---
+# سابقاً كنا نضع علامة remove فقط (تنتظر إعادة التشغيل)؛ الآن نحذف المجلد
+# حذفاً حقيقياً فورياً من مسارَي الوحدات، مع الإبقاء على العلامة كخطة بديلة
+# في حال فشل الحذف (ملف مشغول/صلاحيات).
+#
+# ⚠️ استثناء مهم: لو كان هذا السكربت مُستدعىً من سكربت حذف الملحق نفسه
+#    (FALCON_FROM_COMPANION=1) نتخطى حذف مجلد الملحق هنا — لأن الملحق هو
+#    الذي يتولّاه بنفسه، ولا يجوز حذف سكربت وهو قيد التنفيذ.
+if [ "${FALCON_FROM_COMPANION:-0}" != "1" ]; then
+    for FBASE in /data/adb/modules /data/adb/modules_update; do
+        [ -d "$FBASE/falcon_tricky" ] || continue
+        touch "$FBASE/falcon_tricky/remove" 2>/dev/null
+        rm -rf "$FBASE/falcon_tricky" 2>/dev/null
+    done
+fi
+
+# بيانات الملحق الخاصة (أرشيف أيقونات التطبيقات المستخرجة من الجهاز)
+rm -rf /data/adb/falcon_icons 2>/dev/null
 
 # --- تنظيف ملفات حالة المحرك ---
 # ⛔ لا نحذف /data/adb/tricky_store إطلاقاً: قد يحتوي كيبوكس/إعدادات شخصية

@@ -15,9 +15,12 @@ MODDIR="$MODPATH"
 FT_DIR="/data/adb/modules/falcon_tricky"
 [ -f "$FT_DIR/remove" ] && touch "$MODDIR/remove" 2>/dev/null
 
-# --- مسح وقائي عند كل إقلاع: أي وحدة TrickyStore/SafetyNet قديمة تُعطَّل وتُحذف ---
-# يمنع الحقن المزدوج في keystore2 لو ثبّت المستخدم وحدة تعتيد مستقلة بعدنا.
+# --- (v3.15) مسح وقائي عند كل إقلاع: أي وحدة/إضافة تخص TrickyStore أو SafetyNet ---
+# يمنع الحقن المزدوج في keystore2 لو ثبّت المستخدم محركاً مستقلاً أو ملحقاً
+# (WebUI) بعدنا. الكشف لا يعتمد على اسم المجلد وحده: نقرأ أيضاً module.prop
+# (id / name / description) حتى تُلتقط الملاحق بأي تسمية.
 # يستثني وحدتينا صراحةً: playintegrityfix و falcon_tricky.
+# ⛔ ولا يمس /data/adb/tricky_store (كيبوكس المستخدم + target.txt).
 for RBASE in /data/adb/modules /data/adb/modules_update; do
     [ -d "$RBASE" ] || continue
     for RDIR in "$RBASE"/*; do
@@ -25,7 +28,14 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
         RNAME="${RDIR##*/}"
         case "$RNAME" in
             playintegrityfix|falcon_tricky) continue ;;
-            *[Tt]ricky*|*TRICKY*|*[Ss]afety[Nn]et*|*SAFETYNET*) ;;
+        esac
+        RINFO="$RNAME"
+        if [ -f "$RDIR/module.prop" ]; then
+            RINFO="$RINFO $(grep -i -e '^id=' -e '^name=' -e '^description=' "$RDIR/module.prop" 2>/dev/null)"
+        fi
+        RLOW=$(printf '%s' "$RINFO" | tr 'A-Z' 'a-z' 2>/dev/null)
+        case "$RLOW" in
+            *tricky*|*safetynet*) ;;
             *) continue ;;
         esac
         [ -f "$RDIR/remove" ] && continue

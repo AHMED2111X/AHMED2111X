@@ -212,27 +212,25 @@ else
     ui_print "- ℹ️ قائمة target.txt موجودة مسبقاً — لم تُمس (تحديث للإضافة)." ; delay
 fi
 
-# --- حذف الوحدات المتعارضة (TrickyStore المستقلة + SafetyNet Fix) ---
-# المحرك (Tricky Store OSS) مدمج بالكامل داخل هذه الإضافة، فوجود وحدة tricky_store
-# منفصلة مفعّلة يعني محرّكين يحقنان في keystore2 ⇒ تعارض يكسر Play Integrity
-# وقد يعلّق الجهاز. الإضافة العاملة (PlayIntegrity_19.7.7_r2) تحذفها بنفس الطريقة.
+# ==============================================================================
+# (v3.15) 🗑️ حذف قسري فوري لأي إضافة/وحدة تخص TrickyStore الأصلي
+# ------------------------------------------------------------------------------
+# طلب المستخدم: عند التثبيت لا يبقى على الجهاز أي أثر لوحدة أو إضافة تخص
+# Tricky Store الأصلي (المحرك المستقل + أي ملحق/واجهة WebUI تابعة له).
 #
-# نضع العلامتين معاً:
-#   disable ← حتى لا يُقلع محركها القديم في نفس الإقلاع (يمنع الحقن المزدوج فوراً)
-#   remove  ← ليحذفها مدير الروت نهائياً عند إعادة التشغيل
-CONFLICT_IDS="tricky_store safetynet-fix"
-for RID in $CONFLICT_IDS; do
-    for RBASE in /data/adb/modules /data/adb/modules_update; do
-        if [ -d "$RBASE/$RID" ]; then
-            touch "$RBASE/$RID/disable" "$RBASE/$RID/remove" 2>/dev/null
-            ui_print "- 🗑️ سيُحذف الموديول المتعارض ($RID) عند إعادة التشغيل" ; delay
-        fi
-    done
-done
-
-# --- مسح شامل بأي تسمية: أي وحدة اسمها يحتوي tricky أو safetynet ---
-# (tricky_store / TrickyStore / tricky_store_oss / safetynet-fix / USNF ... إلخ)
-# تُعطَّل وتُعلَّم للحذف — مع استثناء وحدتينا صراحةً: playintegrityfix و falcon_tricky.
+# السبب الإلزامي: محرك التعتيد (Tricky Store OSS) مدمج بالكامل في وحدتنا، فوجود
+# محرك مستقل أو ملحق تابع له = حقن keystore2 مرتين ⇒ تجمّد كامل + كسر Integrity.
+#
+# آلية الكشف (لا تعتمد على اسم المجلد وحده — بعض الملاحق بأسماء مختلفة):
+#   1) اسم مجلد الوحدة
+#   2) محتوى module.prop  (id / name)     ← دلالة قوية ⇒ حذف قسري فوري (rm -rf)
+#   3) description داخل module.prop       ← دلالة ضعيفة ⇒ تعطيل + حذف عند الإقلاع
+#   4) الكلمات المفتاحية:  tricky  /  safetynet
+#
+# ⛔ محمي دائماً: وحدتنا playintegrityfix + ملحقنا falcon_tricky
+# ⛔ لا نمس /data/adb/tricky_store إطلاقاً (كيبوكس المستخدم + target.txt)
+# ==============================================================================
+TRICKY_FORCED=0
 for RBASE in /data/adb/modules /data/adb/modules_update; do
     [ -d "$RBASE" ] || continue
     for RDIR in "$RBASE"/*; do
@@ -241,14 +239,78 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
         case "$RNAME" in
             playintegrityfix|falcon_tricky) continue ;;
         esac
-        case "$RNAME" in
-            *[Tt]ricky*|*TRICKY*|*[Ss]afety[Nn]et*|*SAFETYNET*) ;;
-            *) continue ;;
+
+        # نصّ الحكم: اسم المجلد + id + name من module.prop
+        RKEY="$RNAME"
+        RDESC=""
+        if [ -f "$RDIR/module.prop" ]; then
+            RKEY="$RKEY $(grep -i -e '^id=' -e '^name=' "$RDIR/module.prop" 2>/dev/null)"
+            RDESC="$(grep -i '^description=' "$RDIR/module.prop" 2>/dev/null)"
+        fi
+        RLOW=$(printf '%s' "$RKEY" | tr 'A-Z' 'a-z' 2>/dev/null)
+        RDLOW=$(printf '%s' "$RDESC" | tr 'A-Z' 'a-z' 2>/dev/null)
+
+        case "$RLOW" in
+            *tricky*)
+                # 🔴 محرك أو ملحق TrickyStore ⇒ حذف قسري فوري الآن (لا انتظار إقلاع)
+                rm -rf "$RDIR" 2>/dev/null
+                if [ -d "$RDIR" ]; then
+                    touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
+                    ui_print "- 🗑️ [$RNAME] تعذّر الحذف الفوري ⇒ عُطّلت وستُحذف عند الإقلاع" ; delay
+                else
+                    ui_print "- 🗑️ حُذفت وحدة/إضافة TrickyStore [$RNAME] نهائياً الآن" ; delay
+                    TRICKY_FORCED=1
+                fi
+                ;;
+            *safetynet*)
+                touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
+                ui_print "- 🗑️ وحدة متعارضة [$RNAME]: عُطّلت وستُحذف عند إعادة التشغيل" ; delay
+                ;;
+            *)
+                case "$RDLOW" in
+                    *tricky*|*safetynet*)
+                        touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
+                        ui_print "- 🗑️ [$RNAME] تذكر TrickyStore في وصفها: عُطّلت وستُحذف عند الإقلاع" ; delay
+                        ;;
+                esac
+                ;;
         esac
-        touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
-        ui_print "- 🗑️ وحدة متعارضة ($RNAME) ستُحذف عند إعادة التشغيل" ; delay
     done
 done
+
+# قاعدة أمان صريحة: المحرك المستقل (tricky_store) وأي مرادف له بأي تسمية معروفة
+for RID in tricky_store TrickyStore tricky_store_oss TrickyStoreOSS tricky_store_pro \
+           trickyaddon tricky_addon TrickyAddon TrickyAddonModule tricky_store_addon \
+           TrickyStoreAddon ts_addon tricky_store_webui; do
+    for RBASE in /data/adb/modules /data/adb/modules_update; do
+        if [ -d "$RBASE/$RID" ]; then
+            rm -rf "$RBASE/$RID" 2>/dev/null
+            if [ -d "$RBASE/$RID" ]; then
+                touch "$RBASE/$RID/disable" "$RBASE/$RID/remove" 2>/dev/null
+                ui_print "- 🗑️ [$RID] تعذّر الحذف الفوري ⇒ عُطّلت وستُحذف عند الإقلاع" ; delay
+            else
+                ui_print "- 🗑️ حُذفت وحدة/إضافة TrickyStore [$RID] نهائياً الآن" ; delay
+                TRICKY_FORCED=1
+            fi
+        fi
+    done
+done
+
+# بيانات/إعدادات الملاحق (ليست مسار المحرك /data/adb/tricky_store — لا يُمس)
+for TD in /data/adb/tricky_addon /data/adb/trickyaddon /data/adb/tricky_addon_module \
+          /data/adb/ts_addon /data/adb/tricky_store_addon /data/adb/TrickyAddon \
+          /data/adb/TrickyAddonModule; do
+    if [ -e "$TD" ]; then
+        rm -rf "$TD" 2>/dev/null
+        if [ ! -e "$TD" ]; then
+            ui_print "- 🧹 نُظّفت بقايا ملحق TrickyStore: $TD" ; delay
+        fi
+    fi
+done
+
+if [ "$TRICKY_FORCED" = "1" ]; then
+    ui_print "- ✅ اكتمل تنظيف إضافات TrickyStore الأصلية" ; delay
+fi
 
 # جلب عدد المستخدمين النشطين مباشرة أثناء التثبيت
 SERVER_URL="https://falcon-counter-server.onrender.com"
@@ -294,17 +356,30 @@ fi
 
 # ==============================================================================
 # 🔗 إنشاء وحدة FALCON TRICKY المرئية في مدير الروت (ملحق مربوطة بالأم)
-#    تظهر في قائمة الوحدات باسم FALCON TRICKY وتعمل بنفس غرض وحدة
-#    Tricky Store المستقلة لكن من ملفات إضافتنا. رابط مزدوج:
-#    حذف أحدهما يحذف الآخر تلقائياً بعد إعادة التشغيل.
-#    ⚠️ لا تحمل نسخة ثانية من المحرك — المحرك مملوك للأم فقط،
-#       لأن تشغيله مرتين يحقن keystore2 مرتين ويجمّد الجهاز.
+#    تظهر في قائمة الوحدات باسم FALCON TRICKY وتوفّر واجهة الويب (WebUI).
+#    ⚠️ لا تحمل نسخة ثانية من المحرك — المحرك مملوك للأم وحدها، لأن تشغيله
+#       مرتين يحقن keystore2 مرتين ويجمّد الجهاز بالكامل.
+#
+# (v3.15) الرابط المزدوج أصبح فورياً وحقيقياً في الاتجاهين:
+#    • حذف الأم (playintegrityfix) ⇒ يُحذف مجلد falcon_tricky فوراً (uninstall.sh)
+#    • حذف الملحق (falcon_tricky)  ⇒ يُحذف مجلد الأم فوراً (falcon_tricky/uninstall.sh)
+#    + حماية احتياطية: service.sh في الوحدتين يزيل أي يتيم متبقٍ عند الإقلاع.
 # ==============================================================================
 if [ -f "$MODPATH/falcon_tricky/module.prop" ]; then
     FT_DIR="/data/adb/modules/falcon_tricky"
     rm -rf "$FT_DIR" 2>/dev/null
     mkdir -p "$FT_DIR" 2>/dev/null
     cp -rf "$MODPATH/falcon_tricky/." "$FT_DIR/" 2>/dev/null
+    # (v3.15) لو كان لدى مدير الروت نسخة معلّقة في modules_update (تحديث مؤجّل)
+    # نُحدّثها بنفس المحتوى حتى لا يُستبدل ملحقنا الجديد بنسخة قديمة عند الإقلاع.
+    if [ -d /data/adb/modules_update/falcon_tricky ]; then
+        rm -rf /data/adb/modules_update/falcon_tricky 2>/dev/null
+        mkdir -p /data/adb/modules_update/falcon_tricky 2>/dev/null
+        cp -rf "$MODPATH/falcon_tricky/." /data/adb/modules_update/falcon_tricky/ 2>/dev/null
+        chown -R 0:0 /data/adb/modules_update/falcon_tricky 2>/dev/null
+        chmod 755 /data/adb/modules_update/falcon_tricky/service.sh \
+                  /data/adb/modules_update/falcon_tricky/uninstall.sh 2>/dev/null
+    fi
     chown -R 0:0 "$FT_DIR" 2>/dev/null
     chmod 755 "$FT_DIR" 2>/dev/null
     chmod 644 "$FT_DIR/module.prop" 2>/dev/null
