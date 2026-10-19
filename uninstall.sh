@@ -13,6 +13,27 @@ fi
 # حذف ملف الخاصية الدائمة إن كان موجودًا
 rm -f "/data/property/persist.sys.spoof.gms" 2>/dev/null
 
+# --- (v3.19) إرجاع خصائص تعطيل تزييف الروم التي كتبناها (فقط ما زال بقيمتنا) ---
+# احتراماً لأي قيمة وضعها المستخدم أو وحدة أخرى: نُعيد فقط ما كتبناه نحن.
+if command -v resetprop >/dev/null 2>&1; then
+    revert_prop() { [ "$(resetprop "$1" 2>/dev/null)" = "$2" ] && resetprop -p --delete "$1" 2>/dev/null; }
+    revert_prop persist.sys.pihooks.disable.gms_props true
+    revert_prop persist.sys.pihooks.disable.gms_key_attestation_block true
+    revert_prop persist.sys.entryhooks_enabled false
+    revert_prop persist.sys.pixelprops.google false
+    revert_prop persist.sys.pixelprops.vending false
+    revert_prop persist.sys.pihooks.enabled_features 0
+    revert_prop persist.sys.pihooks.disable 1
+    revert_prop persist.sys.kihooks.disable 1
+    revert_prop persist.sys.pixelprops.pi false
+    revert_prop persist.sys.pixelprops.gapps false
+    revert_prop persist.sys.pixelprops.gms false
+    # الخانتان الفارغتان (أنشأناهما فارغتين فقط إن لم تكونا موجودتين أصلاً)
+    for EP in persist.sys.pihooks.first_api_level persist.sys.pihooks.security_patch; do
+        [ -z "$(resetprop "$EP" 2>/dev/null)" ] && resetprop -p --delete "$EP" 2>/dev/null
+    done
+fi
+
 # حذف ملفات السجل الخاصة بالموديول
 rm -f "/data/adb/modules/playintegrityfix/falcon_integrity_fix.log" 2>/dev/null
 rm -f "/data/adb/modules/playintegrityfix/integrity_fix.log" 2>/dev/null
@@ -49,7 +70,9 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
         esac
         RULOW=$(printf '%s' "$RNAME" | tr 'A-Z' 'a-z' 2>/dev/null)
         case "$RULOW" in
-            *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|*ts_addon*|*tsupport*) ;;
+            *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|*ts_addon*|*tsupport*|\
+            *specter*|*yurikey*|*teesim*|*tee_simulator*|*integritybox*|*integrity_box*|*integrity-box*|\
+            *ta_utl*|*ta_enhanced*|*ta-enhanced*|*magiskhideprops*|*alwaysstrong*) ;;
             *) continue ;;
         esac
         rm -f "$RDIR/remove" "$RDIR/disable" 2>/dev/null
@@ -80,5 +103,12 @@ rm -rf /data/adb/falcon_icons 2>/dev/null
 #    للمستخدم من وحدة TrickyStore المستقلة. نُبقيها كما هي.
 rm -f /data/adb/tricky_store/*.bak /data/adb/tricky_store/*.falcon_merge 2>/dev/null
 rm -f /data/adb/falcon_daemon.log /data/adb/falcon_pif.log /data/adb/falcon_rkp_fix.log 2>/dev/null
+
+# --- (v3.19) تنظيف ملفات الحالة والمؤشرات المؤقتة (يبقى كيبوكس المستخدم والهوية المحفوظة) ---
+rm -f /data/adb/falcon_online_count /data/adb/falcon_known_packages.txt \
+      /data/adb/falcon_current_packages.txt /data/adb/falcon_device_id \
+      /data/adb/falcon_conflict.log /data/adb/falcon/auto_hide.log \
+      /data/adb/falcon/vbmeta_hash 2>/dev/null
+rm -rf /data/adb/falcon_keysync /data/adb/falcon/crl 2>/dev/null
 
 exit 0

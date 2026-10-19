@@ -27,7 +27,7 @@ ui_print "  #        تليجرام: @FALCON_KERNEL     #" ; delay
 ui_print "  ######################################" ; delay
 ui_print " " ; delay
 
-ui_print "- 🔍 جاري تهيئة بيئة Zygisk Next..." ; delay
+ui_print "- 🔍 جاري تهيئة بيئة Zygisk..." ; delay
 
 # --- الفحص والتحقق من توافق إصدار الأندرويد ---
 case "$API" in
@@ -41,31 +41,52 @@ if [ "$API" -lt 25 ]; then
 fi
 # ------------------------------------------------
 
-# --- التحقق من بيئة Zygisk وضمان التوافق مع ZygiskNext v1.5.2+ ---
+# --- (v3.19g) التحقق من بيئة Zygisk ودعم كل المحركات المعروفة ---
+# ZygiskNext (بالمعرّفين: الجديد zygisk_next والقديم zygisksu) ، NeoZygisk ،
+# ReZygisk ، BreZygisk ، أو Zygisk المدمج في Magisk — كلها مدعومة.
 ui_print "- 🔍 جاري فحص بيئة Zygisk المثبتة..." ; delay
 
-ZYNEXT_PROP="/data/adb/modules/zygisk_next/module.prop"
-REZYGI_PROP="/data/adb/modules/rezygisk/module.prop"
+ZN_PROP="/data/adb/modules/zygisk_next/module.prop"
+ZN_OLD_PROP="/data/adb/modules/zygisksu/module.prop"
+NZ_PROP="/data/adb/modules/neozygisk/module.prop"
+RZ_PROP="/data/adb/modules/rezygisk/module.prop"
+BZ_PROP="/data/adb/modules/BreZygisk/module.prop"
+BZ_PROP2="/data/adb/modules/brezygisk/module.prop"
 
-if [ -f "$ZYNEXT_PROP" ] && [ ! -f /data/adb/modules/zygisk_next/disable ]; then
-    ZYNEXT_VER=$(grep '^version=' "$ZYNEXT_PROP" 2>/dev/null | head -1 | cut -d= -f2)
+if [ -f "$ZN_PROP" ] && [ ! -f /data/adb/modules/zygisk_next/disable ]; then
+    ZYNEXT_VER=$(grep '^version=' "$ZN_PROP" 2>/dev/null | head -1 | cut -d= -f2)
     ui_print "- ✅ تم اكتشاف ZygiskNext (${ZYNEXT_VER:-غير معروف})" ; delay
-    ui_print "- ✅ الموديول متوافق بالكامل مع ZygiskNext v1.5.2" ; delay
-    # ZygiskNext يتطلب إطفاء Zygisk المدمج في Magisk لتجنب تعارض محركين
-    if command -v magisk >/dev/null 2>&1; then
-        ZYGI_SQL=$(magisk --sqlite "SELECT value FROM settings WHERE key='zygisk'" 2>/dev/null)
-        case "$ZYGI_SQL" in
-            *value=1*)
-                ui_print "- ⚠️ تحذير: Zygisk المدمج داخل Magisk مفعل!" ; delay
-                ui_print "   أطفئه من إعدادات Magisk — تعارض المحركين يوقف الحقن." ; delay
-                ;;
-        esac
-    fi
-elif [ -f "$REZYGI_PROP" ] && [ ! -f /data/adb/modules/rezygisk/disable ]; then
+elif [ -f "$ZN_OLD_PROP" ] && [ ! -f /data/adb/modules/zygisksu/disable ]; then
+    ZYNEXT_VER=$(grep '^version=' "$ZN_OLD_PROP" 2>/dev/null | head -1 | cut -d= -f2)
+    ui_print "- ✅ تم اكتشاف ZygiskNext (المعرّف القديم zygisksu — ${ZYNEXT_VER:-غير معروف})" ; delay
+elif [ -f "$NZ_PROP" ] && [ ! -f /data/adb/modules/neozygisk/disable ]; then
+    ui_print "- ✅ تم اكتشاف NeoZygisk — الموديول متوافق" ; delay
+elif [ -f "$RZ_PROP" ] && [ ! -f /data/adb/modules/rezygisk/disable ]; then
     ui_print "- ✅ تم اكتشاف ReZygisk — الموديول متوافق" ; delay
+elif [ -f "$BZ_PROP" ] && [ ! -f /data/adb/modules/BreZygisk/disable ]; then
+    ui_print "- ✅ تم اكتشاف BreZygisk — الموديول متوافق" ; delay
+elif [ -f "$BZ_PROP2" ] && [ ! -f /data/adb/modules/brezygisk/disable ]; then
+    ui_print "- ✅ تم اكتشاف BreZygisk — الموديول متوافق" ; delay
 else
-    ui_print "- ℹ️ لم يتم اكتشاف ZygiskNext — سيعمل الموديول مع Zygisk المدمج" ; delay
-    ui_print "   (للأفضل والاستقرار: ثبّت ZygiskNext v1.5.2 وأطفئ Zygisk المدمج)" ; delay
+    ui_print "- ℹ️ لم يتم اكتشاف محرك Zygisk خارجي — يعمل الموديول مع Zygisk المدمج" ; delay
+fi
+
+# أي محرك خارجي يعمل ⇒ نوصي بإطفاء Zygisk المدمج في Magisk (تعارض محركين)
+ZYNEXT_OK=0
+for _zp in "$ZN_PROP" "$ZN_OLD_PROP" "$NZ_PROP" "$RZ_PROP" "$BZ_PROP" "$BZ_PROP2"; do
+    if [ -f "$_zp" ] && [ ! -f "${_zp%/*}/disable" ]; then
+        ZYNEXT_OK=1
+        break
+    fi
+done
+if [ "$ZYNEXT_OK" = "1" ] && command -v magisk >/dev/null 2>&1; then
+    ZYGI_SQL=$(magisk --sqlite "SELECT value FROM settings WHERE key='zygisk'" 2>/dev/null)
+    case "$ZYGI_SQL" in
+        *value=1*)
+            ui_print "- ⚠️ تحذير: Zygisk المدمج داخل Magisk مفعل وهو يعمل معك!" ; delay
+            ui_print "   أطفئه من إعدادات Magisk — تعارض المحركين يوقف الحقن." ; delay
+            ;;
+    esac
 fi
 # ------------------------------------------------
 
@@ -226,6 +247,8 @@ fi
 #   2) محتوى module.prop  (id / name)     ← دلالة قوية ⇒ حذف قسري فوري (rm -rf)
 #   3) description داخل module.prop       ← دلالة ضعيفة ⇒ تعطيل + حذف عند الإقلاع
 #   4) الكلمات المفتاحية: tricky / safetynet / playintegrity / playcurl / pif / integrityfix
+#      + (v3.19) specter / yurikey / teesim / tee_simulator / integritybox / ta_utl /
+#        ta_enhanced / magiskhideprops / alwaysstrong (محركات وملاحق تعتيد شائعة جديدة)
 #
 # ⛔ محمي دائماً: وحدتنا playintegrityfix + ملحقنا falcon_tricky
 # ⛔ لا نمس /data/adb/tricky_store إطلاقاً (كيبوكس المستخدم + target.txt)
@@ -255,7 +278,9 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
         esac
 
         case "$RLOW" in
-            *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*)
+            *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|\
+            *specter*|*yurikey*|*teesim*|*tee_simulator*|*integritybox*|*integrity_box*|*integrity-box*|\
+            *ta_utl*|*ta_enhanced*|*ta-enhanced*|*magiskhideprops*|*alwaysstrong*)
                 # 🔴 محرك/ملحق TrickyStore أو Play Integrity ⇒ حذف قسري فوري الآن
                 rm -rf "$RDIR" 2>/dev/null
                 if [ -d "$RDIR" ]; then
@@ -268,7 +293,9 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
                 ;;
             *)
                 case "$RDLOW" in
-                    *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*)
+                    *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|\
+                    *specter*|*yurikey*|*teesim*|*tee_simulator*|*integritybox*|*integrity_box*|*integrity-box*|\
+                    *ta_utl*|*ta_enhanced*|*ta-enhanced*|*magiskhideprops*|*alwaysstrong*)
                         touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
                         ui_print "- 🗑️ [$RNAME] تذكر إضافة تعتيد في وصفها: عُطّلت وستُحذف عند الإقلاع" ; delay
                         ;;
@@ -282,7 +309,9 @@ done
 for RID in tricky_store TrickyStore tricky_store_oss TrickyStoreOSS tricky_store_pro \
            trickyaddon tricky_addon TrickyAddon TrickyAddonModule tricky_store_addon \
            TrickyStoreAddon ts_addon tricky_store_webui \
-           tsupport TSupport TSupport-Advance tsupport-advance; do
+           tsupport TSupport TSupport-Advance tsupport-advance \
+           specter Specter Yurikey yurikey tee_simulator TEESimulator TEESimulator-RS \
+           TA_utl TA-enhanced TA_enhanced MagiskHidePropsConf AlwaysStrong alwaysstrong; do
     for RBASE in /data/adb/modules /data/adb/modules_update; do
         if [ -d "$RBASE/$RID" ]; then
             rm -rf "$RBASE/$RID" 2>/dev/null
@@ -342,6 +371,8 @@ fi
 [ -f "$MODPATH/kb_sync.sh" ] && set_perm "$MODPATH/kb_sync.sh" 0 0 0755
 [ -f "$MODPATH/soter_fix.sh" ] && set_perm "$MODPATH/soter_fix.sh" 0 0 0755
 [ -f "$MODPATH/rom_spoof_block.sh" ] && set_perm "$MODPATH/rom_spoof_block.sh" 0 0 0755
+[ -f "$MODPATH/falcon_stealth.sh" ] && set_perm "$MODPATH/falcon_stealth.sh" 0 0 0755
+[ -f "$MODPATH/falcon_sdcard_cleanup.sh" ] && set_perm "$MODPATH/falcon_sdcard_cleanup.sh" 0 0 0755
 
 # --- صلاحيات محرك التعتيد المدمج (Tricky Store OSS) ---
 # ⚠️ ضروري: المحرك يُقلع بـ ./daemon لذا يجب أن يكون الملف تنفيذياً (755).

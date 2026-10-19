@@ -407,6 +407,7 @@
         <button id="btnPifCheck" data-i18n="btnPifCheck"></button>
         <button id="btnCanary" data-i18n="btnCanary"></button>
         <button id="btnEngineDiag" data-i18n="btnEngineDiag"></button>
+        <button id="btnWvDiag" data-i18n="btnWvDiag"></button>
     </div>
     <div class="hint" data-i18n="hintMaint"></div>
 </section>
@@ -558,6 +559,13 @@
             </button>
             <div class="maint-desc" data-i18n="mdEngineDiag"></div>
         </div>
+        <div class="maint-item">
+            <button class="maint-btn" type="button">
+                <span data-i18n="btnWvDiag"></span>
+                <i class="mchev">▾</i>
+            </button>
+            <div class="maint-desc" data-i18n="mdWvDiag"></div>
+        </div>
     </div>
     <div class="maint-bottom-space"></div>
 </div>
@@ -569,8 +577,23 @@
 </div>
 
 <script>
+/* 🚨 حارس أخطاء الإقلاع (v3.19b): أي خطأ JS غير متوقع يظهر كشريط أحمر أسفل
+   الشاشة بدل «واجهة فارغة» صامتة — يسهّل تشخيص أي مشكلة ميدانياً فوراً. */
+window.onerror = function (msg, src, ln, col) {
+    try {
+        var d = document.getElementById('jsErrBar');
+        if (!d) {
+            d = document.createElement('div');
+            d.id = 'jsErrBar';
+            d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#7f1d1d;color:#fff;font:11px/1.5 monospace;padding:6px 10px;white-space:pre-wrap;direction:ltr';
+            document.body.appendChild(d);
+        }
+        d.textContent = 'JS-ERROR: ' + msg + ' @line ' + ln + ':' + col;
+    } catch (e) {}
+    return false;
+};
 /* =============================================================================
-   FALCON TRICKY — WebUI (Stealth Radar) — v3.18 (UNIFIED)
+   FALCON TRICKY — WebUI (Stealth Radar) — v3.19 (UNIFIED)
    Languages: العربية · English · Türkçe · Русский
    🧰 (v3.17-UNIFIED) واجهة واحدة نهائياً: أدوات الأم (كيبوكس ذكي/RKP/SOTER/بصمة)
    نُقلت هنا من واجهة الأم القديمة التي حُذفت — كل عملية بمهلة + نجاح/فشل واضح.
@@ -632,6 +655,7 @@ var I18N = {
         logVerified: '✔ تم التحقق من الملف: {a} إدخال',
         logWriteMismatch: '⚠️ عدد الأسطر غير مطابق ({a} ≠ {b}) — تحقّق من الصلاحيات',
         logDiagDone: '🩺 انتهى الفحص — انسخ الأسطر أعلاه وأرسلها للمطوّر',
+        wvNote: 'ملاحظة: مؤشرات استرشادية للقراءة فقط — للتأكيد النهائي اختبر جودة الفيديو (مثل Netflix HD).',
         btnSaveCfg: '💾 حفظ الإعدادات',
         cfgSaved: '✔ الإعدادات محفوظة في الذاكرة الدائمة',
         cfgDirty: '• تغييرات غير محفوظة — اضغط «حفظ الإعدادات»',
@@ -718,6 +742,7 @@ var I18N = {
         mdKbSmart: '• الجزء الذكي للكيبوكس: يفحص الكيبوكس الحالي ضد قائمة إبطال جوجل (CRL)، ويجرب مصادر متعددة حتى يجد كيبوكساً سليماً، مع نسخة احتياطية تلقائية وإعادة تشغيل خدمات جوجل. يعمل عند كل ضغطة ويحتاج إنترنت (1-3 دقائق).',
         mdKbNet: '• جلب الكيبوكس من الشبكة: يقوم بتنزيل كيبوكس من المستودع الرسمي (GitHub) ويحفظه في /data/adb/tricky_store/keybox.xml. يحتاج إنترنت ويستغرق 1-3 دقائق. يُستخدم عندما يفشل الكيبوكس الذكي أو عند تغيير الكيبوكس يدوياً.',
         mdRkpDiag: '• تشخيص RKP: يفحص وحدات Remote Key Provisioning المتوفرة، ويقوم بفحص إصدار شهادة التحقق من TEE، ويظهر حالة أداة KmInstallKeybox. لا يعدل أي إعدادات — مجرد عرض حالة الجهاز.',
+        mdWvDiag: '• فحص Widevine (قراءة فقط): يعرض مؤشرات مستوى Widevine (L1/L3) من dumpsys، ووجود ملفات مفاتيح DRM (IDM)، وخصائص النظام ذات الصلة. لا يعدّل أي شيء إطلاقاً.',
         mdRkpManual: '• إصلاح RKP اليدوي: ينفذ sch /data/adb/modules/playintegrityfix/rkp_fix.sh manual. يصلح مشاكل الاعتماد عند فشل التلقائي. كل عملية تُظهر سطر نجاح/فشل واضح.',
         mdRkpFull: '• إصلاح RKP الكامل: ينفذ sch /data/adb/modules/playintegrityfix/rkp_fix.sh full. يصلح المشاكل الصعبة ويستغرق وقتاً أطول. يظهر نتيجة واضحة في النهاية.',
         mdGmsReset: '• Reset GMS: يمسح بيانات متجر Play وخدمات جوجل (GMS+GSF) ويعيد تشغيل الجهاز تلقائياً. يُستخدم للاعتماد المستعصي فقط — لا يمس صورك وملفاتك.',
@@ -809,6 +834,7 @@ var I18N = {
         btnKbSmart: '🔄 جلب ذكي (CRL + مصادر)',
         btnKbNet: '📥 جلب Keybox (إنترنت)',
         btnRkpDiag: '🔍 فحص مفاتيح RKP',
+        btnWvDiag: '📺 فحص Widevine (L1/L3)',
         btnRkpManual: '🛠️ إعادة تزوير RKP',
         btnRkpFull: '🚀 الإصلاح الكامل + إعادة تشغيل',
         btnGmsReset: '🔄 إعادة تشغيل خدمات جوجل',
@@ -835,6 +861,7 @@ var I18N = {
         logKbNetHead: '📥 جاري جلب الكيبوكس من الإنترنت...',
         logKbNetOk: '✅ تم تنزيل الكيبوكس وتثبيته بشكل دائم.',
         logKbNetFail: '✖ فشل التنزيل أو أن الملف غير صالح — راجع السجل.',
+        logKbNoNet: '🛜 لا يوجد اتصال بالإنترنت — تأكد من الشبكة ثم أعد المحاولة.',
         logPifCheckHead: '🔎 جاري فحص ملفات البصمة...',
         logBridgeLost: '⚠️ انقطع الاتصال بالجسر أثناء التتبع — أعد فتح الواجهة.'
     },
@@ -867,6 +894,7 @@ var I18N = {
         logVerified: '✔ File verified: {a} entries',
         logWriteMismatch: '⚠️ Line count mismatch ({a} ≠ {b}) — check permissions',
         logDiagDone: '🩺 Check finished — copy the lines above and send them to the developer',
+        wvNote: 'Note: read-only indicative markers — for the final answer test video quality (e.g. Netflix HD).',
         btnSaveCfg: '💾 Save settings',
         cfgSaved: '✔ Settings saved permanently',
         cfgDirty: '• Unsaved changes — press “Save settings”',
@@ -953,6 +981,7 @@ var I18N = {
         mdKbSmart: '• Smart keybox fetch: checks the current keybox against Google\'s revocation list (CRL) and tries multiple sources until it finds a valid keybox, with an automatic backup and a restart of Google services. Runs on every tap and needs internet (1-3 minutes).',
         mdKbNet: '• Keybox from network: downloads a keybox from the official repository (GitHub) and saves it to /data/adb/tricky_store/keybox.xml. Needs internet and takes 1-3 minutes. Used when the smart fetch fails or when the keybox was changed manually.',
         mdRkpDiag: '• RKP diagnosis: checks the available Remote Key Provisioning modules, inspects the TEE attestation certificate version, and shows the KmInstallKeybox tool state. Changes nothing — a plain device status view.',
+        mdWvDiag: '• Widevine check (read-only): shows Widevine level indicators (L1/L3) from dumpsys, DRM (IDM) key-file presence, and related system properties. Modifies nothing at all.',
         mdRkpManual: '• Manual RKP fix: runs sch /data/adb/modules/playintegrityfix/rkp_fix.sh manual. Fixes attestation issues when the automatic pass fails. Every run prints a clear success/failure line.',
         mdRkpFull: '• Full RKP fix: runs sch /data/adb/modules/playintegrityfix/rkp_fix.sh full. Handles the hard cases and takes longer. A clear result appears at the end.',
         mdGmsReset: '• Reset GMS: clears Play Store and Google services (GMS+GSF) data and reboots the device automatically. For stubborn attestation only — it never touches your photos or files.',
@@ -1044,6 +1073,7 @@ var I18N = {
         btnKbSmart: '🔄 Smart keybox fetch (CRL + sources)',
         btnKbNet: '📥 Fetch keybox (internet)',
         btnRkpDiag: '🔍 RKP keys status',
+        btnWvDiag: '📺 Widevine Check (L1/L3)',
         btnRkpManual: '🛠️ Re-provision RKP',
         btnRkpFull: '🚀 Full repair + auto reboot',
         btnGmsReset: '🔄 Restart Google services',
@@ -1070,6 +1100,7 @@ var I18N = {
         logKbNetHead: '📥 Fetching keybox from the internet...',
         logKbNetOk: '✅ Keybox downloaded and installed permanently.',
         logKbNetFail: '✖ Download failed or the file is invalid — check the log.',
+        logKbNoNet: '🛜 No internet connection — check your network and try again.',
         logPifCheckHead: '🔎 Checking fingerprint files...',
         logBridgeLost: '⚠️ Bridge connection lost while tracking — reopen the WebUI.'
     },
@@ -1102,6 +1133,7 @@ var I18N = {
         logVerified: '✔ Dosya doğrulandı: {a} kayıt',
         logWriteMismatch: '⚠️ Satır sayısı uyuşmuyor ({a} ≠ {b}) — izinleri kontrol edin',
         logDiagDone: '🩺 Kontrol bitti — yukarıdaki satırları kopyalayıp geliştiriciye gönderin',
+        wvNote: 'Not: yalnızca okuma amaçlı göstergeler — kesin sonuç için video kalitesini test edin (örn. Netflix HD).',
         btnSaveCfg: '💾 Ayarları kaydet',
         cfgSaved: '✔ Ayarlar kalıcı olarak kaydedildi',
         cfgDirty: '• Kaydedilmemiş değişiklikler — “Ayarları kaydet”e basın',
@@ -1188,6 +1220,7 @@ var I18N = {
         mdKbSmart: '• Akıllı keybox getirme: mevcut keybox\'ı Google iptal listesine (CRL) karşı denetler ve geçerli bir keybox bulana kadar birden çok kaynak dener; otomatik yedekleme ve Google servislerini yeniden başlatma içerir. Her dokunuşta çalışır ve internet gerektirir (1-3 dakika).',
         mdKbNet: '• Ağdan keybox: resmi depodan (GitHub) keybox indirir ve /data/adb/tricky_store/keybox.xml konumuna kaydeder. İnternet gerektirir ve 1-3 dakika sürer. Akıllı getirme başarısız olduğunda veya keybox elle değiştirildiğinde kullanılır.',
         mdRkpDiag: '• RKP teşhisi: mevcut Remote Key Provisioning modüllerini denetler, TEE onay sertifikası sürümünü inceler ve KmInstallKeybox aracının durumunu gösterir. Hiçbir ayarı değiştirmez — yalnızca cihaz durumu görünümü.',
+        mdWvDiag: '• Widevine kontrolü (salt okunur): dumpsys çıktısından Widevine seviye göstergelerini (L1/L3), DRM (IDM) anahtar dosyalarının varlığını ve ilgili sistem özelliklerini gösterir. Hiçbir şeyi değiştirmez.',
         mdRkpManual: '• Elle RKP onarımı: sch /data/adb/modules/playintegrityfix/rkp_fix.sh manual komutunu çalıştırır. Otomatik geçiş başarısız olduğunda onay sorunlarını düzeltir. Her işlem net bir başarı/başarısızlık satırı gösterir.',
         mdRkpFull: '• Tam RKP onarımı: sch /data/adb/modules/playintegrityfix/rkp_fix.sh full komutunu çalıştırır. Zor durumları çözer ve daha uzun sürer. Sonunda net bir sonuç görünür.',
         mdGmsReset: '• Reset GMS: Play Store ve Google servislerinin (GMS+GSF) verilerini temizler ve cihazı otomatik yeniden başlatır. Yalnızca inatçı onay sorunları için — fotoğraflarınıza ve dosyalarınıza dokunmaz.',
@@ -1279,6 +1312,7 @@ var I18N = {
         btnKbSmart: '🔄 Akıllı keybox getir (CRL + kaynaklar)',
         btnKbNet: '📥 Keybox indir (internet)',
         btnRkpDiag: '🔍 RKP anahtar durumu',
+        btnWvDiag: '📺 Widevine Kontrolü (L1/L3)',
         btnRkpManual: '🛠️ RKP yeniden sağla',
         btnRkpFull: '🚀 Tam onarım + otomatik yeniden başlatma',
         btnGmsReset: '🔄 Google servislerini yeniden başlat',
@@ -1305,6 +1339,7 @@ var I18N = {
         logKbNetHead: '📥 Keybox internetten indiriliyor...',
         logKbNetOk: '✅ Keybox indirildi ve kalıcı olarak kuruldu.',
         logKbNetFail: '✖ İndirme başarısız veya dosya geçersiz — kayda bakın.',
+        logKbNoNet: '🛜 İnternet bağlantısı yok — ağınızı kontrol edip tekrar deneyin.',
         logPifCheckHead: '🔎 Parmak izi dosyaları denetleniyor...',
         logBridgeLost: '⚠️ İzleme sırasında köprü bağlantısı koptu — arayüzü yeniden açın.'
     },
@@ -1337,6 +1372,7 @@ var I18N = {
         logVerified: '✔ Файл проверен: {a} записей',
         logWriteMismatch: '⚠️ Число строк не совпадает ({a} ≠ {b}) — проверьте права',
         logDiagDone: '🩺 Проверка завершена — скопируйте строки выше и отправьте разработчику',
+        wvNote: 'Примечание: только индикаторы для чтения — для окончательного ответа проверьте качество видео (например, Netflix HD).',
         btnSaveCfg: '💾 Сохранить настройки',
         cfgSaved: '✔ Настройки сохранены постоянно',
         cfgDirty: '• Несохранённые изменения — нажмите «Сохранить настройки»',
@@ -1423,6 +1459,7 @@ var I18N = {
         mdKbSmart: '• Умное получение keybox: проверяет текущий keybox по списку отзыва Google (CRL) и перебирает несколько источников, пока не найдёт рабочий keybox, с автоматической резервной копией и перезапуском сервисов Google. Работает при каждом нажатии и требует интернет (1-3 минуты).',
         mdKbNet: '• Keybox из сети: скачивает keybox из официального репозитория (GitHub) и сохраняет его в /data/adb/tricky_store/keybox.xml. Требует интернет и занимает 1-3 минуты. Используется, когда умный поиск не удался или keybox был изменён вручную.',
         mdRkpDiag: '• Диагностика RKP: проверяет доступные модули Remote Key Provisioning, версию аттестационного сертификата TEE и состояние утилиты KmInstallKeybox. Ничего не изменяет — просто показывает состояние устройства.',
+        mdWvDiag: '• Проверка Widevine (только чтение): показывает индикаторы уровня Widevine (L1/L3) из dumpsys, наличие DRM-файлов (IDM) и связанные свойства системы. Ничего не изменяет.',
         mdRkpManual: '• Ручное исправление RKP: выполняет sch /data/adb/modules/playintegrityfix/rkp_fix.sh manual. Исправляет проблемы аттестации, когда автоматический проход не удался. Каждый запуск печатает понятную строку успеха/неудачи.',
         mdRkpFull: '• Полное исправление RKP: выполняет sch /data/adb/modules/playintegrityfix/rkp_fix.sh full. Решает сложные случаи и занимает больше времени. В конце появляется понятный результат.',
         mdGmsReset: '• Reset GMS: очищает данные Play Маркета и сервисов Google (GMS+GSF) и автоматически перезагружает устройство. Только для упрямых проблем с аттестацией — ваши фото и файлы не затрагиваются.',
@@ -1514,6 +1551,7 @@ var I18N = {
         btnKbSmart: '🔄 Умный keybox (CRL + источники)',
         btnKbNet: '📥 Скачать keybox (интернет)',
         btnRkpDiag: '🔍 Состояние ключей RKP',
+        btnWvDiag: '📺 Проверка Widevine (L1/L3)',
         btnRkpManual: '🛠️ Перевыпуск RKP',
         btnRkpFull: '🚀 Полный ремонт + автоперезагрузка',
         btnGmsReset: '🔄 Перезапуск сервисов Google',
@@ -1540,6 +1578,7 @@ var I18N = {
         logKbNetHead: '📥 Загрузка keybox из интернета...',
         logKbNetOk: '✅ Keybox скачан и установлен навсегда.',
         logKbNetFail: '✖ Загрузка не удалась или файл недействителен — см. журнал.',
+        logKbNoNet: '🛜 Нет подключения к интернету — проверьте сеть и повторите попытку.',
         logPifCheckHead: '🔎 Проверка файлов отпечатка...',
         logBridgeLost: '⚠️ Связь с мостом потеряна при отслеживании — откройте WebUI заново.'
     }
@@ -2024,7 +2063,7 @@ var state = {
     patch: '',
     auto: 'on',
     ver: '',
-    filter: 'installed',
+    filter: 'user',
     loaded: false
 };
 
@@ -2059,7 +2098,7 @@ function loadDemo() {
     state.engine = 'RUNNING';
     state.patch = 'all=2026-09-05';
     state.auto = 'on';
-    state.ver = 'v3.18';
+    state.ver = 'v3.19';
     state.loaded = true;
 }
 
@@ -2155,6 +2194,7 @@ function loadPackages() {
                 state.user = cachedUser;
                 if (state.loaded) render();
                 logLine(t('logCacheUsed'));
+                scanIconsOnce();
             }
             // بلا ذاكرة مؤقتة ⇒ حدّث فوراً. ومعها ⇒ انتظر 8 ثوانٍ ثم حدّث بصمت.
             setTimeout(refreshPkgList, cachedAll.length ? 8000 : 0);
@@ -2177,6 +2217,7 @@ function refreshPkgList() {
         writePkgCache(all, user);
         if (state.loaded) render();
         logLine(tf('logPkgLoaded', { a: all.length }));
+        scanIconsOnce();
     }, 20, true);
 }
 
@@ -2823,6 +2864,13 @@ function kbNetFetch() {
         + 'mkdir -p /data/adb/tricky_store /data/adb/falcon; '
         + 'TMP=/data/adb/falcon/keybox.new.xml; OK=0; '
         + 'BB=""; for P in /data/adb/modules/busybox-ndk/system/*/busybox /data/adb/ksu/bin/busybox /data/adb/ap/bin/busybox /data/adb/magisk/busybox; do if [ -f "$P" ]; then BB="$P"; break; fi; done; '
+        + 'N_WEAK=0; N_STRONG=0; N_RAN=0; '
+        + 'if command -v ping >/dev/null 2>&1; then ping -c 1 -W 2 1.1.1.1 >/dev/null 2>&1 && N_WEAK=1; [ "$N_WEAK" = "0" ] && ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1 && N_WEAK=1; fi; '
+        + 'if [ "$N_WEAK" = "0" ] && [ -n "$BB" ]; then "$BB" nslookup raw.githubusercontent.com >/dev/null 2>&1 && N_WEAK=1; fi; '
+        + 'if [ "$N_WEAK" = "0" ]; then if command -v curl >/dev/null 2>&1; then N_RAN=1; for PH in https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml https://www.davidepalma.it/pib/keybox.xml; do curl -sI -k --connect-timeout 5 -m 8 "$PH" >/dev/null 2>&1 && N_STRONG=1 && break; done; '
+        + 'elif [ -n "$BB" ]; then N_RAN=1; for PH in https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml https://www.davidepalma.it/pib/keybox.xml; do "$BB" wget -q -O /dev/null -T 8 --no-check-certificate "$PH" >/dev/null 2>&1 && N_STRONG=1 && break; done; '
+        + 'elif command -v wget >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then N_RAN=1; for PH in https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml https://www.davidepalma.it/pib/keybox.xml; do timeout 10 wget -q -O /dev/null "$PH" >/dev/null 2>&1 && N_STRONG=1 && break; done; fi; fi; '
+        + 'if [ "$N_WEAK" = "0" ] && [ "$N_RAN" = "1" ] && [ "$N_STRONG" = "0" ]; then echo "KB_NO_NET"; exit 0; fi; '
         + 'kbok() { [ -s "$1" ] || return 1; grep -q "<AndroidAttestation" "$1" 2>/dev/null || return 1; grep -q "BEGIN.*PRIVATE KEY" "$1" 2>/dev/null || return 1; N=$(grep -c "BEGIN CERTIFICATE" "$1" 2>/dev/null); [ "${N:-0}" -ge 2 ] 2>/dev/null || return 1; return 0; }; '
         + 'dl() { rm -f "$2"; '
         + 'if command -v curl >/dev/null 2>&1; then echo "TRY=curl"; curl -k -L -sS --connect-timeout 8 -m 20 -o "$2" "$1" 2>/dev/null; '
@@ -2842,6 +2890,7 @@ function kbNetFetch() {
     sh(cmd, function (ec, out) {
         if (out === '__TIMEOUT__') { logLine(t('logKbNetFail')); toast(t('logKbNetFail')); return; }
         var txt = String(out || '');
+        if (txt.indexOf('KB_NO_NET') !== -1) { logLine(t('logKbNoNet')); toast(t('logKbNoNet')); return; }
         if (txt.indexOf('KB_NET_OK') !== -1) { logLine(t('logKbNetOk')); toast(t('logKbNetOk')); }
         else { logLine(t('logKbNetFail')); toast(t('logKbNetFail')); }
         readCore(function () { render(); });
@@ -2867,6 +2916,40 @@ function rkpDiagnose() {
             if (!l) continue;
             logLine(tok(l));
         }
+        logLine(t('logDiagDone'));
+    }, 60);
+}
+
+/* (v3.19) فحص Widevine — قراءة فقط: مؤشرات L1/L3 بلا أي تعديل إطلاقاً */
+function wvDiag() {
+    if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
+    logLine(tf('logMaintHead', { a: t('btnWvDiag') }));
+    var cmds = [];
+    cmds.push('echo "=== [1] dumpsys media.drm (widevine/security) ==="');
+    cmds.push('dumpsys media.drm 2>/dev/null | grep -iE "widevine|security|level" | head -n 30');
+    cmds.push('echo ""; echo "=== [2] Widevine plugins ==="');
+    cmds.push('dumpsys media.drm 2>/dev/null | grep -iB1 -A4 "plugin" | head -n 40');
+    cmds.push('echo ""; echo "=== [3] DRM/IDM key files (read-only) ==="');
+    cmds.push('ls -l /data/vendor/mediadrm/ 2>&1 | head -n 12');
+    cmds.push('ls -l /data/mediadrm/ 2>&1 | head -n 8');
+    cmds.push('echo ""; echo "=== [4] widevine props ==="');
+    cmds.push('getprop 2>/dev/null | grep -i widevine');
+    cmds.push('echo ""; echo "=== [5] hint ==="');
+    cmds.push('IDMN=$(ls /data/vendor/mediadrm 2>/dev/null | grep -c "IDM"); ' +
+              'DV=$(dumpsys media.drm 2>/dev/null | grep -ioE "security ?level[^,;]{0,20}" | head -n 1); ' +
+              'if [ "${IDMN:-0}" -gt 0 ] 2>/dev/null; then echo "WV_HINT=L1 (IDM keys present)"; ' +
+              'elif printf "%s" "$DV" | grep -q "L1"; then echo "WV_HINT=$DV"; ' +
+              'elif printf "%s" "$DV" | grep -q "L3"; then echo "WV_HINT=$DV"; ' +
+              'else echo "WV_HINT=UNKNOWN"; fi');
+    sh(cmds.join('; '), function (ec, out) {
+        if (out === '__TIMEOUT__') { logLine(tf('logTimeout', { a: 60 })); return; }
+        var lines = String(out || '').split('\n');
+        for (var i = 0; i < lines.length; i++) {
+            var l = lines[i].replace(/\r/g, '');
+            if (!l) continue;
+            logLine(tok(l));
+        }
+        logLine(t('wvNote'));
         logLine(t('logDiagDone'));
     }, 60);
 }
@@ -3081,7 +3164,30 @@ function avatarHtml(pkg) {
     return '<span class="avatar" style="background:hsl(' + hueOf(pkg) + ',60%,34%)">' + esc(ch) + '</span>';
 }
 
+/* (v3.19h) المصدر الأول: أيقونة النظام الحقيقية مباشرةً من مضيف الواجهة عبر
+   بروتوكول ksu://icon/<pkg> — نفس تقنية مشروع TrickyAddonModule: المضيف
+   (KsuWebUIStandalone / MMRL WebUI-X وغيرهما) هو من يجلب أيقونة المشغّل الحقيقية
+   من نظام أندرويد (PackageManager) ويعرضها فوراً بلا أي استخراج. إن لم يدعم
+   المضيف البروتوكول نسقط تلقائياً لأيقونتنا المستخرجة (icons/…) ثم للحرف الملوّن. */
+var ksuIcoBad = false;    // رُفع ⇒ المضيف لا يدعم بروتوكول الأيقونات
+var ksuIcoFails = 0;      // شبكة أمان: لو فشل البروتوكول متكرراً رغم نجاح الفحص
+
+(function () {
+    // فحص استباقي واحد: حزمة android موجودة في كل جهاز — إن رفضها المضيف فالبروتوكول غير مدعوم
+    var probe = new Image();
+    probe.onerror = function () {
+        ksuIcoBad = true;
+        // إن رُسمت القائمة بالبروتوكول قبل وصول نتيجة الفحص → نعيد رسمها فوراً بالبديل
+        if (state.loaded) render();
+    };
+    probe.src = 'ksu://icon/android';
+})();
+
 function iconHtml(pkg) {
+    if (!ksuIcoBad) {
+        return '<img class="appic" src="ksu://icon/' + pkg + '" alt="" draggable="false" loading="lazy" '
+            + 'onerror="falconIcoFail(this,\'' + pkg + '\')">';
+    }
     if (icoMode === 'http' && icoSet[pkg]) {
         return '<img class="appic" src="icons/' + pkg + '.png" alt="" draggable="false" loading="lazy" '
             + 'onerror="falconIcoFail(this,\'' + pkg + '\')">';
@@ -3092,9 +3198,27 @@ function iconHtml(pkg) {
     return avatarHtml(pkg);
 }
 
-/* استبدال الصورة الفاشلة بحرف ملوّن، ولو فشلت ثلاث صور نجرب مسار الجسر */
+/* سقوط الأيقونة الفاشلة بالترتيب: ksu:// ⇒ الأيقونة المستخرجة ⇒ حرف ملوّن */
 function falconIcoFail(img, pkg) {
     img.onerror = null;
+    var raw = img.getAttribute('src') || '';
+    if (raw.indexOf('ksu:') === 0) {
+        ksuIcoFails++;
+        if (ksuIcoFails >= 3) ksuIcoBad = true; // لا نعاود تجربة البروتوكول في الصفوف القادمة
+        if (!img.getAttribute('data-fb')) {
+            if (icoMode === 'http' && icoSet[pkg]) {
+                img.setAttribute('data-fb', '1');
+                img.onerror = function () { falconIcoFail(img, pkg); };
+                img.src = 'icons/' + pkg + '.png';
+                return;
+            }
+            if (icoMode === 'b64' && icoMap[pkg]) {
+                img.setAttribute('data-fb', '1');
+                img.src = icoMap[pkg];
+                return;
+            }
+        }
+    }
     var nice = nameOf(pkg) || pkg;
     var span = document.createElement('span');
     span.className = 'avatar';
@@ -3140,7 +3264,7 @@ function loadIconIndex(after) {
 /* (v3.14) تحديث الفهرس تلقائياً بعد الإقلاع — طلبات ملفات صغيرة بلا جسر،
    فتظهر أيقونات الاستخراج التدريجي (الذي يجري في الخلفية عند الإقلاع). */
 function pollIconIndex() {
-    [5000, 15000, 30000, 60000, 120000].forEach(function (ms) {
+    [5000, 15000, 30000, 60000, 120000, 180000].forEach(function (ms) {
         setTimeout(function () { loadIconIndex(); }, ms);
     });
 }
@@ -3163,26 +3287,50 @@ function loadIconsB64(after) {
         }, 45, true);
 }
 
-/* (v3.14) استخراج أيقونات حزم محددة فقط — منفصل تماماً عن الجسر:
-   الأمر يسحب نفسه في الخلفية ويعود فوراً، فلا يُقفل الواجهة ولا يزاحم أي ضغطة */
-function extractIconsDetached(pkgs) {
+/* (v3.19c) استخراج أيقونات حزم محددة فقط — منفصل تماماً عن الجسر:
+   الأمر يسحب نفسه في الخلفية (nohup + نهاية إدخال) ويعود فوراً.
+   gate=true ⇒ بوابة ساعتين عبر /data/adb/falcon/icons_scan تمنع
+   إعادة المسح الكامل مع كل فتح للواجهة. */
+function extractIconsDetached(pkgs, gate) {
     if (!pkgs || !pkgs.length || !bridgeAvailable()) return;
     var uniq = {};
     pkgs.forEach(function (p) { uniq[stripBang(p)] = true; });
-    var list = Object.keys(uniq).slice(0, 220);
+    var list = Object.keys(uniq).slice(0, 500);
     var args = list.map(function (p) { return "'" + p + "'"; }).join(' ');
+    var gatePart = '';
+    if (gate) {
+        gatePart = 'G=/data/adb/falcon/icons_scan; mkdir -p /data/adb/falcon 2>/dev/null; '
+            + 'NOW=$(date +%s 2>/dev/null || echo 0); case "$NOW" in ""|*[!0-9]*) NOW=0;; esac; '
+            + 'LAST=0; [ -f "$G" ] && LAST=$(cat "$G" 2>/dev/null); case "$LAST" in ""|*[!0-9]*) LAST=0;; esac; '
+            + 'if [ "$NOW" -gt 0 ] && [ "$LAST" -gt 0 ] && [ $((NOW - LAST)) -lt 7200 ]; then echo ICONS_GATED; exit 0; fi; '
+            + '[ "$NOW" -gt 0 ] && echo "$NOW" > "$G"; ';
+    }
     var cmd = 'export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; '
         + 'S=/data/adb/modules/playintegrityfix/icons.sh; [ -f "$S" ] || S=/data/adb/modules_update/playintegrityfix/icons.sh; '
-        + 'if [ -f "$S" ]; then ( sh "$S" ' + args + ' >/dev/null 2>&1 & ) ; echo ICONS_STARTED; else echo ICONS_NOSCRIPT; fi';
-    sh(cmd, function () {
-        // الفهرس ملف HTTP عادي — تحديثه لا يكلّف الجسر شيئاً، فنكرّره بفواصل
-        // قصيرة لتظهر الأيقونات تدريجياً دون أن ينتظر المستخدم شيئاً.
+        + 'if [ -f "$S" ]; then ' + gatePart
+        + 'NB=; command -v nohup >/dev/null 2>&1 && NB=nohup; '
+        + '( $NB sh "$S" ' + args + ' >/dev/null 2>&1 </dev/null & ) ; echo ICONS_STARTED; else echo ICONS_NOSCRIPT; fi';
+    sh(cmd, function (ec, out) {
+        if (out && out.indexOf('ICONS_GATED') !== -1) return;
+        // الفهرس ملف HTTP عادي — لا يكلّف الجسر، فنكرّره حتى تظهر أيقونات
+        // المسح الكامل بعد اكتماله (قد يستغرق دقائق على الأجهزة المزدحمة).
         setTimeout(function () { loadIconIndex(); }, 2500);
-        if (list.length > 6) {
-            setTimeout(function () { loadIconIndex(); }, 9000);
-            setTimeout(function () { loadIconIndex(); }, 22000);
-        }
+        setTimeout(function () { loadIconIndex(); }, 30000);
+        setTimeout(function () { loadIconIndex(); }, 90000);
+        setTimeout(function () { loadIconIndex(); }, 300000);
+        setTimeout(function () { loadIconIndex(); }, 600000);
     }, 12, true);
+}
+
+/* (v3.19c) مسح واحد تلقائي عند فتح الواجهة: تطبيقات المستخدم + المخفية،
+   مع بوابة ساعتين. لا يبدأ إلا بعد جاهزية قائمة الحزم (لا يقفل شيئاً). */
+var icoScanKicked = false;
+function scanIconsOnce() {
+    if (icoScanKicked || !bridgeAvailable()) return;
+    var list = state.user.concat(state.target);
+    if (!list.length) return;
+    icoScanKicked = true;
+    extractIconsDetached(list, true);
 }
 
 function renderSegs() {
@@ -3273,7 +3421,7 @@ function render() {
 }
 
 /* ------------------------------ الأحداث ------------------------------ */
-$('btnRefresh').onclick = function () { readState(function () { render(); }); };
+$('btnRefresh').onclick = function () { readState(function () { render(); loadIconIndex(); }); };
 $('btnEssOnly').onclick = essentialOnly;
 $('btnAdd').onclick = addPkg;
 $('btnDump').onclick = dumpRaw;
@@ -3298,6 +3446,7 @@ $('btnPifApply').onclick = pifApply;
 $('btnPifCheck').onclick = pifCheck;
 $('btnCanary').onclick = canaryUpdate;
 $('btnEngineDiag').onclick = engineDiag;
+$('btnWvDiag').onclick = wvDiag;
 $('btnSelAll').onclick = function () { selectAll(true); };
 $('btnSelNone').onclick = function () { selectAll(false); };
 $('logClose').onclick = closeLog;

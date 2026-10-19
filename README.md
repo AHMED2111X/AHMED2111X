@@ -1,4 +1,4 @@
-🦅🔥 **FALCON INTEGRITY FIX — الإصدار v3.18** 🔥🦅
+🦅🔥 **FALCON INTEGRITY FIX — الإصدار v3.19** 🔥🦅
 
 ━━━━━━━━━━━━━━━━━━━━
 **الإصدار الذي أنهى مشكلة** ❌ «الجهاز غير معتمد» **و** ❌ «Bootloader Unlocked» **في فحص Play Integrity!**
@@ -25,6 +25,29 @@
 ✅ STRONG_INTEGRITY   ← وفق قبول جوجل لمفتاح الكيبوكس
 ✅ متجر Google Play يعرض: «الجهاز معتمد»
 ```
+
+## 🆕 Nuevo in v3.19 — الأيقونات فوراً (ksu://icon) + دعم كل محركات Zygisk + تحسينات الواجهة
+
+⚡ **الأيقونات صارت فورية وحقيقية (الإصلاح النهائي):**
+
+* 🔍 **الاكتشاف:** مشروع TrickyAddonModule لا يستخرج أيقونات من الـAPK إطلاقاً؛ بل يطلبها من **مضيف الواجهة** عبر بروتوكول خاص `ksu://icon/<اسم الحزمة>` — المضيف (KsuWebUIStandalone / MMRL WebUI-X) هو من يجلب أيقونة المشغّل الحقيقية من نظام أندرويد ويعرضها فوراً. بلا unzip، بلا busybox، بلا dex.
+* 🎯 **المطبَّق في FALCON:** كل صف تطبيق يطلب `ksu://icon/<pkg>` أولاً → **كل الأيقونات فوراً** (المستخدمة والنظامية وفي كل الفلاتر). فحص استباقي (حزمة `android`) يكتشف دعم المضيف؛ وإن لم يدعمه يُعاد رسم القائمة فوراً بالبديل (أيقونتنا المستخرجة ← الحرف الملوّن). مسار الاستخراج القديم بقي كخطة بديلة.
+* 🛡️ **سقوط آمن ثلاثي:** `ksu://icon` ← `icons/<pkg>.png` ← الحرف الملوّن — لا يخسر أي جهاز شيئاً.
+
+🧩 **دعم كل محركات Zygisk (بطلبك):**
+
+* ✅ **التثبيت:** يتعرّف على كل المحركات ويعطي رسالة توافق: ZygiskNext (بالمعرّفين `zygisk_next` و `zygisksu`) · NeoZygisk · ReZygisk · BreZygisk (بالمعرّفين) · Zygisk المدمج في Magisk — مع تحذير التعارض.
+* 📋 **بطاقة الوصف:** بدل نقش ثابت تعرض اسم المحرك الفعلي وإصداره: `🟢 ZygiskNext vX` / `🟢 NeoZygisk` / `🟢 ReZygisk` / `🟢 BreZygisk` / `🟢 Zygisk (Magisk)`.
+
+🛠️ **تحسينات الواجهة والثبات (v3.19):**
+
+* 🛟 **إصلاح «الواجهة الفارغة»**: حارس أخطاء إقلاع (`jsErrBar`) + فحص آلي: كل معرّف `$('id')` يجب أن يكون موجوداً في الصفحة.
+* ✍️ **سطر المؤلف** بالصيغة الحرفية: `author=ABUFARID | Telegram:@falcon_kernel`.
+* 📋 **الواجهة تفتح افتراضياً على فلتر «مستخدم»** (قائمة صغيرة).
+* 💬 **وصف مختصر احترافي** لبطاقة FALCON TRICKY في مدير الروت.
+* 🔧 **محرك أيقونات dex (app_process)** كطبقة أخيرة (v3.19f) + **busybox مدمج** (v3.19e) + **أداة فك ضغط مدمجة**.
+
+📊 **النتيجة:** 94/94 فحصاً آلياً ناجحاً (بما في ذلك فحص كل محركات Zygisk وبروتوكول ksu://icon).
 
 ## 🆕 الجديد في v3.18 — إصلاح «جلب Keybox (إنترنت)» نهائياً + واجهة «مرصد التخفي» النهائية
 
@@ -117,7 +140,7 @@
 * 🔤 وإن تعذّر الاستخراج (تطبيق نظامي أو APK مقسّم) يظهر **حرف ملوّن** بلون ثابت لكل تطبيق.
 * 📐 يفضّل أعلى دقة متاحة (`xxxhdpi` → `hdpi`) ويفضّل PNG على WEBP.
 
-## ✨ ما أضافته سلسلة التحديثات v3.05 → v3.18
+## ✨ ما أضافته سلسلة التحديثات v3.05 → v3.19
 
 | الإصدار | الإضافة |
 |---|---|
@@ -135,6 +158,7 @@
 | **v3.16** | 📜 **سجل حي لكل عملية طويلة** (إصلاح جذري لتعليق الجسر) + ✅ **إجبار اعتماد متجر Play** + 💣 **مسح شامل لجوجل** (اختياري) + 📊 **عداد المستخدمين النشطين** في FALCON TRICKY + 🩺 فحص CRL وتحديث Canary |
 | **v3.17** | 🖥️ **واجهة موحّدة**: أدوات الوحدة الأم انتقلت نهائياً إلى FALCON TRICKY + 🧰 قسم صيانة بشرح منسدل لكل زر + 🔁 زر تحديث تحت العنوان + 📣 أزرار تيليجرام |
 | **v3.18** | 🧩 **إصلاح جذري لزر «جلب Keybox (إنترنت)»** (4 مصادر + 3 أدوات تنزيل + فحص صارم + سجل تشخيصي) + 🌐 **ترجمة كاملة** للشروح والتقارير + 🎨 الواجهة النهائية |
+| **v3.19** | ⚡ **أيقونات فوراً (ksu://icon)** + 🧩 دعم كل محركات Zygisk + 🛟 إصلاح واجهة فارغة + 💬 وصف FALCON TRICKY + 🔧 busybox/dex |
 
 ## 🧩 وحدة FALCON TRICKY المرافقة
 
@@ -222,7 +246,7 @@
 
 ## 🔗 الروابط
 
-* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.18.zip](https://github.com/AHMED2111X/AHMED2111X/releases/download/v3.18/FALCONINTEGITY_FIX_V3.18.zip)
+* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.19.zip](https://github.com/AHMED2111X/AHMED2111X/releases/download/v3.19/FALCONINTEGITY_FIX_V3.19.zip)
 * 📢 **القناة الرسمية:** https://t.me/FALCON_KERNEL_PRO
 * 👨‍💻 **تواصل المطور:** https://t.me/falcon_kernel
 * 🐙 **مستودع التحديثات:** https://github.com/AHMED2111X/AHMED2111X
@@ -230,7 +254,7 @@
 ━━━━━━━━━━━━━━━━━━━━
 ## 🇬🇧 English Summary
 
-**FALCON INTEGRITY FIX v3.18** — a complete root module that passes **Play Integrity 3/3** without locking the bootloader and without any automatic wipe (BASIC / DEVICE / STRONG).
+**FALCON INTEGRITY FIX v3.19** — a complete root module that passes **Play Integrity 3/3** without locking the bootloader and without any automatic wipe (BASIC / DEVICE / STRONG).
 
 * 🎭 **PIF fingerprint** — Pixel 6a (bluejay beta · Canary ZP11.260918.007) with matching security patch `2026-10-05`.
 * 🔐 **Keybox attestation** — open-source **Tricky Store OSS v3.1.0** hooking `keystore2`, so the unlocked bootloader is hidden from Google.
@@ -247,6 +271,7 @@
 * 📊 **Active-users counter in FALCON TRICKY (v3.16)** — the same live counter as the main UI, in all 4 languages.
 * 🩺 **CRL keybox-revocation check (both UIs) + on-demand Canary fingerprint updater + guarded boot line (v3.16).**
 * 📱 **FALCON TRICKY companion WebUI** in 4 languages (AR/EN/TR/RU) with a real **Save** button, instant load, auto-hide of newly installed apps, an on-device **hide log**, one-tap keybox import, and app icons extracted straight from the installed APKs.
+* ⚡ **Instant app icons (v3.19):** icons are now fetched directly from the Android system via the WebUI host's `ksu://icon/<package>` protocol (same technique as TrickyAddonModule) — real icons appear instantly for every app, with a safe fallback (extracted icon → letter avatar). Plus: **support for every Zygisk engine** (ZygiskNext · NeoZygisk · ReZygisk · BreZygisk · built-in Magisk) in install messages + module card.
 * 🔑 Keybox is transferred automatically to `/data/adb/tricky_store/keybox.xml` on install and every boot.
 * 🚫 Standalone `tricky_store` modules and any TrickyStore add-on are hard-removed at install and re-checked every boot (double injection into `keystore2` deadlocks the device).
 * 🔒 Nothing is ever wiped automatically — the Play-certification reset (Play Store only; your account lives in GMS) and the optional last-resort full Google wipe only run when you tap their buttons. The full wipe signs you out of Google accounts — your choice; photos, files and apps are untouched.

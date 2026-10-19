@@ -422,6 +422,7 @@ fetch_new() {
 }
 
 # ============================ التشغيل ============================
+KS_REV=0
 case "$MODE" in
     check)
         say "فحص الكيبوكس الحالي: $TARGET"
@@ -455,7 +456,7 @@ case "$MODE" in
                 rc=$?
                 case "$rc" in
                     0) CUR_OK=1; say "الحالي سليم — سنجلب الأحدث رغم ذلك (طلب يدوي)" ;;
-                    1) say "الحالي مُبطَل ($REV_SERIAL) — جلب بديل" ;;
+                    1) KS_REV=1; say "الحالي مُبطَل ($REV_SERIAL) — جلب بديل" ;;
                     *) say "الحالي غير صالح — جلب بديل" ;;
                 esac
             else
@@ -486,6 +487,7 @@ case "$MODE" in
             check_keybox_file "$TARGET"
             rc=$?
             if [ "$rc" = "1" ] || [ "$rc" = "2" ]; then
+                [ "$rc" = "1" ] && KS_REV=1
                 say "[auto] الحالة=$rc $REV_SERIAL $REV_STATUS — جلب تلقائي"
                 if [ -s "$CRL_COMPACT" ]; then
                     fetch_new >/dev/null 2>&1
@@ -502,6 +504,15 @@ case "$MODE" in
             fi
         fi
         ;;
+esac
+
+# --- (v3.19) تحديث مؤشر صحة الكيبوكس في وصف الوحدة ---
+mkdir -p "$STATE" 2>/dev/null
+case "$FIN" in
+    OK)       printf 'OK %s\n' "$(date '+%Y-%m-%d %H:%M')" > "$STATE/kb_state" 2>/dev/null ;;
+    NOCHANGE) [ -s "$STATE/kb_state" ] || printf 'OK %s\n' "$(date '+%Y-%m-%d %H:%M')" > "$STATE/kb_state" 2>/dev/null ;;
+    REVOKED)  printf 'REVOKED %s\n' "$(date '+%Y-%m-%d %H:%M')" > "$STATE/kb_state" 2>/dev/null ;;
+    *)        [ "$KS_REV" = "1" ] && printf 'REVOKED %s\n' "$(date '+%Y-%m-%d %H:%M')" > "$STATE/kb_state" 2>/dev/null ;;
 esac
 
 echo "FALCON_KS_RESULT=${FIN:-UNKNOWN}"

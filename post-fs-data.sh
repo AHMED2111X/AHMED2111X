@@ -73,6 +73,10 @@ resetprop_if_diff ro.boot.realmebootstate green
 # إصلاح تحذير الشاشة البرتقالية لهواتف ون بلس (OnePlus)
 resetprop_if_diff ro.is_ever_orange 0
 
+# (v3.19) تعزيز مؤشرات عدم فتح البوتلودر لهواتف سامسونج (FMP / DP firmware check)
+resetprop_if_diff ro.boot.fmp_config 1
+resetprop_if_diff ro.boot.dp_fw_check 1
+
 # تنظيف خصائص خطافات Play Integrity القديمة
 resetprop --delete persist.sys.pihooks.first_api_level 2>/dev/null
 

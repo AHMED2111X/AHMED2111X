@@ -29,7 +29,9 @@ if [ "$FT_FOUND" = "0" ] && [ -f /data/adb/falcon/.ft_linked ]; then
     touch "$MODDIR/remove" 2>/dev/null
 fi
 
-# --- (v3.15) مسح وقائي عند كل إقلاع: أي وحدة/إضافة تخص TrickyStore أو SafetyNet ---
+# --- (v3.15 + توسيع v3.19) مسح وقائي عند كل إقلاع: أي وحدة/إضافة تخص TrickyStore
+# أو SafetyNet أو أي محرك تعتيد/تزييف متعارض (Specter / Yurikey / TEESimulator /
+# IntegrityBox / TA-enhanced / MagiskHidePropsConf / AlwaysStrong …).
 # يمنع الحقن المزدوج في keystore2 لو ثبّت المستخدم محركاً مستقلاً أو ملحقاً
 # (WebUI) بعدنا. الكشف لا يعتمد على اسم المجلد وحده: نقرأ أيضاً module.prop
 # (id / name / description) حتى تُلتقط الملاحق بأي تسمية.
@@ -53,12 +55,23 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
             *"id=playintegrityfix"*|*"id=falcon_tricky"*) continue ;;
         esac
         case "$RLOW" in
-            *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*) ;;
+            *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|\
+            *specter*|*yurikey*|*teesim*|*tee_simulator*|*integritybox*|*integrity_box*|*integrity-box*|\
+            *ta_utl*|*ta_enhanced*|*ta-enhanced*|*magiskhideprops*|*alwaysstrong*) ;;
             *) continue ;;
         esac
         [ -f "$RDIR/remove" ] && continue
-        touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
-        echo "$(date '+%Y-%m-%d %H:%M:%S') 🗑️ وحدة تعتيد متعارضة مُعطَّلة ومعلَّمة للحذف: $RNAME" >> "$MODDIR/falcon_integrity_fix.log" 2>/dev/null
+        case "$RBASE" in
+            */modules_update)
+                # (v3.19) نسخة مرحّلة لم تُثبَّت بعد ⇒ نحذفها الآن حتى لا تُثبَّت عند الإقلاع القادم
+                rm -rf "$RDIR" 2>/dev/null
+                echo "$(date '+%Y-%m-%d %H:%M:%S') 🗑️ حُذفت نسخة مرحّلة لموديول متعارض (modules_update): $RNAME" >> "$MODDIR/falcon_integrity_fix.log" 2>/dev/null
+                ;;
+            *)
+                touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
+                echo "$(date '+%Y-%m-%d %H:%M:%S') 🗑️ وحدة تعتيد متعارضة مُعطَّلة ومعلَّمة للحذف: $RNAME" >> "$MODDIR/falcon_integrity_fix.log" 2>/dev/null
+                ;;
+        esac
     done
 done
 
@@ -136,6 +149,8 @@ chown root:root "$TRICKY_PATCH_FILE" 2>/dev/null
 resetprop_if_match ro.boot.mode recovery unknown
 resetprop_if_match ro.bootmode recovery unknown
 resetprop_if_match vendor.boot.mode recovery unknown
+resetprop_if_match ro.boot.bootmode recovery unknown
+resetprop_if_match vendor.boot.bootmode recovery unknown
 
 # فرض حالة SELinux كـ enforcing (محمي) وإخفاء الخصائص المريبة
 resetprop_if_diff ro.boot.selinux enforcing
@@ -652,6 +667,11 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
     resetprop_if_diff sys.oem_unlock_allowed 0
     resetprop_if_diff service.adb.root 0
     resetprop_if_diff ro.boot.vbmeta.invalidate_on_error yes
+    # (v3.19) تعزيز متأخر: مؤشر الضمان قد يُعاد كتابته في بعض الرومات بعد post-fs-data
+    resetprop_if_diff ro.boot.warranty_bit 0
+    resetprop_if_diff ro.vendor.boot.warranty_bit 0
+    resetprop_if_diff ro.vendor.warranty_bit 0
+    resetprop_if_diff ro.warranty_bit 0
 
     # --- (v3.16) تدميج مساحة الخصائص: إزالة القيم القديمة العالقة في ذاكرة النظام ---
     (timeout 10 resetprop --compact) >/dev/null 2>&1 || true
@@ -661,30 +681,62 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
         ZYGISK_FOUND=false
         
         for pid in $(pidof zygote zygote64 2>/dev/null); do
-            if grep -qiE "zygisk|rezygisk|brezygisk" /proc/$pid/maps 2>/dev/null; then
+            if grep -qiE "zygisk" /proc/$pid/maps 2>/dev/null; then
                 ZYGISK_FOUND=true
                 break
             fi
         done
 
         if [ "$ZYGISK_FOUND" = "false" ]; then
-            if [ -p /dev/socket/zygisk ] || [ -S /dev/socket/zygiskd ] || [ -S /dev/socket/rezygisk ] || \
+            if [ -S /dev/socket/zygisk ] || [ -p /dev/socket/zygisk ] || [ -S /dev/socket/zygiskd ] || \
+               [ -S /dev/socket/rezygisk ] || [ -S /dev/socket/rezygiskd ] || [ -S /dev/socket/neozygiskd ] || \
+               [ -n "$(pidof zygiskd neozygiskd rezygiskd brezygiskd 2>/dev/null)" ] || \
                ([ -d "/data/adb/modules/BreZygisk" ] && [ ! -f "/data/adb/modules/BreZygisk/disable" ]) || \
                ([ -d "/data/adb/modules/brezygisk" ] && [ ! -f "/data/adb/modules/brezygisk/disable" ]) || \
                ([ -d "/data/adb/modules/zygisk_next" ] && [ ! -f "/data/adb/modules/zygisk_next/disable" ]) || \
+               ([ -d "/data/adb/modules/zygisksu" ] && [ ! -f "/data/adb/modules/zygisksu/disable" ]) || \
+               ([ -d "/data/adb/modules/neozygisk" ] && [ ! -f "/data/adb/modules/neozygisk/disable" ]) || \
                ([ -d "/data/adb/modules/rezygisk" ] && [ ! -f "/data/adb/modules/rezygisk/disable" ]); then
                 ZYGISK_FOUND=true
             fi
         fi
 
-        # تعيين نص حالة الحقن (مع ذكر إصدار ZygiskNext عند توفره)
+        # (v3.19g) اسم محرك Zygisk المثبت — كل المحركات المعروفة: ZygiskNext
+        # (بالاسم الجديد zygisk_next أو القديم zygisksu) ، NeoZygisk ، ReZygisk ،
+        # BreZygisk ، ثم Zygisk المدمج في Magisk (يُفحص مرة واحدة لكل إقلاع).
+        ZYGISK_IMPL=""
+        for _z in "zygisk_next:ZygiskNext" "zygisksu:ZygiskNext" "neozygisk:NeoZygisk" \
+                   "rezygisk:ReZygisk" "BreZygisk:BreZygisk" "brezygisk:BreZygisk"; do
+            _zdir="/data/adb/modules/${_z%%:*}"
+            if [ -f "$_zdir/module.prop" ] && [ ! -f "$_zdir/disable" ]; then
+                _zver=$(grep '^version=' "$_zdir/module.prop" 2>/dev/null | head -1 | cut -d= -f2)
+                ZYGISK_IMPL="${_z#*:}${_zver:+ $_zver}"
+                break
+            fi
+        done
+        if [ -z "$ZYGISK_IMPL" ] && [ "$ZYGI_SQL" != "?" ]; then
+            if [ -z "$ZYGI_SQL" ]; then
+                ZYGI_SQL="?"
+                if command -v magisk >/dev/null 2>&1; then
+                    _zs=$(magisk --sqlite "SELECT value FROM settings WHERE key='zygisk'" 2>/dev/null)
+                    case "$_zs" in *value=1*) ZYGI_SQL="Zygisk (Magisk)" ;; esac
+                fi
+            fi
+            if [ "$ZYGI_SQL" != "?" ]; then
+                ZYGISK_IMPL="$ZYGI_SQL"
+            fi
+        fi
+        # Zygisk المدمج مفعّل ⇒ يُعدّ المحرك قائماً حتى لو لم يلتقطه فحص الذاكرة
+        if [ "$ZYGISK_FOUND" = "false" ] && [ "$ZYGISK_IMPL" = "Zygisk (Magisk)" ]; then
+            ZYGISK_FOUND=true
+        fi
+
+        # تعيين نص حالة الحقن (مع اسم المحرك وإصداره عند توفره)
         if [ "$ZYGISK_FOUND" = "true" ]; then
-            ZYGISK_STATUS="🟢 Zygisk Injected"
-            # عرض إصدار ZygiskNext المثبت (v1.5.2+) في وصف الموديول مباشرة
-            ZYNEXT_DIR="/data/adb/modules/zygisk_next"
-            if [ -d "$ZYNEXT_DIR" ] && [ ! -f "$ZYNEXT_DIR/disable" ] && [ -f "$ZYNEXT_DIR/module.prop" ]; then
-                ZYNEXT_VER=$(grep '^version=' "$ZYNEXT_DIR/module.prop" 2>/dev/null | head -1 | cut -d= -f2)
-                [ -n "$ZYNEXT_VER" ] && ZYGISK_STATUS="🟢 ZygiskNext $ZYNEXT_VER"
+            if [ -n "$ZYGISK_IMPL" ]; then
+                ZYGISK_STATUS="🟢 $ZYGISK_IMPL"
+            else
+                ZYGISK_STATUS="🟢 Zygisk Injected"
             fi
         else
             ZYGISK_STATUS="🔴 Zygisk Not Injecting"
@@ -700,9 +752,19 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             BL_STATUS="🔴 BL Unspoofed"
         fi
 
+        # (v3.19) مؤشر صحة الكيبوكس — من آخر فحص CRL / مزامنة (kb_sync + kbcheck)
+        KB_TAG=""
+        if [ -s /data/adb/falcon_keysync/kb_state ]; then
+            KB_ST=$(head -n 1 /data/adb/falcon_keysync/kb_state 2>/dev/null | tr -d ' \t\r\n')
+            case "$KB_ST" in
+                OK*) KB_TAG="🔑 KB OK | " ;;
+                REVOKED*) KB_TAG="🔑 KB REVOKED | " ;;
+            esac
+        fi
+
         # قراءة العدد النشط مباشرة من الملف الكاش المحدث
         ONLINE_USERS=$(cat "$COUNT_CACHE_FILE" 2>/dev/null || printf '%s\n' "0")
-        NEW_DESC="$ZYGISK_STATUS | $BL_STATUS | 👤 Online: $ONLINE_USERS"
+        NEW_DESC="$KB_TAG$ZYGISK_STATUS | $BL_STATUS | 👤 Online: $ONLINE_USERS"
 
         MODULE_PROP="$MODDIR/module.prop"
 
@@ -737,5 +799,86 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
         [ "$KS_INT" -lt 900 ] 2>/dev/null && KS_INT=900
         sh "$MODDIR/kb_sync.sh" --auto >/dev/null 2>&1
         sleep "$KS_INT"
+    done
+) >/dev/null 2>&1 &
+
+# --- 7. (v3.19) حل بصمة vbmeta التلقائي (ro.boot.vbmeta.digest) ---
+# بعض الأجهزة لا تمرر بصمة vbmeta إطلاقاً أو تمررها كأصفار — علامة مميزة عند
+# فحص الروت. نحسب البصمة الحقيقية محلياً من قسم vbmeta (أول 64KB) ونضبطها في
+# ذاكرة النظام فقط (غير دائمة)، مع كاش لتسريع كل إقلاع تالٍ.
+# للإيقاف: touch /data/adb/falcon/no_vbmeta_digest
+(
+    [ -f /data/adb/falcon/no_vbmeta_digest ] && exit 0
+    sleep 45
+    valid_hash() {
+        [ -n "$1" ] || return 1
+        [ ${#1} -eq 64 ] || return 1
+        case "$1" in *[!0-9a-fA-F]*) return 1 ;; esac
+        [ "$1" = "0000000000000000000000000000000000000000000000000000000000000000" ] && return 1
+        return 0
+    }
+    CUR_H=$(getprop ro.boot.vbmeta.digest 2>/dev/null | tr 'A-F' 'a-f' | tr -d ' \r\n')
+    if ! valid_hash "$CUR_H"; then
+        GOOD_H=""
+        [ -s /data/adb/falcon/vbmeta_hash ] && GOOD_H=$(head -n 1 /data/adb/falcon/vbmeta_hash 2>/dev/null | tr 'A-F' 'a-f' | tr -d ' \r\n')
+        if ! valid_hash "$GOOD_H"; then
+            VBP=""
+            for P in /dev/block/by-name/vbmeta /dev/block/by-name/vbmeta_a \
+                     /dev/block/bootdevice/by-name/vbmeta /dev/block/bootdevice/by-name/vbmeta_a \
+                     /dev/block/platform/bootdevice/by-name/vbmeta; do
+                [ -e "$P" ] && VBP="$P" && break
+            done
+            if [ -n "$VBP" ]; then
+                SC="sha256sum"
+                command -v sha256sum >/dev/null 2>&1 || SC="busybox sha256sum"
+                CALC_H=$(dd if="$VBP" bs=4096 count=16 2>/dev/null | $SC 2>/dev/null | cut -d' ' -f1 | tr 'A-F' 'a-f' | tr -d ' \r\n')
+                valid_hash "$CALC_H" && GOOD_H="$CALC_H"
+            fi
+        fi
+        if valid_hash "$GOOD_H"; then
+            mkdir -p /data/adb/falcon 2>/dev/null
+            printf '%s\n' "$GOOD_H" > /data/adb/falcon/vbmeta_hash 2>/dev/null
+            resetprop -n ro.boot.vbmeta.digest "$GOOD_H" 2>/dev/null
+            log -t "FALCON_FIX" "🧬 تم ضبط بصمة vbmeta للأجهزة التي لا تمررها" 2>/dev/null
+        fi
+    fi
+) >/dev/null 2>&1 &
+
+# --- 8. (v3.19) وضع التخفي: إخماد وسومنا من logcat + تنظيف ANR/tombstone ---
+(
+    [ -f "$MODDIR/falcon_stealth.sh" ] || exit 0
+    sh "$MODDIR/falcon_stealth.sh" >/dev/null 2>&1
+) &
+
+# --- 9. (v3.19) إخفاء بقايا الريكفري من مساحة المستخدم (تنظيف آمن غير مدمّر) ---
+(
+    [ -f "$MODDIR/falcon_sdcard_cleanup.sh" ] || exit 0
+    sh "$MODDIR/falcon_sdcard_cleanup.sh" >/dev/null 2>&1
+) &
+
+# --- 10. (v3.19) حارس محرك التعتيد (Watchdog) ---
+# المحرك قد يتوقف فجأة (انهيار/قتل) فيبقى keystore2 بلا حقن صامتاً وتفشل كل
+# الفحوصات حتى إعادة التشغيل اليدوي. الحارس يتحقق باستمرار: إن اختفى المحرك
+# أعاده فوراً (مع احترام تعطيل/حذف وحدتنا — يتوقف فوراً إن أُمر بحذفنا).
+(
+    sleep 180
+    while true; do
+        [ -f "$MODDIR/disable" ] && exit 0
+        [ -f "$MODDIR/remove" ] && exit 0
+        if [ -f "$TS_DIR/service.sh" ] && [ -f "$TS_DIR/daemon" ] && [ -f "$TS_DIR/classes.dex" ]; then
+            if ! pidof TrickyStoreOSS >/dev/null 2>&1; then
+                # تدوير السجل عند الكبر قبل الكتابة
+                sz=$(wc -c < /data/adb/falcon_daemon.log 2>/dev/null | tr -d ' ')
+                case "$sz" in
+                    ''|*[!0-9]*) ;;
+                    *) [ "$sz" -gt 200000 ] 2>/dev/null && tail -c 100000 /data/adb/falcon_daemon.log > /data/adb/falcon_daemon.log.tmp 2>/dev/null && mv -f /data/adb/falcon_daemon.log.tmp /data/adb/falcon_daemon.log 2>/dev/null ;;
+                esac
+                log -t "FALCON_FIX" "🛡️ حارس المحرك: المحرك متوقف — إعادة تشغيل تلقائية" 2>/dev/null
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] 🛡️ حارس المحرك: المحرك متوقف — إعادة تشغيل تلقائية" >> /data/adb/falcon_daemon.log 2>/dev/null
+                (cd "$TS_DIR" && sh "$TS_DIR/service.sh" >>/data/adb/falcon_daemon.log 2>&1) &
+                sleep 45
+            fi
+        fi
+        sleep 90
     done
 ) >/dev/null 2>&1 &

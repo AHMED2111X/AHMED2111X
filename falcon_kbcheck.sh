@@ -150,6 +150,8 @@ fi
 printf 'INFO|STATE=%s|AGE=%s|SIZE=%s|DATE=%s|PATH=%s\n' "$STATE" "$AGE" "$SIZE" "$DATE" "$JSON"
 
 # --- فحص الأرقام المطلوبة ---
+KOK=0
+KREV=0
 if [ -n "$SERIALS" ]; then
     for S in $SERIALS; do
         case "$S" in
@@ -159,8 +161,10 @@ if [ -n "$SERIALS" ]; then
         if [ -s "$COMPACT" ]; then
             HIT=$(grep -o -E "\"${S}\":.{0,200}" "$COMPACT" 2>/dev/null | head -n 1)
             if [ -z "$HIT" ]; then
+                KOK=$((KOK+1))
                 printf 'SER|%s|OK\n' "$S"
             else
+                KREV=$((KREV+1))
                 ST=$(printf '%s' "$HIT" | sed -n 's/.*"status":"\([A-Za-z]*\)".*/\1/p')
                 RS=$(printf '%s' "$HIT" | sed -n 's/.*"reason":"\([A-Za-z_]*\)".*/\1/p')
                 CM=$(printf '%s' "$HIT" | sed -n 's/.*"comment":"\([^"]*\)".*/\1/p')
@@ -171,6 +175,17 @@ if [ -n "$SERIALS" ]; then
             printf 'SER|%s|UNKNOWN\n' "$S"
         fi
     done
+fi
+
+# --- (v3.19) تحديث مؤشر صحة الكيبوكس في وصف الوحدة ---
+if [ "$KOK" -gt 0 ] 2>/dev/null || [ "$KREV" -gt 0 ] 2>/dev/null; then
+    KSD="/data/adb/falcon_keysync"
+    mkdir -p "$KSD" 2>/dev/null
+    if [ "$KREV" -gt 0 ] 2>/dev/null; then
+        printf 'REVOKED %s\n' "$(date '+%Y-%m-%d %H:%M')" > "$KSD/kb_state" 2>/dev/null
+    else
+        printf 'OK %s\n' "$(date '+%Y-%m-%d %H:%M')" > "$KSD/kb_state" 2>/dev/null
+    fi
 fi
 
 exit 0
