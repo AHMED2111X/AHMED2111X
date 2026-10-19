@@ -12,8 +12,22 @@ MODDIR="$MODPATH"
 # --- ربط وحدة FALCON TRICKY المرئية (رابط مزدوج: حذف أحدهما يحذف الآخر) ---
 # إذا أزال المستخدم وحدة FALCON TRICKY من مدير الروت فنعلّم أنفسنا للحذف
 # أيضاً حتى يختفي الاثنان معاً بعد إعادة التشغيل.
-FT_DIR="/data/adb/modules/falcon_tricky"
-[ -f "$FT_DIR/remove" ] && touch "$MODDIR/remove" 2>/dev/null
+# نراقب المسارين (modules + modules_update) ونكشف الغياب التام للملحق أيضاً.
+# أمان: لا نُعلّم أنفسنا للحذف بسبب غياب الملحق إلا إن سبق أن ثُبّت الملحق فعلاً
+# (علامة /data/adb/falcon/.ft_linked يُنشئها customize.sh بعد نجاح النسخ)،
+# حتى لا يحذف المحرك نفسه أبداً بسبب تركيب ناقص أو فاشل.
+FT_FOUND=0
+for B in /data/adb/modules /data/adb/modules_update; do
+    if [ -d "$B/falcon_tricky" ]; then
+        FT_FOUND=1
+        if [ -f "$B/falcon_tricky/remove" ]; then
+            touch "$MODDIR/remove" 2>/dev/null
+        fi
+    fi
+done
+if [ "$FT_FOUND" = "0" ] && [ -f /data/adb/falcon/.ft_linked ]; then
+    touch "$MODDIR/remove" 2>/dev/null
+fi
 
 # --- (v3.15) مسح وقائي عند كل إقلاع: أي وحدة/إضافة تخص TrickyStore أو SafetyNet ---
 # يمنع الحقن المزدوج في keystore2 لو ثبّت المستخدم محركاً مستقلاً أو ملحقاً
@@ -34,8 +48,12 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
             RINFO="$RINFO $(grep -i -e '^id=' -e '^name=' -e '^description=' "$RDIR/module.prop" 2>/dev/null)"
         fi
         RLOW=$(printf '%s' "$RINFO" | tr 'A-Z' 'a-z' 2>/dev/null)
+        # حماية ذاتية: لا نمس وحدتينا حتى لو أُعيد تسمية المجلد
         case "$RLOW" in
-            *tricky*|*safetynet*) ;;
+            *"id=playintegrityfix"*|*"id=falcon_tricky"*) continue ;;
+        esac
+        case "$RLOW" in
+            *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*) ;;
             *) continue ;;
         esac
         [ -f "$RDIR/remove" ] && continue

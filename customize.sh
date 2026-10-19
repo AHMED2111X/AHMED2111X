@@ -225,7 +225,7 @@ fi
 #   1) اسم مجلد الوحدة
 #   2) محتوى module.prop  (id / name)     ← دلالة قوية ⇒ حذف قسري فوري (rm -rf)
 #   3) description داخل module.prop       ← دلالة ضعيفة ⇒ تعطيل + حذف عند الإقلاع
-#   4) الكلمات المفتاحية:  tricky  /  safetynet
+#   4) الكلمات المفتاحية: tricky / safetynet / playintegrity / playcurl / pif / integrityfix
 #
 # ⛔ محمي دائماً: وحدتنا playintegrityfix + ملحقنا falcon_tricky
 # ⛔ لا نمس /data/adb/tricky_store إطلاقاً (كيبوكس المستخدم + target.txt)
@@ -249,28 +249,28 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
         fi
         RLOW=$(printf '%s' "$RKEY" | tr 'A-Z' 'a-z' 2>/dev/null)
         RDLOW=$(printf '%s' "$RDESC" | tr 'A-Z' 'a-z' 2>/dev/null)
+        # حماية ذاتية مطلقة: لا نمس وحدتينا حتى لو أُعيد تسمية مجلديهما
+        case "$RLOW" in
+            *"id=playintegrityfix"*|*"id=falcon_tricky"*) continue ;;
+        esac
 
         case "$RLOW" in
-            *tricky*)
-                # 🔴 محرك أو ملحق TrickyStore ⇒ حذف قسري فوري الآن (لا انتظار إقلاع)
+            *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*)
+                # 🔴 محرك/ملحق TrickyStore أو Play Integrity ⇒ حذف قسري فوري الآن
                 rm -rf "$RDIR" 2>/dev/null
                 if [ -d "$RDIR" ]; then
                     touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
                     ui_print "- 🗑️ [$RNAME] تعذّر الحذف الفوري ⇒ عُطّلت وستُحذف عند الإقلاع" ; delay
                 else
-                    ui_print "- 🗑️ حُذفت وحدة/إضافة TrickyStore [$RNAME] نهائياً الآن" ; delay
+                    ui_print "- 🗑️ حُذفت وحدة/إضافة متعارضة [$RNAME] نهائياً الآن" ; delay
                     TRICKY_FORCED=1
                 fi
                 ;;
-            *safetynet*)
-                touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
-                ui_print "- 🗑️ وحدة متعارضة [$RNAME]: عُطّلت وستُحذف عند إعادة التشغيل" ; delay
-                ;;
             *)
                 case "$RDLOW" in
-                    *tricky*|*safetynet*)
+                    *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*)
                         touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
-                        ui_print "- 🗑️ [$RNAME] تذكر TrickyStore في وصفها: عُطّلت وستُحذف عند الإقلاع" ; delay
+                        ui_print "- 🗑️ [$RNAME] تذكر إضافة تعتيد في وصفها: عُطّلت وستُحذف عند الإقلاع" ; delay
                         ;;
                 esac
                 ;;
@@ -281,7 +281,8 @@ done
 # قاعدة أمان صريحة: المحرك المستقل (tricky_store) وأي مرادف له بأي تسمية معروفة
 for RID in tricky_store TrickyStore tricky_store_oss TrickyStoreOSS tricky_store_pro \
            trickyaddon tricky_addon TrickyAddon TrickyAddonModule tricky_store_addon \
-           TrickyStoreAddon ts_addon tricky_store_webui; do
+           TrickyStoreAddon ts_addon tricky_store_webui \
+           tsupport TSupport TSupport-Advance tsupport-advance; do
     for RBASE in /data/adb/modules /data/adb/modules_update; do
         if [ -d "$RBASE/$RID" ]; then
             rm -rf "$RBASE/$RID" 2>/dev/null
@@ -374,6 +375,10 @@ fi
 rm -rf /data/adb/modules/playintegrityfix/webroot /data/adb/modules_update/playintegrityfix/webroot 2>/dev/null || true
 rm -f /data/adb/modules/playintegrityfix/bridge.js /data/adb/modules_update/playintegrityfix/bridge.js 2>/dev/null || true
 
+# (v3.17-FIX) علامة الربط الآمنة: تُصفَّر قبل كل تركيب، ولا تُعاد إلا بعد نجاح
+# نسخ الملحق فعلياً — تستخدمها خدمة الأم كي لا تحذف نفسها بسبب تركيب ناقص.
+rm -f /data/adb/falcon/.ft_linked 2>/dev/null || true
+
 if [ -f "$MODPATH/falcon_tricky/module.prop" ]; then
     FT_DIR="/data/adb/modules/falcon_tricky"
     rm -rf "$FT_DIR" 2>/dev/null
@@ -421,6 +426,11 @@ if [ -f "$MODPATH/falcon_tricky/module.prop" ]; then
         } > "$_fwi/_index.txt" 2>/dev/null || true
         chmod 644 "$_fwi/_index.txt" 2>/dev/null || true
         chmod 755 "$_fwi" 2>/dev/null || true
+    fi
+    # (v3.17-FIX) نُثبت علامة الربط فقط بعد نجاح نسخ الملحق فعلياً
+    if [ -f "$FT_DIR/module.prop" ] && [ -d "$FT_DIR/webroot" ]; then
+        mkdir -p /data/adb/falcon 2>/dev/null || true
+        touch /data/adb/falcon/.ft_linked 2>/dev/null || true
     fi
     rm -rf "$MODPATH/falcon_tricky" 2>/dev/null
     ui_print "- 🔗 FALCON TRICKY: وحدة مرئية مربوطة بالأم (حذف أحدهما يحذف الآخر)" ; delay

@@ -47,8 +47,9 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
         case "$RNAME" in
             playintegrityfix|falcon_tricky) continue ;;
         esac
-        case "$RNAME" in
-            *[Tt]ricky*|*TRICKY*|*[Ss]afety[Nn]et*|*SAFETYNET*) ;;
+        RULOW=$(printf '%s' "$RNAME" | tr 'A-Z' 'a-z' 2>/dev/null)
+        case "$RULOW" in
+            *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|*ts_addon*|*tsupport*) ;;
             *) continue ;;
         esac
         rm -f "$RDIR/remove" "$RDIR/disable" 2>/dev/null

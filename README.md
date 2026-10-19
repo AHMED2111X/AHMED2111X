@@ -1,4 +1,4 @@
-🦅🔥 **FALCON INTEGRITY FIX — الإصدار v3.16** 🔥🦅
+🦅🔥 **FALCON INTEGRITY FIX — الإصدار v3.18** 🔥🦅
 
 ━━━━━━━━━━━━━━━━━━━━
 **الإصدار الذي أنهى مشكلة** ❌ «الجهاز غير معتمد» **و** ❌ «Bootloader Unlocked» **في فحص Play Integrity!**
@@ -25,6 +25,31 @@
 ✅ STRONG_INTEGRITY   ← وفق قبول جوجل لمفتاح الكيبوكس
 ✅ متجر Google Play يعرض: «الجهاز معتمد»
 ```
+
+## 🆕 الجديد في v3.18 — إصلاح «جلب Keybox (إنترنت)» نهائياً + واجهة «مرصد التخفي» النهائية
+
+🧩 **زر «جلب Keybox (إنترنت)» يعمل الآن على كل الهواتف — إصلاح جذري:**
+
+* 🔍 **السبب الحقيقي**: كان الزر يعتمد على `curl` (غير موجود على أغلب الأجهزة)، ثم `wget -T 15` — وأداة أندرويد الافتراضية لا تدعم الخيار `-T` فتتعطّل فوراً — مع مصدر تنزيل واحد فقط: أي حجب = فشل كامل.
+* 🔄 **4 مصادر بالتتابع** حتى ينجح أحدها: Falcon raw ← Falcon GitHub ← TrickyStoreOSS ← davidepalma.it (خارج GitHub).
+* 🛠️ **3 أدوات تنزيل بالتدرّج**: `curl` ← `busybox wget` (بحث تلقائي في 4 مسارات) ← `wget` النظامي بصيغتين متوافقتين مع toybox.
+* ✅ **فحص صارم للملف**: `<AndroidAttestation>` + مفتاح خاص + **شهادتان على الأقل** — يرفض صفحات الأخطاء نهائياً.
+* 📋 **سجل تشخيصي كامل**: أي مصدر جُرّب؟ أي أداة؟ أين توقّف التنزيل بالضبط؟ — «راجع السجل» أصبح مفيداً فعلاً.
+* ⚡ **تثبيت شامل بعد النجاح**: `tricky_store` + `falcon` + `teesim` + إعادة تشغيل خدمات جوجل فوراً.
+
+🖥️ **واجهة «مرصد التخفي» الموحّدة الجديدة:**
+
+* 🎨 تصميم بطاقة أنيق: اسم الوحدة في المنتصف، أيقونات نصية بلا صور.
+* 🔁 زر «تحديث» عريض في صف كامل تحت العنوان مباشرة.
+* 🧰 قسم **«صيانة الوحدة الأم»**: الأزرار فوق بعضها + **شرح منسدل لكل زر** (زر واحد مفتوح في كل مرة).
+
+🌐 **ترجمة كاملة 100%:** كل النصوص تتبدّل فوراً — **بما فيها شروح أزرار الصيانة وتقارير التشخيص** — أربع لغات، والعربية تظهر فقط عند اختيارها.
+
+📣 **أزرار تيليجرام داخل الواجهة (أسفل الشاشة):** 👤 المطوّر @falcon_kernel · 📣 القناة @FALCON_KERNEL_PRO.
+
+🗑️ **حماية قسرية متبادلة محسّنة:** حذف أي إضافة قديمة (TrickyStore / SafetyNet / PlayIntegrity / PIF…) قبل التثبيت + الوحدتان تراقبان بعضهما (حذف إحداهما يحذف الأخرى فوراً).
+
+👤 **بيانات المطوّر في `module.prop`:** `ABUFARID (أبو فريد) | Telegram: @falcon_kernel`.
 
 ## 🆕 الجديد في v3.16 — سجل حي بلا انتظار + اعتماد متجر Play + العداد
 
@@ -92,7 +117,7 @@
 * 🔤 وإن تعذّر الاستخراج (تطبيق نظامي أو APK مقسّم) يظهر **حرف ملوّن** بلون ثابت لكل تطبيق.
 * 📐 يفضّل أعلى دقة متاحة (`xxxhdpi` → `hdpi`) ويفضّل PNG على WEBP.
 
-## ✨ ما أضافته سلسلة التحديثات v3.05 → v3.16
+## ✨ ما أضافته سلسلة التحديثات v3.05 → v3.18
 
 | الإصدار | الإضافة |
 |---|---|
@@ -108,6 +133,8 @@
 | **v3.14** | ⚡ **ردّ فعل لحظي** (إلغاء `readState` بعد الحفظ + أيقونات عبر HTTP بلا جسر) + **زر «تحديد الكل» و«إلغاء الكل»** بضغطة مع عدّاد |
 | **v3.15** | 🗑️ **حذف قسري فوري لأي إضافة/ملحق يخص TrickyStore** (كشف من `module.prop` + قائمة معرّفات + مسح عند كل إقلاع) + 🔗 **ربط مزدوج فوري** بين الوحدة الأم والمرافقة |
 | **v3.16** | 📜 **سجل حي لكل عملية طويلة** (إصلاح جذري لتعليق الجسر) + ✅ **إجبار اعتماد متجر Play** + 💣 **مسح شامل لجوجل** (اختياري) + 📊 **عداد المستخدمين النشطين** في FALCON TRICKY + 🩺 فحص CRL وتحديث Canary |
+| **v3.17** | 🖥️ **واجهة موحّدة**: أدوات الوحدة الأم انتقلت نهائياً إلى FALCON TRICKY + 🧰 قسم صيانة بشرح منسدل لكل زر + 🔁 زر تحديث تحت العنوان + 📣 أزرار تيليجرام |
+| **v3.18** | 🧩 **إصلاح جذري لزر «جلب Keybox (إنترنت)»** (4 مصادر + 3 أدوات تنزيل + فحص صارم + سجل تشخيصي) + 🌐 **ترجمة كاملة** للشروح والتقارير + 🎨 الواجهة النهائية |
 
 ## 🧩 وحدة FALCON TRICKY المرافقة
 
@@ -116,6 +143,7 @@
 * 🔗 **الحذف متبادل وفوري**: حذف إحدى الوحدتين يحذف الأخرى نهائياً (سكربتا حذف + حراسة عند الإقلاع).
 * 🛡️ **لا تُشغّل أي محرّك** — محرّك واحد فقط يملك `keystore2` (تشغيله مرتين = تجمّد الجهاز).
 * 🗑️ **حذف قسري فوري** لأي وحدة أو ملحق يخص TrickyStore عند التثبيت وعند كل إقلاع — بالكشف من الاسم **و** `module.prop`، مع عدم المساس بـ `/data/adb/tricky_store` (كيبوكسك و`target.txt`).
+* 📣 **أزرار تيليجرام أسفل الواجهة**: المطوّر **@falcon_kernel** — والقناة **@FALCON_KERNEL_PRO**.
 
 ### 📖 شرح كل قائمة في واجهة FALCON TRICKY
 
@@ -147,6 +175,8 @@
 * **🩺 فحص الجسر** — تشخيص كامل (الجسر · الكتابة · الصلاحيات · المسارات) — أرسل نتيجته عند أي مشكلة.
 * **📄 نسخ السجل** — نافذة بكل السجل لتحديده ونسخه.
 * **📋 استعراض القائمة الخام** — يطبع `target.txt` سطراً سطراً كما هو على الجهاز.
+* **🧰 صيانة الوحدة الأم** — 12 أداة (كيبوكس ذكي/جلب إنترنت · RKP · خدمات جوجل · اعتماد المتجر · SOTER · بصمة · محرك) مع **شرح منسدل يظهر تحت كل زر عند الضغط**.
+* **📣 أزرار تيليجرام** — أسفل الواجهة: المطوّر @falcon_kernel · القناة @FALCON_KERNEL_PRO.
 
 **📱 قسم التطبيقات:** 🔎 بحث بثلاث طرق (اسم الحزمة · الاسم العربي · الاسم بأي من اللغات الأربع)، و4 تبويبات: **مخفي · المثبتة (الافتراضي) · الكل · مستخدم**. فوق القائمة زرّا **✔ تحديد الكل** و **✖ إلغاء الكل** مع عدّاد «قابل للإخفاء / قابل للإظهار» — يخفيان أو يُظهران **كل ما تراه أمامك** بضغطة واحدة (وتبقى حزم Google الثلاث محميّة). كل صفٍّ = دائرة الحالة + **أيقونة التطبيق** + اسم الحزمة + الاسم العربي + الوسوم (`إلزامي` · `مستثنى !` · `مستخدم` · `نظام` · `غير مثبّت`) + أزرار **إخفاء / إظهار**.
 
@@ -192,7 +222,7 @@
 
 ## 🔗 الروابط
 
-* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.16.zip](https://github.com/AHMED2111X/AHMED2111X/releases/download/v3.16/FALCONINTEGITY_FIX_V3.16.zip)
+* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.18.zip](https://github.com/AHMED2111X/AHMED2111X/releases/download/v3.18/FALCONINTEGITY_FIX_V3.18.zip)
 * 📢 **القناة الرسمية:** https://t.me/FALCON_KERNEL_PRO
 * 👨‍💻 **تواصل المطور:** https://t.me/falcon_kernel
 * 🐙 **مستودع التحديثات:** https://github.com/AHMED2111X/AHMED2111X
@@ -200,10 +230,12 @@
 ━━━━━━━━━━━━━━━━━━━━
 ## 🇬🇧 English Summary
 
-**FALCON INTEGRITY FIX v3.16** — a complete root module that passes **Play Integrity 3/3** without locking the bootloader and without any automatic wipe (BASIC / DEVICE / STRONG).
+**FALCON INTEGRITY FIX v3.18** — a complete root module that passes **Play Integrity 3/3** without locking the bootloader and without any automatic wipe (BASIC / DEVICE / STRONG).
 
 * 🎭 **PIF fingerprint** — Pixel 6a (bluejay beta · Canary ZP11.260918.007) with matching security patch `2026-10-05`.
 * 🔐 **Keybox attestation** — open-source **Tricky Store OSS v3.1.0** hooking `keystore2`, so the unlocked bootloader is hidden from Google.
+* 🧩 **Keybox fetch fixed (v3.18)** — the “Fetch keybox (internet)” button now works on every phone: it used to depend on `curl` (missing on most devices) and then `wget -T` (unsupported by Android's default wget), from a single source. Now: **4 sources in order** (Falcon raw → Falcon GitHub → TrickyStoreOSS → davidepalma.it) + **3 download tools** in a fallback ladder (`curl` → `busybox wget` → system `wget`) + **strict validation** (root tag + private key + at least 2 certificates) + a **staged diagnostic log** showing exactly where it stopped.
+* 🖥️ **Unified Stealth Radar UI (v3.17/3.18)** — refined card design, full-width refresh button under the title, a maintenance section with **per-button collapsible explanations**, **complete 4-language localization** (including maintenance descriptions and diagnostic reports), and Telegram footer buttons (developer + official channel).
 * 🩺 **Automatic RKP key repair** for Red Magic / ZTE / Nubia devices.
 * ⚡ **Instant UI (v3.14)** — no more 10-second “operation in progress”: saving no longer re-lists packages, and app icons are served as plain files from the module webroot instead of travelling over the root bridge.
 * ✔️ **Select all / Clear all (v3.14)** — hide or unhide every app currently on screen with one tap, with a live “can hide / can show” counter.

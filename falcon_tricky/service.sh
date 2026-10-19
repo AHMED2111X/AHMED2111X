@@ -11,20 +11,28 @@
 #
 # غرضه:
 #    1) الظهور في قائمة مدير الروت باسم FALCON TRICKY.
-#    2) ضمان الرابط المزدوج: حذف أحدهما يحذف الآخر.
+#    2) ضمان الرابط المزدوج الصارم: حذف أحدهما يحذف الآخر إجبارياً.
 # ==============================================================================
 
 MODDIR="${0%/*}"
-MAIN_DIR="/data/adb/modules/playintegrityfix"
+MAIN_ID="playintegrityfix"
+MAIN_FOUND=0
 
-# 1) إذا أُزيلت الإضافة الأم من مدير الروت → نعلّم أنفسنا للحذف أيضاً
-if [ -f "$MAIN_DIR/remove" ]; then
-    touch "$MODDIR/remove" 2>/dev/null
-    exit 0
-fi
+# 1) نراقب الإضافة الأم في المسارين (modules + modules_update):
+#    إن وُجدت معلَّمة للحذف (remove) → نعلّم أنفسنا للحذف فوراً.
+for B in /data/adb/modules /data/adb/modules_update; do
+    if [ -d "$B/$MAIN_ID" ]; then
+        MAIN_FOUND=1
+        if [ -f "$B/$MAIN_ID/remove" ]; then
+            touch "$MODDIR/remove" 2>/dev/null
+            exit 0
+        fi
+    fi
+done
 
-# 2) إذا اختفت الإضافة الأم تماماً → نزيل أنفسنا حتى لا يبقى ملحق يتيم
-if [ ! -d "$MAIN_DIR" ]; then
+# 2) إذا اختفت الإضافة الأم تماماً → نزيل أنفسنا حتى لا يبقى ملحق يتيم.
+#    (لا يُستخدم الملحق أبداً بدون الإضافة الأم)
+if [ "$MAIN_FOUND" = "0" ]; then
     touch "$MODDIR/remove" 2>/dev/null
     exit 0
 fi
