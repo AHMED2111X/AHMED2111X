@@ -1,4 +1,4 @@
-🦅🔥 **FALCON INTEGRITY FIX — الإصدار v3.19** 🔥🦅
+🦅🔥 **FALCON INTEGRITY FIX — الإصدار v3.20** 🔥🦅
 
 ━━━━━━━━━━━━━━━━━━━━
 **الإصدار الذي أنهى مشكلة** ❌ «الجهاز غير معتمد» **و** ❌ «Bootloader Unlocked» **في فحص Play Integrity!**
@@ -25,6 +25,22 @@
 ✅ STRONG_INTEGRITY   ← وفق قبول جوجل لمفتاح الكيبوكس
 ✅ متجر Google Play يعرض: «الجهاز معتمد»
 ```
+
+## 🆕 الجديد في v3.20 — إصلاح «أزرار الصيانة لا تعمل» على الهاتف 🔧
+
+🩹 **المشكلة:** بعض أزرار الصيانة — جلب Keybox (إنترنت) · الجلب الذكي · إعادة تزوير RKP · الإصلاح الكامل · إعادة تشغيل خدمات جوجل · إجبار التزوير · اعتماد متجر Play · إصلاح SOTER · تطبيق البصمة · تحديث بصمة Canary · المسح الشامل لجوجل — كانت تنتظر موافقتك عبر نافذة التأكيد **الأصلية للمتصفح** `confirm()`.
+
+وهذه النافذة **لا تظهر إطلاقاً داخل واجهات الويب على أندرويد** (KsuWebUIStandalone / MMRL WebUI-X): المتصفح يُرجع «إلغاء» فوراً وبصمت، فيبدو الزر كأنه لا يعمل بلا أي رسالة.
+
+✅ **الإصلاح:**
+* استُبدلت كل نداءات `confirm()` الأصلية بـ **شريط التأكيد الداخلي** `confirmAction()` — الشريط الأحمر أسفل الشاشة بزرَّي **تأكيد / إلغاء** (كان موجوداً ومستخدماً أصلاً في «الإبقاء على الأساسي» و«تحديد الكل» و«تصفير المراقبة») — يعمل على كل الأجهزة وكل المضيفات.
+* شمل الإصلاح جميع الأزرار المتأثرة: عبر `maintRun()` (11 زراً) + `kbNetFetch()` + `googleWipe()`.
+* إعادة هيكلة صغيرة: `kbNetFetch` (تأكيد) ← `kbNetFetchRun` (تنفيذ).
+* **حماية من التكرار:** فحص آلي جديد يمنع رجوع `confirm()` الأصلي إلى الواجهة مستقبلاً.
+
+📊 **النتيجة:** 99/99 فحصاً آلياً ناجحاً — والآن **كل زر يستجيب على الهاتف** (يظهر شريط التأكيد ثم يبدأ التنفيذ مع سجل مباشر).
+
+📌 لا تغيير في منطق الأوامر أو الوحدات الأم — إصلاح واجهة فقط.
 
 ## 🆕 Nuevo in v3.19 — الأيقونات فوراً (ksu://icon) + دعم كل محركات Zygisk + تحسينات الواجهة
 
@@ -140,7 +156,7 @@
 * 🔤 وإن تعذّر الاستخراج (تطبيق نظامي أو APK مقسّم) يظهر **حرف ملوّن** بلون ثابت لكل تطبيق.
 * 📐 يفضّل أعلى دقة متاحة (`xxxhdpi` → `hdpi`) ويفضّل PNG على WEBP.
 
-## ✨ ما أضافته سلسلة التحديثات v3.05 → v3.19
+## ✨ ما أضافته سلسلة التحديثات v3.05 → v3.20
 
 | الإصدار | الإضافة |
 |---|---|
@@ -159,6 +175,7 @@
 | **v3.17** | 🖥️ **واجهة موحّدة**: أدوات الوحدة الأم انتقلت نهائياً إلى FALCON TRICKY + 🧰 قسم صيانة بشرح منسدل لكل زر + 🔁 زر تحديث تحت العنوان + 📣 أزرار تيليجرام |
 | **v3.18** | 🧩 **إصلاح جذري لزر «جلب Keybox (إنترنت)»** (4 مصادر + 3 أدوات تنزيل + فحص صارم + سجل تشخيصي) + 🌐 **ترجمة كاملة** للشروح والتقارير + 🎨 الواجهة النهائية |
 | **v3.19** | ⚡ **أيقونات فوراً (ksu://icon)** + 🧩 دعم كل محركات Zygisk + 🛟 إصلاح واجهة فارغة + 💬 وصف FALCON TRICKY + 🔧 busybox/dex |
+| **v3.20** | 🩹 **إصلاح أزرار الصيانة على الهاتف** — شريط تأكيد داخلي بدل `confirm()` الأصلي (11 زراً + المسح الشامل + جلب Keybox) + فحص آلي يمنع التكرار |
 
 ## 🧩 وحدة FALCON TRICKY المرافقة
 
@@ -246,7 +263,7 @@
 
 ## 🔗 الروابط
 
-* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.19.zip](https://github.com/AHMED2111X/AHMED2111X/releases/download/v3.19/FALCONINTEGITY_FIX_V3.19.zip)
+* 📥 **التحميل:** [FALCONINTEGITY_FIX_V3.20.zip](https://github.com/AHMED2111X/AHMED2111X/releases/download/v3.20/FALCONINTEGITY_FIX_V3.20.zip)
 * 📢 **القناة الرسمية:** https://t.me/FALCON_KERNEL_PRO
 * 👨‍💻 **تواصل المطور:** https://t.me/falcon_kernel
 * 🐙 **مستودع التحديثات:** https://github.com/AHMED2111X/AHMED2111X
@@ -254,7 +271,7 @@
 ━━━━━━━━━━━━━━━━━━━━
 ## 🇬🇧 English Summary
 
-**FALCON INTEGRITY FIX v3.19** — a complete root module that passes **Play Integrity 3/3** without locking the bootloader and without any automatic wipe (BASIC / DEVICE / STRONG).
+**FALCON INTEGRITY FIX v3.20** — a complete root module that passes **Play Integrity 3/3** without locking the bootloader and without any automatic wipe (BASIC / DEVICE / STRONG).
 
 * 🎭 **PIF fingerprint** — Pixel 6a (bluejay beta · Canary ZP11.260918.007) with matching security patch `2026-10-05`.
 * 🔐 **Keybox attestation** — open-source **Tricky Store OSS v3.1.0** hooking `keystore2`, so the unlocked bootloader is hidden from Google.
@@ -272,6 +289,7 @@
 * 🩺 **CRL keybox-revocation check (both UIs) + on-demand Canary fingerprint updater + guarded boot line (v3.16).**
 * 📱 **FALCON TRICKY companion WebUI** in 4 languages (AR/EN/TR/RU) with a real **Save** button, instant load, auto-hide of newly installed apps, an on-device **hide log**, one-tap keybox import, and app icons extracted straight from the installed APKs.
 * ⚡ **Instant app icons (v3.19):** icons are now fetched directly from the Android system via the WebUI host's `ksu://icon/<package>` protocol (same technique as TrickyAddonModule) — real icons appear instantly for every app, with a safe fallback (extracted icon → letter avatar). Plus: **support for every Zygisk engine** (ZygiskNext · NeoZygisk · ReZygisk · BreZygisk · built-in Magisk) in install messages + module card.
+* 🩹 **v3.20 hotfix — every button now responds on the phone:** the maintenance actions (keybox fetch, RKP re-boot, Play certify, SOTER repair, full Google wipe, PIF apply/update, Canary, smart fetch) relied on the browser-native `confirm()`, which Android WebUI hosts (KsuWebUIStandalone / MMRL WebUI-X) silently block — the tap appeared to do nothing. They now use the built-in confirm bar (the same red bar used by «essentials only» / «select all» / «reset baseline»), so all 13 maintenance tools work everywhere.
 * 🔑 Keybox is transferred automatically to `/data/adb/tricky_store/keybox.xml` on install and every boot.
 * 🚫 Standalone `tricky_store` modules and any TrickyStore add-on are hard-removed at install and re-checked every boot (double injection into `keystore2` deadlocks the device).
 * 🔒 Nothing is ever wiped automatically — the Play-certification reset (Play Store only; your account lives in GMS) and the optional last-resort full Google wipe only run when you tap their buttons. The full wipe signs you out of Google accounts — your choice; photos, files and apps are untouched.

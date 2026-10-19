@@ -593,7 +593,7 @@ window.onerror = function (msg, src, ln, col) {
     return false;
 };
 /* =============================================================================
-   FALCON TRICKY — WebUI (Stealth Radar) — v3.19 (UNIFIED)
+   FALCON TRICKY — WebUI (Stealth Radar) — v3.20 (UNIFIED)
    Languages: العربية · English · Türkçe · Русский
    🧰 (v3.17-UNIFIED) واجهة واحدة نهائياً: أدوات الأم (كيبوكس ذكي/RKP/SOTER/بصمة)
    نُقلت هنا من واجهة الأم القديمة التي حُذفت — كل عملية بمهلة + نجاح/فشل واضح.
@@ -2098,7 +2098,7 @@ function loadDemo() {
     state.engine = 'RUNNING';
     state.patch = 'all=2026-09-05';
     state.auto = 'on';
-    state.ver = 'v3.19';
+    state.ver = 'v3.20';
     state.loaded = true;
 }
 
@@ -2824,8 +2824,9 @@ function shLive(headMsg, cmd, logPath, onDone) {
 /* (v3.16) المسح الشامل لجوجل — الخيار الأخير للاعتماد (يُسجّل خروج الحسابات) */
 function googleWipe() {
     if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
-    if (!confirm(t('gwipeConfirm'))) return;
-    shLive(t('logGwipeHead'), 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh wipe', '/data/adb/falcon/gwipe.log');
+    confirmAction(t('gwipeConfirm'), function () {
+        shLive(t('logGwipeHead'), 'sh /data/adb/modules/playintegrityfix/rkp_fix.sh wipe', '/data/adb/falcon/gwipe.log');
+    });
 }
 
 /* ============================================================================
@@ -2837,13 +2838,15 @@ var MAIN_MOD = '/data/adb/modules/playintegrityfix';
 
 function maintRun(labelKey, cmd, logName, confirmKey) {
     if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
-    if (confirmKey && !confirm(t(confirmKey))) return;
-    shLive(tf('logMaintHead', { a: t(labelKey) }), cmd, '/data/adb/falcon/' + logName, function (out, code) {
-        var msg = tf(code === 0 ? 'logMaintOk' : 'logMaintFail', { a: t(labelKey) });
-        logLine(msg);
-        toast(msg);
-        readCore(function () { render(); });
-    });
+    var runMaint = function () {
+        shLive(tf('logMaintHead', { a: t(labelKey) }), cmd, '/data/adb/falcon/' + logName, function (out, code) {
+            var msg = tf(code === 0 ? 'logMaintOk' : 'logMaintFail', { a: t(labelKey) });
+            logLine(msg);
+            toast(msg);
+            readCore(function () { render(); });
+        });
+    };
+    if (confirmKey) { confirmAction(t(confirmKey), runMaint); } else { runMaint(); }
 }
 
 function kbSmartFetch() {
@@ -2852,7 +2855,10 @@ function kbSmartFetch() {
 
 function kbNetFetch() {
     if (!bridgeAvailable()) { toast(t('logDemoAction')); return; }
-    if (!confirm(t('confirmKbNet'))) return;
+    confirmAction(t('confirmKbNet'), kbNetFetchRun);
+}
+
+function kbNetFetchRun() {
     logLine(t('logKbNetHead'));
     var SRC = [
         'https://raw.githubusercontent.com/AHMED2111X/AHMED2111X/main/keybox.xml',
