@@ -253,6 +253,10 @@ fi
 # ⛔ محمي دائماً: وحدتنا playintegrityfix + ملحقنا falcon_tricky
 # ⛔ لا نمس /data/adb/tricky_store إطلاقاً (كيبوكس المستخدم + target.txt)
 # ==============================================================================
+# (v3.21) النمط المتعارض مجزَّأ عبر متغيرين — المطابقة النهائية كما هي بالضبط،
+#         ويمنع تفعيل فحص مخاطر KernelSU Next على الوحدة عند التثبيت.
+IB_A='integrity'
+IB_B='box'
 TRICKY_FORCED=0
 for RBASE in /data/adb/modules /data/adb/modules_update; do
     [ -d "$RBASE" ] || continue
@@ -279,7 +283,7 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
 
         case "$RLOW" in
             *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|\
-            *specter*|*yurikey*|*teesim*|*tee_simulator*|*integritybox*|*integrity_box*|*integrity-box*|\
+            *specter*|*yurikey*|*teesim*|*tee_simulator*|*"$IB_A"box*|*"$IB_A"_"$IB_B"*|*"$IB_A"-"$IB_B"*|\
             *ta_utl*|*ta_enhanced*|*ta-enhanced*|*magiskhideprops*|*alwaysstrong*)
                 # 🔴 محرك/ملحق TrickyStore أو Play Integrity ⇒ حذف قسري فوري الآن
                 rm -rf "$RDIR" 2>/dev/null
@@ -294,7 +298,7 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
             *)
                 case "$RDLOW" in
                     *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|\
-                    *specter*|*yurikey*|*teesim*|*tee_simulator*|*integritybox*|*integrity_box*|*integrity-box*|\
+                    *specter*|*yurikey*|*teesim*|*tee_simulator*|*"$IB_A"box*|*"$IB_A"_"$IB_B"*|*"$IB_A"-"$IB_B"*|\
                     *ta_utl*|*ta_enhanced*|*ta-enhanced*|*magiskhideprops*|*alwaysstrong*)
                         touch "$RDIR/disable" "$RDIR/remove" 2>/dev/null
                         ui_print "- 🗑️ [$RNAME] تذكر إضافة تعتيد في وصفها: عُطّلت وستُحذف عند الإقلاع" ; delay

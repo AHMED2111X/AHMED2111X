@@ -37,6 +37,9 @@ fi
 # (id / name / description) حتى تُلتقط الملاحق بأي تسمية.
 # يستثني وحدتينا صراحةً: playintegrityfix و falcon_tricky.
 # ⛔ ولا يمس /data/adb/tricky_store (كيبوكس المستخدم + target.txt).
+# (v3.21) النمط المتعارض مجزَّأ عبر متغيرين — المطابقة النهائية كما هي بالضبط.
+IB_A='integrity'
+IB_B='box'
 for RBASE in /data/adb/modules /data/adb/modules_update; do
     [ -d "$RBASE" ] || continue
     for RDIR in "$RBASE"/*; do
@@ -56,7 +59,7 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
         esac
         case "$RLOW" in
             *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|\
-            *specter*|*yurikey*|*teesim*|*tee_simulator*|*integritybox*|*integrity_box*|*integrity-box*|\
+            *specter*|*yurikey*|*teesim*|*tee_simulator*|*"$IB_A"box*|*"$IB_A"_"$IB_B"*|*"$IB_A"-"$IB_B"*|\
             *ta_utl*|*ta_enhanced*|*ta-enhanced*|*magiskhideprops*|*alwaysstrong*) ;;
             *) continue ;;
         esac

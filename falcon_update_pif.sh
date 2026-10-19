@@ -24,6 +24,12 @@
 #   - --force : أعد الكتابة حتى لو كانت البصمة الحالية هي الأحدث.
 #
 # ⛔ لا يُشغَّل تلقائياً عند الإقلاع أبداً — فقط عند طلب المستخدم.
+#
+# (v3.21) تحسينات الموثوقية والوضوح:
+#   ① مهلات أقصر لكل تنزيل حتى لا يتجمد التحديث عند ضعف الشبكة.
+#   ② busybox المدمج مع الوحدة يُستخدم تلقائياً (date / grep / wget).
+#   ③ عند غياب بناء Canary لجهاز Beta تُجرَّب أجهزة بديلة تلقائياً (حتى 3).
+#   ④ كل رسالة فشل تُسجَّل أيضاً في falcon_integrity_fix.log لسهولة التتبع.
 # ==============================================================================
 
 set +o standalone 2>/dev/null
@@ -49,7 +55,11 @@ done
 
 say() { printf '[➜] %s\n' "$1"; }
 ok()  { printf '[✔] %s\n' "$1"; }
-die() { printf '[✖] %s\n' "$1"; exit 1; }
+die() {
+    printf '[✖] %s\n' "$1"
+    printf '%s [✖] فشل تحديث البصمة: %s\n' "$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null)" "$1" >> "$MODDIR/falcon_integrity_fix.log" 2>/dev/null
+    exit 1
+}
 
 # --- فحص البيئة والصلاحيات ---
 if [ "$USER" != "root" ] && [ "$(whoami 2>/dev/null)" != "root" ] && [ "$(id -u 2>/dev/null)" != "0" ]; then
@@ -59,13 +69,16 @@ case "$HOME" in
     *termux*) die "يرجى التشغيل من بيئة الروت الأساسية (داخل تطبيق الروت)" ;;
 esac
 
-# --- البحث عن busybox ---
+# --- البحث عن busybox (v3.21: النسخة المدمجة في الوحدة أولاً ثم المسارات الشائعة) ---
 BUSYBOX=""
 find_busybox() {
     [ -n "$BUSYBOX" ] && return 0
     local path
-    for path in /data/adb/modules/busybox-ndk/system/*/busybox /data/adb/magisk/busybox /data/adb/ksu/bin/busybox /data/adb/ap/bin/busybox; do
-        if [ -f "$path" ]; then
+    for path in "$MODDIR/busybox" \
+                /data/adb/ksu/bin/busybox /data/adb/ksud/bin/busybox \
+                /data/adb/magisk/busybox /data/adb/ap/bin/busybox \
+                /data/adb/modules/busybox-ndk/system/*/busybox; do
+        if [ -f "$path" ] && "$path" true >/dev/null 2>&1; then
             BUSYBOX="$path"
             return 0
         fi
@@ -90,27 +103,30 @@ if ! printf 'A\nB\n' | grep -m1 -A1 "A" | grep -q "B"; then
 fi
 
 # --- تنزيل: curl ثم busybox wget ثم wget النظامي (مع Referer اختياري) ---
+# (v3.21) مهلات أقصر (فشل أسرع) + لفّ wget النظامي بمهلة عند توفر timeout
 dl() {
     local tmp="$2.tmp"
     rm -f "$tmp" 2>/dev/null
     if command -v curl >/dev/null 2>&1; then
         if [ -n "$3" ]; then
-            curl -k -L -sS --connect-timeout 12 -m 90 -H "Referer: $3" -o "$tmp" "$1" 2>/dev/null
+            curl -k -L -sS --connect-timeout 10 -m 45 -H "Referer: $3" -o "$tmp" "$1" 2>/dev/null
         else
-            curl -k -L -sS --connect-timeout 12 -m 90 -o "$tmp" "$1" 2>/dev/null
+            curl -k -L -sS --connect-timeout 10 -m 45 -o "$tmp" "$1" 2>/dev/null
         fi
         if [ -s "$tmp" ]; then mv -f "$tmp" "$2" 2>/dev/null; return 0; fi
     fi
     if [ -n "$BUSYBOX" ]; then
         if [ -n "$3" ]; then
-            "$BUSYBOX" wget -q -T 60 --no-check-certificate --header "Referer: $3" -O "$tmp" "$1" 2>/dev/null
+            "$BUSYBOX" wget -q -T 40 --no-check-certificate --header "Referer: $3" -O "$tmp" "$1" 2>/dev/null
         else
-            "$BUSYBOX" wget -q -T 60 --no-check-certificate -O "$tmp" "$1" 2>/dev/null
+            "$BUSYBOX" wget -q -T 40 --no-check-certificate -O "$tmp" "$1" 2>/dev/null
         fi
         if [ -s "$tmp" ]; then mv -f "$tmp" "$2" 2>/dev/null; return 0; fi
     fi
     if command -v wget >/dev/null 2>&1; then
-        wget -q -T 60 --no-check-certificate -O "$tmp" "$1" 2>/dev/null || wget -q -O "$tmp" "$1" 2>/dev/null
+        local W="wget"
+        command -v timeout >/dev/null 2>&1 && W="timeout 45 wget"
+        $W -q -T 40 --no-check-certificate -O "$tmp" "$1" 2>/dev/null || $W -q -O "$tmp" "$1" 2>/dev/null
         if [ -s "$tmp" ]; then mv -f "$tmp" "$2" 2>/dev/null; return 0; fi
     fi
     rm -f "$tmp" 2>/dev/null
@@ -120,11 +136,13 @@ dl() {
 # --- جلب ترويسة Last-Modified لملف بعيد ---
 get_lastmod() {
     if command -v curl >/dev/null 2>&1; then
-        curl -k -sI -L --connect-timeout 12 -m 60 "$1" 2>/dev/null > "$2"
+        curl -k -sI -L --connect-timeout 10 -m 40 "$1" 2>/dev/null > "$2"
     elif [ -n "$BUSYBOX" ]; then
-        "$BUSYBOX" wget -q -T 60 -S --spider --no-check-certificate -o "$2" "$1" 2>/dev/null
+        "$BUSYBOX" wget -q -T 40 -S --spider --no-check-certificate -o "$2" "$1" 2>/dev/null
     elif command -v wget >/dev/null 2>&1; then
-        wget -q -S --spider --no-check-certificate -o "$2" "$1" 2>/dev/null
+        local W="wget"
+        command -v timeout >/dev/null 2>&1 && W="timeout 40 wget"
+        $W -q -S --spider --no-check-certificate -o "$2" "$1" 2>/dev/null
     fi
     grep -i -m1 'last-modified' "$2" 2>/dev/null | sed 's/^[Ll]ast-[Mm]odified:[[:space:]]*//' | tr -d '\r'
 }
@@ -144,7 +162,7 @@ rm -f PIXEL_*.new PIXEL_VERSIONS_HTML PIXEL_LATEST_HTML PIXEL_FI_HTML PIXEL_OTA_
 
 # --- 1) أحدث إصدار أندرويد ---
 say "جلب قائمة إصدارات أندرويد من موقع المطورين..."
-dl "https://developer.android.com/about/versions" PIXEL_VERSIONS_HTML || die "فشل الاتصال بالإنترنت (developer.android.com)"
+dl "https://developer.android.com/about/versions" PIXEL_VERSIONS_HTML || die "فشل الاتصال بـ developer.android.com — تحقق من الإنترنت أو عطّل VPN مؤقتاً ثم أعد المحاولة"
 
 VMAX=0
 for V in $(grep -oE 'about/versions/[0-9]+' PIXEL_VERSIONS_HTML 2>/dev/null | grep -oE '[0-9]+' | sort -u); do
@@ -170,7 +188,7 @@ OTA_LINK=$(grep -o 'href="[^"]*download-ota[^"]*"' PIXEL_LATEST_HTML 2>/dev/null
 [ -z "$OTA_LINK" ] && OTA_LINK="$FI_LINK"
 
 say "تنزيل صفحتي الصور الكاملة و OTA..."
-dl "https://developer.android.com$FI_LINK" PIXEL_FI_HTML || die "فشل تنزيل صفحة الصور الكاملة"
+dl "https://developer.android.com$FI_LINK" PIXEL_FI_HTML || die "فشل تنزيل صفحة الصور الكاملة — تحقق من الإنترنت ثم أعد المحاولة"
 dl "https://developer.android.com$OTA_LINK" PIXEL_OTA_HTML || true
 
 FI_N=$(grep -c 'tr id=' PIXEL_FI_HTML 2>/dev/null)
@@ -212,30 +230,51 @@ say "الجهاز المختار: $MODEL ($PRODUCT)"
 
 # --- 4) أحدث بناء Canary من Flash Tool ---
 say "جلب بيانات أحدث بناء Canary من Android Flash Tool..."
-dl "https://flash.android.com/" PIXEL_FLASH_HTML || die "فشل تنزيل صفحة Flash Tool"
+dl "https://flash.android.com/" PIXEL_FLASH_HTML || die "فشل تنزيل صفحة Flash Tool — تحقق من الإنترنت ثم أعد المحاولة"
 KEY=$(grep -o '<body data-client-config=.*' PIXEL_FLASH_HTML 2>/dev/null | cut -d';' -f2 | cut -d'&' -f1)
 [ -z "$KEY" ] && die "تعذر استخراج مفتاح الاتصال من Flash Tool"
 
-dl "https://content-flashstation-pa.googleapis.com/v1/builds?product=$PRODUCT&key=$KEY" PIXEL_STATION_JSON "https://flash.android.com" || die "فشل جلب بيانات البناء من جوجل"
-
-CLINE=$(grep -n '"canary": true' PIXEL_STATION_JSON 2>/dev/null | tail -n 1 | cut -d: -f1)
-case "$CLINE" in ''|*[!0-9]*) die "لا يوجد بناء Canary لهذا الجهاز" ;; esac
-CSTART=$((CLINE - 14))
-[ "$CSTART" -lt 1 ] && CSTART=1
-sed -n "${CSTART},${CLINE}p" PIXEL_STATION_JSON > PIXEL_CANARY_JSON 2>/dev/null
-[ -s PIXEL_CANARY_JSON ] || die "لا يوجد بناء Canary لهذا الجهاز"
-
-ID=$(grep 'releaseCandidateName' PIXEL_CANARY_JSON 2>/dev/null | cut -d'"' -f4)
-INCREMENTAL=$(grep 'buildId' PIXEL_CANARY_JSON 2>/dev/null | cut -d'"' -f4)
-RTVER=$(grep 'releaseTrackVersionName' PIXEL_CANARY_JSON 2>/dev/null | cut -d'"' -f4)
-[ -z "$ID" ] && die "تعذر استخراج رقم البناء (ID)"
-[ -z "$INCREMENTAL" ] && die "تعذر استخراج رقم الإصدار (INCREMENTAL)"
-case "$ID" in *[!A-Za-z0-9._-]*) die "رقم البناء غير صالح: $ID" ;; esac
-case "$INCREMENTAL" in ''|*[!0-9]*) die "قيمة INCREMENTAL غير صالحة" ;; esac
+# (v3.21) ثلاث محاولات: عند غياب بناء Canary لجهاز Beta ننتقل تلقائياً إلى جهاز بديل
+CANOK=0
+TRY=1
+while [ "$TRY" -le 3 ] && [ "$CANOK" = "0" ]; do
+    if [ "$TRY" -gt 1 ]; then
+        RND=$RANDOM
+        case "$RND" in ''|*[!0-9]*) RND=1 ;; esac
+        IDX=$((RND % N + 1))
+        MODEL=$(printf '%s\n' "$MODEL_LIST" | sed -n "${IDX}p")
+        PRODUCT=$(printf '%s\n' "$PRODUCT_LIST" | sed -n "${IDX}p")
+        DEVICE=$(printf '%s' "$PRODUCT" | sed 's/_beta$//')
+        [ -z "$MODEL" ] && MODEL="$DEVICE"
+        say "محاولة بديلة ($TRY/3): $MODEL ($PRODUCT)"
+    fi
+    if dl "https://content-flashstation-pa.googleapis.com/v1/builds?product=$PRODUCT&key=$KEY" PIXEL_STATION_JSON "https://flash.android.com"; then
+        CLINE=$(grep -n '"canary": true' PIXEL_STATION_JSON 2>/dev/null | tail -n 1 | cut -d: -f1)
+        case "$CLINE" in ''|*[!0-9]*) CLINE=0 ;; esac
+        if [ "$CLINE" -ge 1 ]; then
+            CSTART=$((CLINE - 14))
+            [ "$CSTART" -lt 1 ] && CSTART=1
+            sed -n "${CSTART},${CLINE}p" PIXEL_STATION_JSON > PIXEL_CANARY_JSON 2>/dev/null
+            if [ -s PIXEL_CANARY_JSON ]; then
+                ID=$(grep 'releaseCandidateName' PIXEL_CANARY_JSON 2>/dev/null | cut -d'"' -f4 | tail -n 1)
+                INCREMENTAL=$(grep 'buildId' PIXEL_CANARY_JSON 2>/dev/null | cut -d'"' -f4 | tail -n 1)
+                RTVER=$(grep 'releaseTrackVersionName' PIXEL_CANARY_JSON 2>/dev/null | cut -d'"' -f4 | tail -n 1)
+                case "$ID" in ''|*[!A-Za-z0-9._-]*) ID="" ;; esac
+                case "$INCREMENTAL" in ''|*[!0-9]*) INCREMENTAL="" ;; esac
+                [ -n "$ID" ] && [ -n "$INCREMENTAL" ] && CANOK=1
+            fi
+        fi
+        [ "$CANOK" = "0" ] && [ "$TRY" -lt 3 ] && say "لا يتوفر بناء Canary لهذا الجهاز — تجربة جهاز بديل..."
+    else
+        die "فشل جلب بيانات البناء من جوجل — تحقق من الإنترنت ثم أعد المحاولة"
+    fi
+    TRY=$((TRY + 1))
+done
+[ "$CANOK" = "1" ] || die "لا يتوفر بناء Canary حالياً — أعد المحاولة بعد قليل"
 say "أحدث بصمة Canary: $ID ($RTVER)"
 
 # --- 5) تاريخ الإصدار والانتهاء التقديري (+ 6 أسابيع) ---
-FI_URL=$(grep 'factoryImageDownloadUrl' PIXEL_CANARY_JSON 2>/dev/null | cut -d'"' -f4)
+FI_URL=$(grep 'factoryImageDownloadUrl' PIXEL_CANARY_JSON 2>/dev/null | cut -d'"' -f4 | tail -n 1)
 REL=""
 EXP=""
 if [ -n "$FI_URL" ]; then
@@ -254,7 +293,7 @@ fi
 say "تاريخ الإصدار: $REL | الانتهاء التقديري: $EXP"
 
 # --- 6) الرقعة الأمنية من نشرات أمان Pixel ---
-CID=$(grep '"id"' PIXEL_CANARY_JSON 2>/dev/null | sed -e 's;.*canary-\(.*\)".*;\1;' -e 's;^\(.\{4\}\);\1-;' | head -n 1)
+CID=$(grep '"id"' PIXEL_CANARY_JSON 2>/dev/null | sed -e 's;.*canary-\(.*\)".*;\1;' -e 's;^\(.\{4\}\);\1-;' | tail -n 1)
 if [ -z "$CID" ]; then
     MM=$(printf '%s' "$ID" | grep -oE '[0-9]{6}' | head -n 1 | cut -c1-4)
     case "$MM" in
@@ -386,6 +425,7 @@ fi
 
 # --- 13) الملخص ---
 printf '\n%s\n' "================ ملخص التحديث ================"
+printf '  الجهاز         : %s (%s)\n' "$MODEL" "$PRODUCT"
 printf '  البصمة القديمة : %s\n' "${OLD_FP:--}"
 printf '  البصمة الجديدة : %s\n' "$NEW_FP"
 printf '  الرقعة الأمنية  : %s\n' "$SECURITY_PATCH"
@@ -393,5 +433,6 @@ printf '  تاريخ الإصدار  : %s\n' "$REL"
 printf '  الانتهاء تقديراً: %s\n' "$EXP"
 printf '  نسخة احتياطية  : custom.pif.prop.bak-%s\n' "$OLD_ID"
 printf '%s\n' "=============================================="
+printf '%s [✔] تم تحديث بصمة Canary: %s | %s | جهاز: %s\n' "$(date '+%Y-%m-%d %H:%M:%S' 2>/dev/null)" "$ID" "$SECURITY_PATCH" "$MODEL" >> "$MODDIR/falcon_integrity_fix.log" 2>/dev/null
 printf 'FALCON_PIF_UPDATE_DONE\n'
 exit 0

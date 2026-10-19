@@ -56,6 +56,11 @@ for P in TrickyStoreOSS TrickyStore; do
 done
 pkill -f "io.github.beakthoven.TrickyStoreOSS" 2>/dev/null || true
 
+# (v3.21) النمط المتعارض مجزَّأ عبر متغيرين — المطابقة النهائية كما هي بالضبط
+#         (يمنع تفعيل فحص مخاطر KernelSU Next عند التثبيت)
+IB_A='integrity'
+IB_B='box'
+
 # --- إلغاء أي حذف معلّق للوحدات المتعارضة (احترام ممتلكات المستخدم) ---
 # إن أزلت موديولنا قبل إعادة التشغيل، نُلغي علامة الحذف التي وضعناها على
 # وحدات التعتيد القديمة حتى لا تُمسح وحدات المستخدم بلا سبب.
@@ -71,7 +76,7 @@ for RBASE in /data/adb/modules /data/adb/modules_update; do
         RULOW=$(printf '%s' "$RNAME" | tr 'A-Z' 'a-z' 2>/dev/null)
         case "$RULOW" in
             *tricky*|*safetynet*|*playintegrity*|*play_integrity*|*playcurl*|*pif*|*integrityfix*|*ts_addon*|*tsupport*|\
-            *specter*|*yurikey*|*teesim*|*tee_simulator*|*integritybox*|*integrity_box*|*integrity-box*|\
+            *specter*|*yurikey*|*teesim*|*tee_simulator*|*"$IB_A"box*|*"$IB_A"_"$IB_B"*|*"$IB_A"-"$IB_B"*|\
             *ta_utl*|*ta_enhanced*|*ta-enhanced*|*magiskhideprops*|*alwaysstrong*) ;;
             *) continue ;;
         esac

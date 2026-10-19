@@ -593,7 +593,7 @@ window.onerror = function (msg, src, ln, col) {
     return false;
 };
 /* =============================================================================
-   FALCON TRICKY — WebUI (Stealth Radar) — v3.20 (UNIFIED)
+   FALCON TRICKY — WebUI (Stealth Radar) — v3.21 (UNIFIED)
    Languages: العربية · English · Türkçe · Русский
    🧰 (v3.17-UNIFIED) واجهة واحدة نهائياً: أدوات الأم (كيبوكس ذكي/RKP/SOTER/بصمة)
    نُقلت هنا من واجهة الأم القديمة التي حُذفت — كل عملية بمهلة + نجاح/فشل واضح.
@@ -2098,7 +2098,7 @@ function loadDemo() {
     state.engine = 'RUNNING';
     state.patch = 'all=2026-09-05';
     state.auto = 'on';
-    state.ver = 'v3.20';
+    state.ver = 'v3.21';
     state.loaded = true;
 }
 
@@ -2771,7 +2771,43 @@ function shLive(headMsg, cmd, logPath, onDone) {
     if (busy || LIVE_RUNNING) { toast(t('logRefused')); return; }
     LIVE_RUNNING = true;
     var LOGF = logPath || '/data/adb/falcon/live_op.log';
+    var shown = 0;
     logLine(headMsg);
+    function liveRender(ln) {
+        ln = String(ln).replace(/\r$/, '');
+        if (!ln.replace(/\s/g, '')) return;
+        if (/^FALCON_EXIT=-?[0-9]+$/.test(ln)) return;
+        logLine(ln.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+    }
+    /* (v3.21) تفريغ ختامي مضمون: يعرض كل ما لم يُقرأ لحظياً (حتى لو وصل الناتج
+       بلا أسطر جديدة) ويستخرج سبب الفشل من سطر [✖] ويُظهره كتنبيه فوري. */
+    function liveFlush(o2) {
+        var txt = String(o2 || '');
+        var tail = txt.length > shown ? txt.substring(shown) : '';
+        tail = tail.replace(/FALCON_EXIT=-?[0-9]+/g, '');
+        if (tail.indexOf('\n') === -1) {
+            if (tail.indexOf('\\n') !== -1) { tail = tail.replace(/\\n/g, '\n'); }
+            else { tail = tail.replace(/\s*(\[➜\]|\[✔\]|\[✖\]|\[!\]|\[i\])/g, '\n$1'); }
+        }
+        var tls = tail.split(/\r\n|\r|\n/);
+        for (var ti = 0; ti < tls.length && ti < 200; ti++) liveRender(tls[ti]);
+        if (txt.length > shown) shown = txt.length;
+        var all = txt.replace(/FALCON_EXIT=-?[0-9]+/g, '').replace(/\\n/g, '\n');
+        var reason = '';
+        var parts = all.split(/\r\n|\r|\n/);
+        for (var pi = parts.length - 1; pi >= 0; pi--) {
+            var pm = /\[✖\][^\r\n]*/.exec(parts[pi]);
+            if (pm) { reason = String(pm[0]).substring(0, 240); break; }
+        }
+        if (!reason) {
+            var rm = /\[✖\][^\r\n]{0,240}/.exec(all);
+            if (rm) reason = rm[0];
+        }
+        if (reason) {
+            var rs = String(reason).replace(/^\[✖\]\s*/, '');
+            if (rs) toast(esc(rs));
+        }
+    }
     function liveFinish(out, code) {
         LIVE_RUNNING = false;
         if (onDone) onDone(out, code);
@@ -2783,7 +2819,7 @@ function shLive(headMsg, cmd, logPath, onDone) {
             if (onDone) onDone('', -1);
             return;
         }
-        var shown = 0, ticks = 0, misses = 0;
+        var ticks = 0, misses = 0;
         function shLiveNext() {
             ticks++;
             if (ticks > 240) { LIVE_RUNNING = false; logLine(tf('logTimeout', { a: 600 })); return; }
@@ -2802,15 +2838,12 @@ function shLive(headMsg, cmd, logPath, onDone) {
                 if (cut >= 0 && cut + 1 > shown) {
                     var chunk = o2.substring(shown, cut + 1).replace(/\n+$/, '');
                     var cls = chunk.split('\n');
-                    for (var ci = 0; ci < cls.length; ci++) {
-                        var ln = cls[ci].replace(/\r$/, '');
-                        if (!ln.replace(/\s/g, '')) continue;
-                        logLine(ln.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
-                    }
+                    for (var ci = 0; ci < cls.length; ci++) liveRender(cls[ci]);
                     shown = cut + 1;
                 }
                 if (o2.indexOf('FALCON_EXIT=') !== -1) {
                     var em = /FALCON_EXIT=([0-9-]+)/.exec(o2);
+                    liveFlush(o2);
                     liveFinish(o2, em ? parseInt(em[1], 10) : -1);
                     return;
                 }
