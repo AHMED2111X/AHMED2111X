@@ -67,9 +67,8 @@
 ### 👨‍💻 المطور
 
 - **المطور**: ABUFARID
-- **تيليجرام**: [@FALCON_KERNEL](https://t.me/FALCON_KERNEL)
-- **القناة**: [فالكـون كيرنـل | FALCON KERNEL](https://t.me/FALCON_KERNEL)
-
+- **تيليجرام**: https://t.me/FALCON_KERNEL
+- **القناة**: https://t.me/FALCON_KERNEL_PRO
 ### 🤝 المساهمة
 
 نرحب بالمساهمات! إذا وجدت خطأ أو لديك اقتراح، يمكنك فتح [Issue](https://github.com/AHMED2111X/AHMED2111X/issues) أو التواصل عبر تيليجرام.
