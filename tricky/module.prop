@@ -1,0 +1,7 @@
+id=tricky_store
+name=Tricky Store OSS
+version=v3.21
+versionCode=127
+author=beakthoven
+description=A trick of keystore but open source.
+updateJson=https://raw.githubusercontent.com/beakthoven/TrickyStoreOSS/main/update.json
