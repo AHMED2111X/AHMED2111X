@@ -131,8 +131,8 @@ Built with automation in mind, it handles keybox migration, conflicts, RKP fixes
 ### 👨‍💻 Developer
 
 - **Developer**: ABUFARID
-- **Telegram**:(https://t.me/FALCON_KERNEL)
-- **Channel**:(https://t.me/FALCON_KERNEL_PRO)
+- **Telegram**:https://t.me/FALCON_KERNEL
+- **Channel**:https://t.me/FALCON_KERNEL_PRO
 
 ### 🤝 Contributing
 
