@@ -160,6 +160,7 @@ diag_props() {
     echo "== 4) خصائص السلامة (ما يقرأه جوجل) =="
     for P in ro.build.tags ro.build.type ro.build.fingerprint ro.build.version.security_patch \
              ro.build.version.incremental ro.build.id ro.debuggable ro.secure ro.adb.secure \
+             ro.build.version.sdk ro.build.version.release ro.build.version.release_or_codename \
              ro.product.model ro.product.brand ro.product.name ro.product.device \
              ro.boot.verifiedbootstate ro.boot.flash.locked ro.boot.vbmeta.device_state \
              ro.boot.veritymode ro.boot.selinux ro.boot.warranty_bit ro.boot.mode \
@@ -167,6 +168,21 @@ diag_props() {
              ro.system.build.tags ro.vendor.build.tags ro.odm.build.tags; do
         printf "  %-38s = %s\n" "$P" "$(gp "$P")"
     done
+    line
+}
+
+# ------------------------------------------- 4.5) إعدادات PIF كما يراها المحرك
+diag_pif() {
+    echo "== 4.5) إعدادات PIF كما يقرأها محرك Zygisk =="
+    for F in custom.pif.json custom.pif.prop pif.prop; do
+        if [ -s "$MODDIR/$F" ]; then
+            echo "  --- $MODDIR/$F ---"
+            grep -E 'FINGERPRINT|"\*api_level"|^\*api_level|DEVICE_INITIAL_SDK_INT|"RELEASE"|^RELEASE=|^SECURITY_PATCH|"SECURITY_PATCH"' \
+                "$MODDIR/$F" 2>/dev/null | head -n 8 | sed 's/^/         /'
+        fi
+    done
+    echo "  ⚠️  قيمة *api_level هي ro.build.version.sdk الذي يراه جوجل."
+    echo "     إن كانت 32 (أندرويد 12L) وبصمة Canary 2026 ⇒ تناقض يكشفه الفحص."
     line
 }
 
@@ -251,6 +267,7 @@ do_diag() {
         diag_keybox
         diag_target
         diag_props
+        diag_pif
         diag_zygisk
         diag_rkp
         diag_verdict
@@ -301,10 +318,108 @@ do_fix() {
     echo "⚠️  أعد تشغيل الجهاز ثم شغّل:  sh $0 diag"
 }
 
+# ------------------------------------------- 8) تعديل مستوى API (تجربة سريعة)
+# ⛔ لا يحذف شيئاً: نسخة احتياطية لكل ملف قبل التعديل + أمر استرجاع.
+# هذا يغيّر ro.build.version.sdk الذي يعلنه محرك PIF — وهو أهم مرشّح
+# لخلل «أخضر واحد» عندما تكون البصمة Canary حديثة و *api_level قديمة.
+apilevel() {
+    _v="$1"
+    if [ -z "$_v" ]; then
+        echo "الاستخدام: sh $0 apilevel <30..37>   |   sh $0 apilevel reset"
+        exit 1
+    fi
+
+    if [ "$_v" = "reset" ]; then
+        for F in custom.pif.prop custom.pif.json; do
+            [ -f "$MODDIR/$F.bak-apilevel" ] || continue
+            cp -f "$MODDIR/$F.bak-apilevel" "$MODDIR/$F" 2>/dev/null
+            echo "✔ استُعيد $F"
+        done
+        restart_gms
+        echo "↩️  أُعيد تشغيل خدمات جوجل — أعد فحص Play Integrity"
+        return 0
+    fi
+
+    case "$_v" in
+        ''|*[!0-9]*) echo "✖ قيمة غير صالحة: $_v" ; return 1 ;;
+    esac
+    if [ "$_v" -lt 26 ] 2>/dev/null || [ "$_v" -gt 40 ] 2>/dev/null; then
+        echo "✖ القيمة يجب أن تكون بين 26 و 40" ; return 1
+    fi
+
+    for F in custom.pif.prop custom.pif.json; do
+        [ -f "$MODDIR/$F" ] || continue
+        [ -f "$MODDIR/$F.bak-apilevel" ] || cp -f "$MODDIR/$F" "$MODDIR/$F.bak-apilevel" 2>/dev/null
+    done
+
+    # ملف الخصائص (مصدر الحقيقة)
+    if [ -f "$MODDIR/custom.pif.prop" ]; then
+        if grep -q '^\*api_level=' "$MODDIR/custom.pif.prop" 2>/dev/null; then
+            sed -i "s|^\*api_level=.*|*api_level=$_v|" "$MODDIR/custom.pif.prop" 2>/dev/null
+        else
+            echo "*api_level=$_v" >> "$MODDIR/custom.pif.prop" 2>/dev/null
+        fi
+        ok "custom.pif.prop → *api_level=$_v"
+    fi
+
+    # ⭐ إعادة توليد custom.pif.json عبر سكربت المشروع نفسه (أضمن طريقة)
+    if [ -f "$MODDIR/apply_pif.sh" ]; then
+        sh "$MODDIR/apply_pif.sh" force >/dev/null 2>&1
+        ok "أُعيد توليد بصمة PIF (custom.pif.json) من ملف الخصائص"
+    fi
+
+    # ⭐ احتياطي: كتابة مباشرة للـJSON بطريقة awk (أضمن من sed على كلBusyBox)
+    if [ -f "$MODDIR/custom.pif.json" ]; then
+        json_set_apilevel "$MODDIR/custom.pif.json" "$_v"
+    fi
+
+    # تحقّق: هل تغيّر الرقم في JSON فعلاً؟
+    if [ -f "$MODDIR/custom.pif.json" ]; then
+        _cur="$(grep -m1 'api_level' "$MODDIR/custom.pif.json" 2>/dev/null | tr -dc '0-9')"
+        if [ "$_cur" = "$_v" ]; then
+            ok "JSON مؤكَّد: *api_level=$_cur"
+        else
+            warn "JSON ما زال يعرض ($_cur) — تحقّق يدوياً"
+        fi
+    fi
+
+    restart_gms
+    echo ""
+    echo "✅ تم الضبط على api_level=$_v — أعد فحص Play Integrity الآن."
+    echo "   للرجوع: sh $0 apilevel reset"
+}
+
+restart_gms() {
+    if [ -f "$MODDIR/killpi.sh" ]; then
+        sh "$MODDIR/killpi.sh" >/dev/null 2>&1
+    else
+        killall -9 com.google.android.gms.unstable com.android.vending 2>/dev/null
+    fi
+}
+
+# ⭐ كتابة قيمة *api_level داخل ملف JSON بطريقة awk (مضمونة على كل BusyBox)
+# السطر الهدف:     "*api_level": "32",
+# بعد التقسيم بـ ":  [1]="    " [2]="*api_level" [3]=": " [4]="32" [5]=","
+json_set_apilevel() {
+    _jf="$1"
+    _jv="$2"
+    [ -f "$_jf" ] || return 0
+    awk -v v="$_jv" '
+        index($0, "api_level") > 0 {
+            c = ($0 ~ /,[[:space:]]*$/) ? "," : ""
+            print "    \"*api_level\": \"" v "\"" c
+            next
+        }
+        { print }
+    ' "$_jf" > "$_jf.tmp" 2>/dev/null && mv -f "$_jf.tmp" "$_jf" 2>/dev/null
+    rm -f "$_jf.tmp" 2>/dev/null
+}
+
 case "${1:-diag}" in
     diag) do_diag ;;
     fix)  do_fix ;;
-    *)    echo "الاستخدام: sh $0 {diag|fix}" ; exit 1 ;;
+    apilevel) apilevel "$2" ;;
+    *)    echo "الاستخدام: sh $0 {diag|fix|apilevel <30..37|reset>}" ; exit 1 ;;
 esac
 
 exit 0
