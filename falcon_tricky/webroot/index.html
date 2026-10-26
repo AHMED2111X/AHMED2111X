@@ -427,6 +427,25 @@
     <div class="hint" data-i18n="hintMaint"></div>
 </section>
 
+<!-- (v3.23) لوحة منفذ الكيبوكس — إدارة المنفذ الأساسي/الثانوي -->
+<section class="panel" id="kbSlotsPanel">
+    <h2 data-i18n="panelKbSlots"></h2>
+    <div class="row">
+        <button id="btnKbSlotsStatus" data-i18n="btnKbSlotsStatus"></button>
+        <button id="btnKbSlotsPreferPrimary" data-i18n="btnKbSlotsPreferPrimary"></button>
+        <button id="btnKbSlotsPreferSecondary" data-i18n="btnKbSlotsPreferSecondary"></button>
+    </div>
+    <div class="row" style="margin-top:8px">
+        <button id="btnKbSlotsPromote" class="amber" data-i18n="btnKbSlotsPromote"></button>
+        <button id="btnKbSlotsClear" class="danger" data-i18n="btnKbSlotsClear"></button>
+    </div>
+    <div class="row" style="margin-top:8px">
+        <button id="btnIntegrityDiag" data-i18n="btnIntegrityDiag"></button>
+        <button id="btnIntegrityFix" class="amber" data-i18n="btnIntegrityFix"></button>
+    </div>
+    <div class="hint" data-i18n="hintKbSlots"></div>
+</section>
+
 <section class="panel" id="appsPanel">
     <h2 data-i18n="panelApps"></h2>
     <div class="row grow">
@@ -563,6 +582,13 @@
                 <i class="mchev">▾</i>
             </button>
             <div class="maint-desc" data-i18n="mdEngineDiag"></div>
+        </div>
+        <div class="maint-item">
+            <button class="maint-btn" type="button">
+                <span data-i18n="panelKbSlots"></span>
+                <i class="mchev">▾</i>
+            </button>
+            <div class="maint-desc" data-i18n="mdKbSlots"></div>
         </div>
         <div class="maint-item">
             <button class="maint-btn" type="button">
@@ -758,6 +784,20 @@ var I18N = {
         mdPifCheck: '• تفقد PIF: يعرض حالة المحرك المثبت، وملفات البصمة (custom.pif.prop/pif.prop)، والسجلات. للتفقد فقط — لا يعدل أي شيء.',
         mdCanary: '• تحديث Canary: ينفذ sch /data/adb/modules/playintegrityfix/falcon_update_pif.sh -m. يجلب أحدث إصدار من Canary Engine للتأكد من التوافق مع شهادات RKP الإجبارية (فبراير 2026).',
         mdEngineDiag: '• تشخيص المحرك: يفحص حالة TrickyStoreOSS (pid, logs), ملفات الكيبوكس (active vs user), بصمة الجهاز الحقيقية مقابل المزيفة, target.txt, security_patch.txt, RKP keys. عرض تشخيصي فقط.',
+        panelKbSlots: '🔐 منفذ الكيبوكس (أساسي / ثانوي)',
+        btnKbSlotsStatus: '🔍 حالة المنفذين',
+        btnKbSlotsPreferPrimary: '⭐ تفضيل الأساسي',
+        btnKbSlotsPreferSecondary: '🔁 تفضيل الثانوي',
+        btnKbSlotsPromote: '⬆️ ترقية الثانوي ← الأساسي',
+        btnKbSlotsClear: '🧹 مسح الثانوي',
+        hintKbSlots: 'يدير الموديول كيبوكسين: الأساسي (مُقدَّس، لا يُمسح) والثانوي (احتياطي). التبويب يعرض المنفذ الفعّال حالاً، ويبدّل التفضيل، أو يرقّي الثانوي إلى الأساسي بأمر صريح — مع نسخ احتياطية وسجل كامل.',
+        btnIntegrityDiag: '🩺 تشخيص السلامة',
+        btnIntegrityFix: '🔧 إعادة تطبيق آمنة',
+        mdIntegrityDiag: '• تشخيص السلامة: يفحص استيراد المفتاح إلى TEE، وحقن المكتبة داخل keystore2، وحالة الإبطال (CRL)، وتغطية قوائم الحمايات، وحالة RKP. قراءة فقط — لا يغيّر أي شيء.',
+        confirmIntegrityFix: '🔧 إعادة تطبيق آمنة:\n\n• تُعاد بناء قائمة الحمايات من كل التطبيقات المثبتة.\n• يُعاد تطبيق طبقة توافق الرومات.\n• يُعاد تطبيق الكيبوكس النشط.\n• تُعاد تشغيل خدمات Google Play.\n\nلا يحذف أي ملف ولا يمسّ الكيبوكس الأساسي.\n\nمتابعة؟'
+        mdKbSlots: '• منفذ الكيبوكس: يعرض حالة المنفذ الأساسي والثانوي ويبدّل التفضيل بينهما. المنفذ الأساسي (/data/adb/falcon/keybox.xml) محميٌّ دائماً ولا يُمحى أبداً. ترقية الثانوي إلى الأساسي تتطلب موافقة صريحة.',
+        confirmKbSlotsPromote: '⬆️ ترقية المنفذ الثانوي إلى الأساسي:\n\n• سيصبح محتوى /data/adb/falcon/keybox2.xml هو المنفذ الأساسي.\n• يُحفظ الأساسي الحالي كنسخة احتياطية قبل الاستبدال.\n• لن يُحذف أي ملف — العملية قابلة للتراجع.\n\nمتابعة؟',
+        confirmKbSlotsClear: '🧹 مسح المنفذ الثانوي:\n\n• سيُحذف /data/adb/falcon/keybox2.xml.\n• المنفذ الأساسي لا يُمَس.\n\nمتابعة؟',
         dgRkpMods: 'وحدات Remote Key Provisioning المتوفرة',
         dgRkpTee: 'فحص إصدار شهادة التحقق من TEE',
         dgRkpTool: 'وجود أداة ZTE لإصلاح المفاتيح',
@@ -998,6 +1038,20 @@ var I18N = {
         mdPifCheck: '• PIF check: shows the installed engine state, the fingerprint files (custom.pif.prop/pif.prop), and the logs. Check only — it modifies nothing.',
         mdCanary: '• Canary update: runs sch /data/adb/modules/playintegrityfix/falcon_update_pif.sh -m. Fetches the latest Canary Engine release to ensure compatibility with the mandatory RKP certificates (February 2026).',
         mdEngineDiag: '• Engine diagnosis: checks the TrickyStoreOSS state (pid, logs), the keybox files (active vs user), the real vs spoofed device fingerprint, target.txt, security_patch.txt, RKP keys. Diagnostic display only.',
+        panelKbSlots: '🔐 Keybox slots (primary / secondary)',
+        btnKbSlotsStatus: '🔍 Slots status',
+        btnKbSlotsPreferPrimary: '⭐ Prefer primary',
+        btnKbSlotsPreferSecondary: '🔁 Prefer secondary',
+        btnKbSlotsPromote: '⬆️ Promote secondary → primary',
+        btnKbSlotsClear: '🧹 Clear secondary',
+        hintKbSlots: 'The module manages two keybox slots: the primary (sacred, never wiped) and the secondary (backup). This tab shows which slot is active, switches the preference, or promotes the secondary to primary on explicit request — with backups and a full log.',
+        btnIntegrityDiag: '🩺 Integrity diagnosis',
+        btnIntegrityFix: '🔧 Safe re-apply',
+        mdIntegrityDiag: '• Integrity diagnosis: checks the TEE key import, the library injection inside keystore2, the revocation status (CRL), the protection-list coverage and the RKP state. Read-only — it changes nothing.',
+        confirmIntegrityFix: '🔧 Safe re-apply:\n\n• The protection list is rebuilt from every installed app.\n• The custom-ROM compatibility layer is re-applied.\n• The active keybox is re-applied.\n• Google Play services are restarted.\n\nNothing is deleted and the primary keybox is never touched.\n\nContinue?'
+        mdKbSlots: '• Keybox slots: shows the state of the primary and secondary slots and switches the preference between them. The primary (/data/adb/falcon/keybox.xml) is always protected and never wiped. Promoting the secondary to primary requires explicit confirmation.',
+        confirmKbSlotsPromote: '⬆️ Promote the secondary slot to primary:\n\n• /data/adb/falcon/keybox2.xml becomes the primary slot content.\n• The current primary is saved as a backup before replacement.\n• Nothing is deleted — the operation is reversible.\n\nContinue?',
+        confirmKbSlotsClear: '🧹 Clear the secondary slot:\n\n• /data/adb/falcon/keybox2.xml will be removed.\n• The primary slot is not touched.\n\nContinue?',
         dgRkpMods: 'Available Remote Key Provisioning modules',
         dgRkpTee: 'TEE attestation certificate version check',
         dgRkpTool: 'ZTE key-repair tool presence',
@@ -1238,6 +1292,20 @@ var I18N = {
         mdPifCheck: '• PIF kontrolü: kurulu motor durumunu, parmak izi dosyalarını (custom.pif.prop/pif.prop) ve günlükleri gösterir. Yalnızca kontrol — hiçbir şeyi değiştirmez.',
         mdCanary: '• Canary güncellemesi: sch /data/adb/modules/playintegrityfix/falcon_update_pif.sh -m komutunu çalıştırır. Zorunlu RKP sertifikalarıyla (Şubat 2026) uyumluluğu sağlamak için en yeni Canary Engine sürümünü getirir.',
         mdEngineDiag: '• Motor teşhisi: TrickyStoreOSS durumunu (pid, loglar), keybox dosyalarını (active vs user), gerçek ve sahte cihaz parmak izini, target.txt, security_patch.txt ve RKP anahtarlarını denetler. Yalnızca teşhis görüntüsü.',
+        panelKbSlots: '🔐 Keybox yuvaları (birincil / ikincil)',
+        btnKbSlotsStatus: '🔍 Yuva durumu',
+        btnKbSlotsPreferPrimary: '⭐ Birincili tercih et',
+        btnKbSlotsPreferSecondary: '🔁 İkincili tercih et',
+        btnKbSlotsPromote: '⬆️ İkinciliyi birincile yükselt',
+        btnKbSlotsClear: '🧹 İkinciliyi temizle',
+        hintKbSlots: 'Modül iki keybox yuvası yönetir: birincil (kutsal, asla silinmez) ve ikincil (yedek). Bu sekme etkin yuvayı gösterir, tercihi değiştirir veya açık istekle ikinciliyi birincile yükseltir — yedekler ve tam günlük ile.',
+        btnIntegrityDiag: '🩺 Bütünlük teşhisi',
+        btnIntegrityFix: '🔧 Güvenli yeniden uygula',
+        mdIntegrityDiag: '• Bütünlük teşhisi: TEE anahtar içe aktarımını, keystore2 içine kütüphane enjeksiyonunu, iptal durumunu (CRL), koruma listesi kapsamasını ve RKP durumunu denetler. Yalnızca okuma — hiçbir şeyi değiştirmez.',
+        confirmIntegrityFix: '🔧 Güvenli yeniden uygulama:\n\n• Koruma listesi kurulu tüm uygulamalardan yeniden oluşturulur.\n• Özel ROM uyumluluk katmanı yeniden uygulanır.\n• Etkin keybox yeniden uygulanır.\n• Google Play servisleri yeniden başlatılır.\n\nHiçbir şey silinmez ve birincil keybox değiştirilmez.\n\nDevam?'
+        mdKbSlots: '• Keybox yuvaları: birincil ve ikincil yuva durumunu gösterir ve aralarındaki tercihi değiştirir. Birincil (/data/adb/falcon/keybox.xml) her zaman korunur ve asla silinmez. İkinciliyi birincile yükseltmek açık onay gerektirir.',
+        confirmKbSlotsPromote: '⬆️ İkincil yuvayı birincile yükselt:\n\n• /data/adb/falcon/keybox2.xml içeriği birincil yuva olur.\n• Mevcut birincil, değiştirmeden önce yedek olarak kaydedilir.\n• Hiçbir şey silinmez — işlem geri alınabilir.\n\nDevam?',
+        confirmKbSlotsClear: '🧹 İkincil yuvayı temizle:\n\n• /data/adb/falcon/keybox2.xml silinecek.\n• Birincil yuvaya dokunulmaz.\n\nDevam?',
         dgRkpMods: 'Mevcut Remote Key Provisioning modülleri',
         dgRkpTee: 'TEE onay sertifikası sürüm denetimi',
         dgRkpTool: 'ZTE anahtar onarım aracının varlığı',
@@ -1478,6 +1546,20 @@ var I18N = {
         mdPifCheck: '• Проверка PIF: показывает состояние установленного движка, файлы отпечатка (custom.pif.prop/pif.prop) и журналы. Только проверка — ничего не изменяет.',
         mdCanary: '• Обновление Canary: выполняет sch /data/adb/modules/playintegrityfix/falcon_update_pif.sh -m. Загружает последнюю версию Canary Engine для совместимости с обязательными RKP-сертификатами (февраль 2026).',
         mdEngineDiag: '• Диагностика движка: проверяет состояние TrickyStoreOSS (pid, логи), файлы keybox (active vs user), реальный и подменённый отпечаток устройства, target.txt, security_patch.txt и ключи RKP. Только диагностический вывод.',
+        panelKbSlots: '🔐 Слоты keybox (основной / резервный)',
+        btnKbSlotsStatus: '🔍 Статус слотов',
+        btnKbSlotsPreferPrimary: '⭐ Предпочесть основной',
+        btnKbSlotsPreferSecondary: '🔁 Предпочесть резервный',
+        btnKbSlotsPromote: '⬆️ Повысить резервный до основного',
+        btnKbSlotsClear: '🧹 Очистить резервный',
+        hintKbSlots: 'Модуль управляет двумя слотами keybox: основным (защищён, никогда не удаляется) и резервным. Эта вкладка показывает активный слот, переключает предпочтение или по явному запросу повышает резервный до основного — с резервными копиями и полным журналом.',
+        btnIntegrityDiag: '🩺 Диагностика целостности',
+        btnIntegrityFix: '🔧 Безопасное применение',
+        mdIntegrityDiag: '• Диагностика целостности: проверяет импорт ключа в TEE, внедрение библиотеки в keystore2, статус отзыва (CRL), покрытие списка защиты и состояние RKP. Только чтение — ничего не изменяет.',
+        confirmIntegrityFix: '🔧 Безопасное применение:\n\n• Список защиты пересобирается из всех установленных приложений.\n• Слой совместимости с кастомными ROM применяется заново.\n• Активный keybox применяется заново.\n• Службы Google Play перезапускаются.\n\nНичего не удаляется, основной keybox не затрагивается.\n\nПродолжить?'
+        mdKbSlots: '• Слоты keybox: показывает состояние основного и резервного слотов и переключает предпочтение между ними. Основной (/data/adb/falcon/keybox.xml) всегда защищён и никогда не удаляется. Для повышения резервного до основного требуется явное подтверждение.',
+        confirmKbSlotsPromote: '⬆️ Повысить резервный слот до основного:\n\n• Содержимое /data/adb/falcon/keybox2.xml станет основным слотом.\n• Текущий основной сохраняется в резервную копию перед заменой.\n• Ничего не удаляется — операцию можно отменить.\n\nПродолжить?',
+        confirmKbSlotsClear: '🧹 Очистить резервный слот:\n\n• Будет удалён /data/adb/falcon/keybox2.xml.\n• Основной слот не затрагивается.\n\nПродолжить?',
         dgRkpMods: 'Доступные модули Remote Key Provisioning',
         dgRkpTee: 'Проверка версии аттестационного сертификата TEE',
         dgRkpTool: 'Наличие утилиты ZTE для исправления ключей',
@@ -1939,7 +2021,7 @@ function wrap(cmd, secs) {
 }
 
 function setBusy(on) {
-    var ids = ['btnRefresh', 'btnEssOnly', 'btnAdd', 'btnDump', 'btnDiag', 'btnCopyLog', 'btnSaveCfg', 'btnBaseline', 'btnAutoLog', 'btnKeyboxImport', 'btnCrlCheck', 'btnGwipe', 'btnKbSmart', 'btnKbNet', 'btnRkpDiag', 'btnRkpManual', 'btnRkpFull', 'btnGmsReset', 'btnRkpForce', 'btnCertify', 'btnSoter', 'btnPifApply', 'btnPifCheck', 'btnCanary', 'btnEngineDiag'];
+    var ids = ['btnRefresh', 'btnEssOnly', 'btnAdd', 'btnDump', 'btnDiag', 'btnCopyLog', 'btnSaveCfg', 'btnBaseline', 'btnAutoLog', 'btnKeyboxImport', 'btnCrlCheck', 'btnGwipe', 'btnKbSmart', 'btnKbNet', 'btnRkpDiag', 'btnRkpManual', 'btnRkpFull', 'btnGmsReset', 'btnRkpForce', 'btnCertify', 'btnSoter', 'btnPifApply', 'btnPifCheck', 'btnCanary', 'btnEngineDiag', 'btnKbSlotsStatus', 'btnKbSlotsPreferPrimary', 'btnKbSlotsPreferSecondary', 'btnKbSlotsPromote', 'btnKbSlotsClear', 'btnIntegrityDiag', 'btnIntegrityFix'];
     for (var i = 0; i < ids.length; i++) { if ($(ids[i])) $(ids[i]).disabled = !!on; }
 }
 
@@ -3685,6 +3767,99 @@ if (bridgeAvailable()) {
     setCfgStatus('dirty');
     render();
 }
+</script>
+<script>
+/* =============================================================================
+   (v3.23) لوحة منفذ الكيبوكس — إدارة المنفذ الأساسي/الثانوي
+   • كل الأوامر آمنة: قراءة حالة، تبديل تفضيل، ترقية، مسح الثانوي فقط.
+   • المنفذ الأساسي (/data/adb/falcon/keybox.xml) لا يُمَس أبداً.
+   • التشغيل محميّ بمهلة الجسر + قفل منع التكرار (نفس آلية بقية الأزرار).
+   ============================================================================= */
+(function () {
+    try {
+        var KB_SCRIPT = '/data/adb/modules/playintegrityfix/falcon_keybox.sh';
+
+        function kbSlotCmd(args) {
+            return 'sh ' + KB_SCRIPT + ' ' + args;
+        }
+
+        function kbSlotsStatus() {
+            if (typeof maintRun === 'function') {
+                maintRun('btnKbSlotsStatus', kbSlotCmd('status'), 'kb_slots.log');
+            }
+        }
+
+        function kbSlotsPreferPrimary() {
+            if (typeof maintRun === 'function') {
+                maintRun('btnKbSlotsPreferPrimary', kbSlotCmd('prefer primary') + ' ; ' + kbSlotCmd('status'), 'kb_slots.log');
+            }
+        }
+
+        function kbSlotsPreferSecondary() {
+            if (typeof maintRun === 'function') {
+                maintRun('btnKbSlotsPreferSecondary', kbSlotCmd('prefer secondary') + ' ; ' + kbSlotCmd('status'), 'kb_slots.log');
+            }
+        }
+
+        function kbSlotsPromote() {
+            if (typeof maintRun === 'function') {
+                maintRun('btnKbSlotsPromote', kbSlotCmd('promote-secondary') + ' ; ' + kbSlotCmd('status'), 'kb_slots.log', 'confirmKbSlotsPromote');
+            }
+        }
+
+        function kbSlotsClear() {
+            if (typeof maintRun === 'function') {
+                maintRun('btnKbSlotsClear', kbSlotCmd('clear-secondary') + ' ; ' + kbSlotCmd('status'), 'kb_slots.log', 'confirmKbSlotsClear');
+            }
+        }
+
+        var MAP = {
+            btnKbSlotsStatus: kbSlotsStatus,
+            btnKbSlotsPreferPrimary: kbSlotsPreferPrimary,
+            btnKbSlotsPreferSecondary: kbSlotsPreferSecondary,
+            btnKbSlotsPromote: kbSlotsPromote,
+            btnKbSlotsClear: kbSlotsClear
+        };
+
+        for (var k in MAP) {
+            (function (id, fn) {
+                try {
+                    var el = document.getElementById(id);
+                    if (el) el.onclick = function () { try { fn(); } catch (e) {} };
+                } catch (e) {}
+            })(k, MAP[k]);
+        }
+
+        /* --- (v3.23) تشخيص السلامة + إعادة تطبيق آمنة --- */
+        var DIAG_SCRIPT = '/data/adb/modules/playintegrityfix/falcon_integrity_diag.sh';
+
+        function integrityDiag() {
+            if (typeof maintRun === 'function') {
+                maintRun('btnIntegrityDiag', 'sh ' + DIAG_SCRIPT + ' diag', 'integrity_diag_live.log');
+            }
+        }
+
+        function integrityFix() {
+            if (typeof maintRun === 'function') {
+                maintRun('btnIntegrityFix', 'sh ' + DIAG_SCRIPT + ' fix', 'integrity_fix_live.log', 'confirmIntegrityFix');
+            }
+        }
+
+        var MAP2 = {
+            btnIntegrityDiag: integrityDiag,
+            btnIntegrityFix: integrityFix
+        };
+
+        for (var k2 in MAP2) {
+            (function (id, fn) {
+                try {
+                    var el = document.getElementById(id);
+                    if (el) el.onclick = function () { try { fn(); } catch (e) {} };
+                } catch (e) {}
+            })(k2, MAP2[k2]);
+        }
+    } catch (e) {}
+})();
 </script>
 </body>
 </html>
