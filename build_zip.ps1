@@ -26,7 +26,7 @@ $VER_NUM = ($Version -replace '^v','')
 $rootFiles = @(
     'action.sh','apply_pif.sh','banner.png','busybox','classes.dex','clean_install.sh','common_func.sh',
     'common_setup.sh','custom.pif.json','custom.pif.prop','customize.sh','example.app_replace.list',
-    'falcon_kbcheck.sh','falcon_keybox.sh','falcon_rom_compat.sh','falcon_sdcard_cleanup.sh','falcon_stealth.sh','falcon_update_pif.sh',
+    'falcon_kbcheck.sh','falcon_keybox.sh','falcon_rom_compat.sh','falcon_integrity_diag.sh','falcon_sdcard_cleanup.sh','falcon_stealth.sh','falcon_update_pif.sh',
     'icon.png','icondump.dex','icons.sh','kb_sync.sh','keybox.xml','killpi.sh','migrate.sh','module.prop',
     'post-fs-data.sh','rkp_fix.sh','rom_spoof_block.sh','security_patch.txt','sepolicy.rule','service.sh',
     'soter_fix.sh','sources.conf','target.txt','uninstall.sh','update.json'
