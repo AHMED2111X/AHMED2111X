@@ -899,6 +899,18 @@ falcon_parse_count() {
     fi
 ) >/dev/null 2>&1 &
 
+# --- 7.5 (v3.23) طبقة توافق الرومات المعدّلة — إعادة تطبيق دورية ---
+# بعض الرومات المخصصة تعيد كتابة وسوم البناء وبصمات الأجزاء في service.sh
+# متأخراً (بعد post-fs-data) فتسحق ما طبّقناه. هذه الحلقة تعيد الضبط كل
+# 20 ثانية وبقيمة فقط عند الاختلاف ⇒ لا عبء على الجهاز.
+# ⛔ لا نلمس ro.build.fingerprint (محرك PIF يتولّاها داخل العمليات المستهدفة).
+# للإيقاف: touch /data/adb/falcon/rom_compat_off
+if [ -f "$MODDIR/falcon_rom_compat.sh" ]; then
+    (
+        sh "$MODDIR/falcon_rom_compat.sh" watch >/dev/null 2>&1
+    ) >/dev/null 2>&1 &
+fi
+
 # --- 8. (v3.19) وضع التخفي: إخماد وسومنا من logcat + تنظيف ANR/tombstone ---
 (
     [ -f "$MODDIR/falcon_stealth.sh" ] || exit 0

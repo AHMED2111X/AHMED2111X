@@ -29,6 +29,7 @@
 - **🔒 تحقّق SHA-256 من سلامة الحزمة** — ملف `payload.sha256` مولَّد وقت البناء يُفحص في بداية التثبيت؛ **تحذير فقط** ولا يمنع التثبيت أبداً.
 - **📦 توافق Magisk 28102+** — دعم `MAGISK_WHITEOUT` لإخفاء تطبيقات الرومات المخصصة، وتعطيل خصائص `persist.sys.pp.*` المتعارضة.
 - **♻️ مسح ذاكرة خصائص بعد الحذف** — `resetprop -c` بعد `resetprop --delete` (من مرجع PIF 19.7.7-r2) لضمان عدم بقاء قيمة قديمة في ذاكرة الخصائص.
+- **🛡️ طبقة توافق الرومات المعدّلة (جديد)** — `falcon_rom_compat.sh` تعالج 21 خاصية كانت مكشوفة على LineageOS/crDroid/Evolution: `ro.build.tags` (`test-keys` ⇒ `release-keys`)، `ro.build.type` (`userdebug` ⇒ `user`)، بصمات الأجزاء الأربعة، معرّفات البناء، تواريخ الرقعة، و`ro.build.description`. القيم كلها مشتقّة من نفس بصمة PIF ⇒ اتساق مضمون 100%. تُطبَّق قبل Zygote وتُعاد كل 20 ثانية.
 - **📦 مجلد `zygisk/` مطابق للمرجع 1:1** — أضفنا `zygisk/keybox.xml` و`zygisk/xda-developers` (نسخة مطابقة بايت-ببايت) و`zygisk/target.txt` و`zygisk/security_patch.txt`، فاكتملت سلسلة الاحتياطي `$MODDIR/zygisk/keybox.xml` ← `$MODDIR/keybox.xml` التي كانت معطوبة، وتطابق تخطيط الحزمة المرجع تماماً.
 - **🔬 تدقيق بايت-بايتي لوحدة Zygisk** — أثبت التحليل أن `zygisk/*.so` لا تقرأ أي كيبوكس إطلاقاً (0 إشارة لـ `keybox`)، وتقرأ فقط `pif.prop` و`custom.pif.prop` و`custom.pif.json` — أي أن **البصمة تمر عبر مساراتها المعتادة فقط، ولم يتغيّر سلوك الزيجيسك إطلاقاً**.
 - **🚧 بوابات تثبيت أوضح** — تحذير عند التثبيت من Recovery، ورسالة واضحة لمعمارية غير مدعومة (دون منع تثبيت الأجهزة المدعومة).
@@ -45,8 +46,36 @@
 - **📦 Magisk 28102+ compatibility** — `MAGISK_WHITEOUT` support for hiding custom-ROM injection apps, plus conflicting `persist.sys.pp.*` property handling.
 - **♻️ Property-cache flush after deletion** — `resetprop -c` after `resetprop --delete` (from the PIF 19.7.7-r2 reference).
 - **🚧 Clearer install gates** — warning when installing from recovery, explicit message for unsupported architectures (supported devices are never blocked).
+- **🛡️ Custom-ROM compatibility layer (new)** — `falcon_rom_compat.sh` fixes 21 properties that were exposed on LineageOS/crDroid/Evolution: `ro.build.tags` (`test-keys` ⇒ `release-keys`), `ro.build.type` (`userdebug` ⇒ `user`), the four partition fingerprints, build IDs, security-patch dates, and `ro.build.description`. Every value is derived from the same PIF fingerprint ⇒ guaranteed 100% consistency. Applied before Zygote and re-applied every 20 seconds.
 - **📦 `zygisk/` folder now 1:1 with the reference** — we added `zygisk/keybox.xml` and `zygisk/xda-developers` (byte-identical copies) plus `zygisk/target.txt` and `zygisk/security_patch.txt`. This completes the `$MODDIR/zygisk/keybox.xml` ← `$MODDIR/keybox.xml` fallback chain that was previously broken, and makes the package layout match the reference exactly.
 - **🔬 Byte-level audit of the Zygisk module** — proven that `zygisk/*.so` never reads any keybox (0 `keybox` strings); they only read `pif.prop`, `custom.pif.prop` and `custom.pif.json` — so **the fingerprint still flows through its usual paths and the Zygisk behaviour is completely unchanged**.
+
+### 🛡️ دعم الرومات المعدّلة (جديد في v3.23)
+
+على الرومات المخصصة (LineageOS / crDroid / Evolution X / PixelOS ...) تترك بعض الخصائص بصمة الروم نفسه، وهي **أوضح علامات** تعرّفه جوجل وتُفشل فحص السلامة:
+
+| الخاصية | على الروم المعدّل | ما يفعله الموديول |
+|---|---|---|
+| `ro.build.tags` | `test-keys` | ⇒ `release-keys` |
+| `ro.build.type` | `userdebug` / `eng` | ⇒ `user` |
+| `ro.debuggable` | `1` | ⇒ `0` |
+| `ro.secure` / `ro.adb.secure` | `0` | ⇒ `1` |
+| `ro.system/vendor/odm/product.build.fingerprint` | بصمة الروم | ⇒ بصمة PIF المموَّهة |
+| `ro.system/vendor/odm/product.build.tags` | `test-keys` | ⇒ `release-keys` |
+| `ro.system/vendor/odm/product.build.id` | معرّف الروم | ⇒ معرّف PIF |
+| `ro.*.build.version.security_patch` | تاريخ الروم | ⇒ تاريخ PIF |
+| `ro.build.description` | اسم الروم | ⇒ وصف بنية متسقة |
+
+**كيف نضمن الاتساق؟** كل قيمة تُستخرج من **نفس بصمة PIF** (`custom.pif.prop`، أو الهوية المحفوظة من الواجهة إن وُجدت) ⇒ يستحيل أن تتعارض مع محرك PIF.
+
+**الأوامر:**
+```sh
+sh /data/adb/modules/playintegrityfix/falcon_rom_compat.sh status   # عرض الحالة
+sh /data/adb/modules/playintegrityfix/falcon_rom_compat.sh disable  # تعطيل
+sh /data/adb/modules/playintegrityfix/falcon_rom_compat.sh enable   # تفعيل
+```
+
+> ⛔ **لا نلمس** `ro.build.fingerprint` — يتولّاها محرك PIF داخل العمليات المستهدفة فقط (سلوك PIF الأصلي). ولا نكتب أي ملف نظام إطلاقاً — الخصائص فقط عبر `resetprop`.
 
 ---
 

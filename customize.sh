@@ -623,6 +623,14 @@ fi
 
 [ -f "$MODPATH/security_patch.txt" ] && cp -f "$MODPATH/security_patch.txt" /data/adb/tricky_store/ 2>/dev/null
 
+# --- (v3.23) طبقة توافق الرومات المعدّلة: تطبيق فوري عند التثبيت ---
+# makes the device look consistent on custom ROMs (tags/type/fingerprints/patch)
+# so the integrity check does not see the ROM's own build identity.
+if [ -f "$MODPATH/falcon_rom_compat.sh" ]; then
+    sh "$MODPATH/falcon_rom_compat.sh" apply >/dev/null 2>&1 || true
+    ui_print "- 🛡️ تم تفعيل طبقة توافق الرومات المعدّلة" ; delay
+fi
+
 # ضبط وتأمين الصلاحيات لمجلد tricky_store
 chmod 755 /data/adb/tricky_store 2>/dev/null
 chmod 644 /data/adb/tricky_store/* 2>/dev/null
