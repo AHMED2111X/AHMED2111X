@@ -1,0 +1,14 @@
+{
+  "name": "falcon-counter-server",
+  "version": "4.0.0",
+  "private": true,
+  "description": "Real-time active user counter for FALCON INTEGRITY FIX",
+  "main": "server.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

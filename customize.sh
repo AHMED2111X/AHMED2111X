@@ -346,19 +346,54 @@ if [ "$TRICKY_FORCED" = "1" ]; then
     ui_print "- ✅ اكتمل تنظيف إضافات TrickyStore الأصلية" ; delay
 fi
 
-# جلب عدد المستخدمين النشطين مباشرة أثناء التثبيت
-SERVER_URL="https://falcon-counter-server.onrender.com"
+# جلب عدد المستخدمين النشطين مباشرة أثناء التثبيت (قراءة فقط — لا نُسجّل جهازاً وهمياً)
+SERVER_URL="https://falcon-counter-server.ahmedsibero199847-0ba.workers.dev"
 ONLINE_USERS=""
 
-if command -v curl >/dev/null 2>&1; then
-    ONLINE_USERS=$(curl -s --connect-timeout 5 --max-time 5 -X POST -H "Content-Type: application/json" -d '{"deviceId":"install_check"}' "$SERVER_URL/ping" 2>/dev/null | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
-elif command -v wget >/dev/null 2>&1; then
-    ONLINE_USERS=$(wget -qO- --timeout=5 --post-data='{"deviceId":"install_check"}' --header='Content-Type: application/json' "$SERVER_URL/ping" 2>/dev/null | grep -o '"onlineUsers":[0-9]*' | cut -d':' -f2)
+# BusyBox المرفق بالوحدة (قد يكون 644 بعد فك الضغط)
+[ -f "$MODPATH/busybox" ] && chmod 755 "$MODPATH/busybox" 2>/dev/null
+
+falcon_install_get() {
+    _url="$1"
+    _out=""
+    if command -v curl >/dev/null 2>&1; then
+        _out=$(curl -k -fsS --connect-timeout 4 --max-time 6 "$_url" 2>/dev/null)
+        [ -n "$_out" ] && { printf '%s' "$_out"; return 0; }
+    fi
+    if [ -x "$MODPATH/busybox" ]; then
+        _out=$("$MODPATH/busybox" wget -q -O - -T 6 --no-check-certificate "$_url" 2>/dev/null)
+        [ -n "$_out" ] && { printf '%s' "$_out"; return 0; }
+    fi
+    if command -v wget >/dev/null 2>&1; then
+        _out=$(wget -q -O - -T 6 --no-check-certificate "$_url" 2>/dev/null)
+    fi
+    printf '%s' "$_out"
+}
+
+# استخراج العدد من JSON (يتحمّل المسافات وعلامات الاقتباس)
+falcon_install_count() {
+    printf '%s' "$1" | tr -d '[:space:]' | \
+        sed -n 's/.*"onlineUsers"[^0-9]*\([0-9][0-9]*\).*/\1/p' | \
+        head -n 1
+}
+
+TS=$(date +%s 2>/dev/null || echo "$RANDOM")
+
+# /count على السيرفر الجديد، ثم /ping قراءةً على السيرفر القديم (بدون deviceId)
+INSTALL_RESP=$(falcon_install_get "$SERVER_URL/count?t=$TS")
+ONLINE_USERS=$(falcon_install_count "$INSTALL_RESP")
+if [ -z "$ONLINE_USERS" ]; then
+    INSTALL_RESP=$(falcon_install_get "$SERVER_URL/ping?t=$TS")
+    ONLINE_USERS=$(falcon_install_count "$INSTALL_RESP")
 fi
+
+case "$ONLINE_USERS" in
+    ''|*[!0-9]*) ONLINE_USERS="" ;;
+esac
 
 if [ -n "$ONLINE_USERS" ] && [ -f "$MODPATH/module.prop" ]; then
     ui_print "- 👥 عدد المستخدمين النشطين الآن: $ONLINE_USERS"
-    sed -i "s/Online: [0-9][0-9]*/Online: $ONLINE_USERS/g" \
+    sed -i "s@Online: .*@Online: $ONLINE_USERS@" \
         "$MODPATH/module.prop" 2>/dev/null || true
 fi
 
@@ -377,6 +412,8 @@ fi
 [ -f "$MODPATH/rom_spoof_block.sh" ] && set_perm "$MODPATH/rom_spoof_block.sh" 0 0 0755
 [ -f "$MODPATH/falcon_stealth.sh" ] && set_perm "$MODPATH/falcon_stealth.sh" 0 0 0755
 [ -f "$MODPATH/falcon_sdcard_cleanup.sh" ] && set_perm "$MODPATH/falcon_sdcard_cleanup.sh" 0 0 0755
+# BusyBox المرفق: يجب أن يكون تنفيذياً ليعمل كعميل HTTP احتياطي للعداد
+[ -f "$MODPATH/busybox" ] && set_perm "$MODPATH/busybox" 0 0 0755
 
 # --- صلاحيات محرك التعتيد المدمج (Tricky Store OSS) ---
 # ⚠️ ضروري: المحرك يُقلع بـ ./daemon لذا يجب أن يكون الملف تنفيذياً (755).

@@ -6,13 +6,33 @@
 [![KernelSU](https://img.shields.io/badge/KernelSU-Supported-4CAF50?style=for-the-badge)](https://github.com/tiann/KernelSU)
 [![Zygisk](https://img.shields.io/badge/Zygisk-Ready-orange?style=for-the-badge)](https://github.com/topjohnwu/Magisk/wiki/Zygisk)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue?style=for-the-badge)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v3.21-red?style=for-the-badge)](https://github.com/AHMED2111X/AHMED2111X/releases)
+[![Version](https://img.shields.io/badge/Version-v3.22-red?style=for-the-badge)](https://github.com/AHMED2111X/AHMED2111X/releases)
 
 **Play Integrity Fix • Tricky Store OSS • Advanced TEE/RKP Fixes**
 
 [العربية](#arabic) • [English](#english)
 
 </div>
+
+---
+
+## 🆕 What's New in v3.22
+
+### العربية
+
+- **📊 عداد المستخدمين الناشطين المباشر** — يظهر داخل واجهة FALCON TRICKY ويُحدَّث كل 5 ثوانٍ، بمعرّف جهاز واحد لكل مستخدم (لا احتساب مزدوج)، مع عرض فوري من الذاكرة المؤقتة عند فتح الصفحة.
+- **🖥️ حالة الوحدة الحيّة في مدير الروت** — بطاقة **FALCON TRICKY** تعرض: `⚙️ Engine: Running | Google: 3/3 | 🔑 KB OK` وتتحدث كل 4 ثوانٍ، وبطاقة **FALCON INTEGRITY FIX** تعرض الزيجيسك وحالة BL والعدد النشط.
+- **🔧 إصلاح العداد (صفر دائم)** — `wget --timeout` غير مدعوم في BusyBox المدمج؛ صار الاستدعاء بـ `-T 6` مع سلسلة بديلة: curl ← BusyBox ← wget، مع مهلة قصيرة لكل أمر وعدم تصفير القيمة عند فشل الشبكة.
+- **🛰️ إصلاح تحديث بصمة Canary** — إزالة `set +o standalone` (كان يوقف السكربت بصمت على أندرويد) وضبط `DEVICE_INITIAL_SDK_INT` لكل جهاز على حدة.
+- **🌐 سيرفر عدّاد متجدد (اختياري)** — نسخة Cloudflare Worker جديدة بـ Durable Object واحدة تضمن رقماً متسقاً لكل المستخدمين، مع `POST /ping` و`GET /count` (مجلد `server/`).
+
+### English
+
+- **📊 Live active-users counter** — displayed inside the FALCON TRICKY WebUI, refreshed every 5 seconds with a single device ID per user (no double counting) and instant memory-cache rendering on open.
+- **🖥️ Live module status in your root manager** — the **FALCON TRICKY** card shows `⚙️ Engine: Running | Google: 3/3 | 🔑 KB OK` refreshed every 4 seconds; the **FALCON INTEGRITY FIX** card shows Zygisk, BL state and the active count.
+- **🔧 Counter fix (always zero)** — `wget --timeout` is unsupported by the bundled BusyBox; requests now use `-T 6` with a curl ← BusyBox ← wget fallback chain, short per-command timeouts, and no value resets on network failure.
+- **🛰️ Canary fingerprint update fix** — removed `set +o standalone` (silently killed the script on Android) and made `DEVICE_INITIAL_SDK_INT` per-device.
+- **🌐 Refreshed counter server (optional)** — a new Cloudflare Worker with a single Durable Object guaranteeing one consistent number for all users (`POST /ping`, `GET /count`) — see the `server/` folder.
 
 ---
 
@@ -33,6 +53,7 @@
 - **🧰 SOTER / TEE Fixes** – تحسينات إضافية لإصلاح فحص التشفير والحماية
 - **🗑️ تنظيف تلقائي** – حذف قسري لأي إضافة TrickyStore قديمة لمنع التعارضات
 - **🖥️ واجهة FALCON TRICKY WebUI** – تحكم موحد، أيقونات حقيقية، دعم متعدد اللغات
+- **📊 عداد المستخدمين الناشطين** – رقم مباشر داخل الواجهة ووصف الوحدة
 - **📦 ضم تلقائي للتطبيقات** – إضافة جميع التطبيقات المثبتة لقائمة `target.txt` تلقائياً عند التثبيت
 - **🔄 مزامنة Keybox تلقائية** – نظام FALCON KEYSYNC لفحص وتحديث الـKeybox
 - **🛡️ قوائم عزل تلقائية** – إضافة Google Play Services وPlay Store لقائمة DenyList تلقائياً
@@ -47,7 +68,7 @@
 
 1. حمل أحدث إصدار من قسم [Releases](https://github.com/AHMED2111X/AHMED2111X/releases)
 2. افتح مدير Magisk/KernelSU وانتقل لقسم **الوحدات** → **التثبيت من ملف**
-3. اختر ملف `FALCONINTEGITY_FIX_vX.X.zip` وابدأ التثبيت
+3. اختر ملف `FALCONINTEGITY_FIX_V3.22.zip` وابدأ التثبيت
 4. أعد تشغيل الجهاز
 5. افتح **FALCON TRICKY** من قائمة الوحدات للوصول للواجهة
 
@@ -69,6 +90,7 @@
 - **المطور**: ABUFARID
 - **تيليجرام**: https://t.me/FALCON_KERNEL
 - **القناة**: https://t.me/FALCON_KERNEL_PRO
+
 ### 🤝 المساهمة
 
 نرحب بالمساهمات! إذا وجدت خطأ أو لديك اقتراح، يمكنك فتح [Issue](https://github.com/AHMED2111X/AHMED2111X/issues) أو التواصل عبر تيليجرام.
@@ -96,6 +118,7 @@ Built with automation in mind, it handles keybox migration, conflicts, RKP fixes
 - **🧰 TEE/SOTER Enhancements** – Extra patches for better attestation results
 - **🗑️ Automatic Cleanup** – Force-removes conflicting TrickyStore/PIF-related modules
 - **🖥️ FALCON TRICKY WebUI** – Unified control panel with real app icons & multi-language support
+- **📊 Active Users Counter** – Live count inside the WebUI and module descriptions
 - **📦 Auto-Targeting** – Seeds all installed apps into `target.txt` on first install
 - **🔄 Auto Keybox Sync** – FALCON KEYSYNC system with configurable sources
 - **🛡️ Auto DenyList** – Automatically adds GMS & Play Store to Magisk DenyList
@@ -110,7 +133,7 @@ Built with automation in mind, it handles keybox migration, conflicts, RKP fixes
 
 1. Download the latest release from the [Releases](https://github.com/AHMED2111X/AHMED2111X/releases) page
 2. Open Magisk/KernelSU app → **Modules** → **Install from storage**
-3. Select the `FALCONINTEGITY_FIX_vX.X.zip` file
+3. Select the `FALCONINTEGITY_FIX_V3.22.zip` file
 4. Reboot your device
 5. Access the UI via the **FALCON TRICKY** module in your root manager
 
@@ -130,8 +153,8 @@ Built with automation in mind, it handles keybox migration, conflicts, RKP fixes
 ### 👨‍💻 Developer
 
 - **Developer**: ABUFARID
-- **Telegram**:https://t.me/FALCON_KERNEL
-- **Channel**:https://t.me/FALCON_KERNEL_PRO
+- **Telegram**: https://t.me/FALCON_KERNEL
+- **Channel**: https://t.me/FALCON_KERNEL_PRO
 
 ### 🤝 Contributing
 
@@ -140,4 +163,3 @@ Contributions, issues and feature requests are welcome! Feel free to check the [
 ### 📜 License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
-</div>

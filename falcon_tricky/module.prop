@@ -1,9 +1,9 @@
 id=falcon_tricky
 name=FALCON TRICKY
-version=v3.21
-versionCode=127
+version=v3.22
+versionCode=128
 author=ABUFARID | Telegram:@falcon_kernel
-description=🔐 محرك Tricky Store مدمج + واجهة «مرصد التخفي» — كيبوكس ذكي، أيقونات تطبيقات حقيقية، ودعم أربع لغات.
+description=⚙️ Engine: Running | Google: 3/3 | 🔑 KB OK
 banner=banner.png
 actionIcon=webroot/icon.png
 webuiIcon=webroot/icon.png

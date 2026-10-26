@@ -302,24 +302,24 @@
     .maint-item.open .maint-desc { display: block; }
     .maint-bottom-space { height: 42px; }
     /* (v3.18) أزرار تيليجرام في الأسفل — المطوّر + القناة */
-    .tg-btns { display: flex; gap: 10px; margin-top: 12px; }
+    .tg-btns { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .tg-btn {
-        flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 10px;
-        border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px;
+        flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 6px;
+        border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px;
         background: linear-gradient(180deg, rgba(43,255,136,0.08), rgba(0,0,0,0.25));
         text-decoration: none;
     }
     .tg-btn:active { transform: scale(0.98); border-color: rgba(43,255,136,0.55); }
     .tg-ico {
-        flex: 0 0 34px; width: 34px; height: 34px; border-radius: 50%;
+        flex: 0 0 26px; width: 26px; height: 26px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         background: rgba(43,255,136,0.10); border: 1px solid var(--line);
-        font-size: 15px; color: var(--neon);
+        font-size: 12px; color: var(--neon);
     }
     .tg-ico.ch { color: var(--cyan); border-color: rgba(77,227,255,0.35); background: rgba(77,227,255,0.08); }
     .tg-txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: start; }
-    .tg-b { font-size: 0.73rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tg-s { font-size: 0.65rem; color: var(--cyan); direction: ltr; unicode-bidi: isolate; }
+    .tg-b { font-size: 0.66rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tg-s { font-size: 0.58rem; color: var(--cyan); direction: ltr; unicode-bidi: isolate; }
     footer a { color: var(--cyan); text-decoration: none; }
 </style>
 </head>
@@ -355,6 +355,21 @@
         <span class="online-title" data-i18n="onlineTitle"></span>
     </div>
     <div class="online-count" id="online-counter">--</div>
+</div>
+<!-- (v3.22) يوزرات التليجرام — ثلاثه بجانب بعض تحت عداد المشتركين -->
+<div class="tg-btns" style="margin-top:8px">
+    <a class="tg-btn" href="https://t.me/falcon_kernel">
+        <span class="tg-ico">👤</span>
+        <span class="tg-txt"><span class="tg-b" data-i18n="footerDev"></span><span class="tg-s">@falcon_kernel</span></span>
+    </a>
+    <a class="tg-btn" href="https://t.me/FALCON_KERNEL_PRO">
+        <span class="tg-ico ch">📢</span>
+        <span class="tg-txt"><span class="tg-b" data-i18n="footerChannel"></span><span class="tg-s">@FALCON_KERNEL_PRO</span></span>
+    </a>
+    <a class="tg-btn" href="https://t.me/SULTAN_ROOT">
+        <span class="tg-ico" style="color:var(--amber);border-color:rgba(255,194,71,0.35);background:rgba(255,194,71,0.08)">🛠️</span>
+        <span class="tg-txt"><span class="tg-b" data-i18n="footerSultan"></span><span class="tg-s">@SULTAN_ROOT</span></span>
+    </a>
 </div>
 
 <div class="hint" id="bridgeTag"></div>
@@ -452,16 +467,6 @@
 <footer>
     <div data-i18n="footerTop"></div>
     <div id="verTag" class="tok" style="color:var(--neon)"></div>
-    <div class="tg-btns">
-        <a class="tg-btn" href="https://t.me/falcon_kernel">
-            <span class="tg-ico">👤</span>
-            <span class="tg-txt"><span class="tg-b" data-i18n="footerDev"></span><span class="tg-s">@falcon_kernel</span></span>
-        </a>
-        <a class="tg-btn" href="https://t.me/FALCON_KERNEL_PRO">
-            <span class="tg-ico ch">📢</span>
-            <span class="tg-txt"><span class="tg-b" data-i18n="footerChannel"></span><span class="tg-s">@FALCON_KERNEL_PRO</span></span>
-        </a>
-    </div>
 </footer>
 
 <div id="confirmBar">
@@ -593,7 +598,7 @@ window.onerror = function (msg, src, ln, col) {
     return false;
 };
 /* =============================================================================
-   FALCON TRICKY — WebUI (Stealth Radar) — v3.21 (UNIFIED)
+   FALCON TRICKY — WebUI (Stealth Radar) — v3.22 (UNIFIED)
    Languages: العربية · English · Türkçe · Русский
    🧰 (v3.17-UNIFIED) واجهة واحدة نهائياً: أدوات الأم (كيبوكس ذكي/RKP/SOTER/بصمة)
    نُقلت هنا من واجهة الأم القديمة التي حُذفت — كل عملية بمهلة + نجاح/فشل واضح.
@@ -737,6 +742,7 @@ var I18N = {
         demo: 'وضع المعاينة — لا يوجد جذر في هذه النافذة (البيانات تجريبية للعرض فقط)',
         footerTop: 'FALCON TRICKY · ملحق وحدة FALCON INTEGRITY FIX',
         footerChannel: 'قناة التليجرام',
+        footerSultan: 'طلب خدمات روت والسوفت وير',
         footerDev: 'أبو فريد — المطوّر',
         maintHint: 'اضغط على أي زر لعرض شرحه بالتفصيل.',
         mdKbSmart: '• الجزء الذكي للكيبوكس: يفحص الكيبوكس الحالي ضد قائمة إبطال جوجل (CRL)، ويجرب مصادر متعددة حتى يجد كيبوكساً سليماً، مع نسخة احتياطية تلقائية وإعادة تشغيل خدمات جوجل. يعمل عند كل ضغطة ويحتاج إنترنت (1-3 دقائق).',
@@ -976,6 +982,7 @@ var I18N = {
         demo: 'Preview mode — no root in this window (sample data for display only)',
         footerTop: 'FALCON TRICKY · companion of FALCON INTEGRITY FIX',
         footerChannel: 'Telegram Channel',
+        footerSultan: 'Root & Software Services',
         footerDev: 'Abu Farid — Developer',
         maintHint: 'Tap any button to show its full description.',
         mdKbSmart: '• Smart keybox fetch: checks the current keybox against Google\'s revocation list (CRL) and tries multiple sources until it finds a valid keybox, with an automatic backup and a restart of Google services. Runs on every tap and needs internet (1-3 minutes).',
@@ -1215,6 +1222,7 @@ var I18N = {
         demo: 'Önizleme modu — bu pencerede root yok (veriler örnek amaçlıdır)',
         footerTop: 'FALCON TRICKY · FALCON INTEGRITY FIX eklentisi',
         footerChannel: 'Telegram Kanalı',
+        footerSultan: 'Root & Yazılım Hizmetleri',
         footerDev: 'Abu Farid — Geliştirici',
         maintHint: 'Ayrıntılı açıklamayı görmek için bir düğmeye dokunun.',
         mdKbSmart: '• Akıllı keybox getirme: mevcut keybox\'ı Google iptal listesine (CRL) karşı denetler ve geçerli bir keybox bulana kadar birden çok kaynak dener; otomatik yedekleme ve Google servislerini yeniden başlatma içerir. Her dokunuşta çalışır ve internet gerektirir (1-3 dakika).',
@@ -1454,6 +1462,7 @@ var I18N = {
         demo: 'Режим предпросмотра — нет root в этом окне (данные только для показа)',
         footerTop: 'FALCON TRICKY · дополнение к FALCON INTEGRITY FIX',
         footerChannel: 'Telegram-канал',
+        footerSultan: 'Root & Software Services',
         footerDev: 'Абу Фарид — разработчик',
         maintHint: 'Нажмите на любую кнопку, чтобы увидеть подробное описание.',
         mdKbSmart: '• Умное получение keybox: проверяет текущий keybox по списку отзыва Google (CRL) и перебирает несколько источников, пока не найдёт рабочий keybox, с автоматической резервной копией и перезапуском сервисов Google. Работает при каждом нажатии и требует интернет (1-3 минуты).',
@@ -2098,7 +2107,7 @@ function loadDemo() {
     state.engine = 'RUNNING';
     state.patch = 'all=2026-09-05';
     state.auto = 'on';
-    state.ver = 'v3.21';
+    state.ver = 'v3.22';
     state.loaded = true;
 }
 
@@ -3518,35 +3527,138 @@ for (var mi = 0; mi < maintBtns.length; mi++) {
     };
 }
 
-/* (v3.16) عداد المستخدمين النشطين — منسوخ كما هو من الواجهة الرئيسية (ES5 + XHR، عند الطلب فقط) */
-var GW_SERVER = 'https://falcon-counter-server.onrender.com';
+/* (v3.22.4) عداد المستخدمين النشطين — كما في النسخة الأصلية: تسجيل وقراءة من الواجهة (POST) كل 5 ثوانٍ.
+   المعرّف هو معرّف الخدمة نفسه (/data/adb/falcon_device_id) حتى لا يُحسب الجهاز مرتين،
+   ويُكتب العدد في /data/adb/falcon_online_count ليطابق وصف الوحدة. */
+var GW_SERVER = 'https://falcon-counter-server.ahmedsibero199847-0ba.workers.dev';
+var GW_CACHE_KEY = 'falcon_online_count_cache';
+var GW_INTERVAL_MS = 5000;
 var gwDeviceId = null;
+var gwSvcLoaded = false;
+var gwInFlight = false;
+var gwTimer = null;
+
 try { gwDeviceId = localStorage.getItem('falcon_device_id'); } catch (e) {}
 if (!gwDeviceId) {
     gwDeviceId = 'dev_' + Math.random().toString(36).substr(2, 9);
     try { localStorage.setItem('falcon_device_id', gwDeviceId); } catch (e) {}
 }
-function gwPing() {
+
+function gwRender(n) {
+    var el = document.getElementById('online-counter');
+    if (el) el.textContent = String(n);
+}
+function gwCached() {
     try {
-        var xhr = new XMLHttpRequest();
+        var v = parseInt(localStorage.getItem(GW_CACHE_KEY), 10);
+        if (isFinite(v) && v >= 0 && v <= 999999) { gwRender(v); return v; }
+    } catch (e) {}
+    return null;
+}
+function gwStore(n) {
+    try { localStorage.setItem(GW_CACHE_KEY, String(n)); } catch (e) {}
+}
+function gwParse(text) {
+    try {
+        var data = JSON.parse(text);
+        var n = parseInt(data && data.onlineUsers, 10);
+        if (isFinite(n) && n >= 0 && n <= 999999) return n;
+    } catch (e) {}
+    var m = /"onlineUsers"\s*:\s*"?(\d+)"?/.exec(text || '');
+    return m ? parseInt(m[1], 10) : null;
+}
+function gwWrite(n) {
+    if (!bridgeAvailable()) return;
+    bridgeCall('echo ' + n + ' > /data/adb/falcon_online_count 2>/dev/null', function () {});
+}
+function gwLoadServiceId() {
+    if (!bridgeAvailable()) return;
+    bridgeCall('cat /data/adb/falcon_device_id 2>/dev/null', function (ec, out) {
+        var id = String(out || '').replace(/\s+/g, '');
+        if (id && /^[A-Za-z0-9._:-]{1,128}$/.test(id)) { gwDeviceId = id; gwSvcLoaded = true; }
+    });
+}
+function gwPing() {
+    if (gwInFlight || document.hidden) return;
+    gwInFlight = true;
+    var xhr = new XMLHttpRequest();
+    var done = false;
+    function finish() { if (!done) { done = true; gwInFlight = false; } }
+    try {
         xhr.open('POST', GW_SERVER + '/ping', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
-        try { xhr.timeout = 6000; } catch (e) {}
+        try { xhr.timeout = 10000; } catch (e) {}
         xhr.onreadystatechange = function () {
-            if (xhr.readyState !== 4 || xhr.status !== 200) return;
-            try {
-                var data = JSON.parse(xhr.responseText);
-                if (data && data.onlineUsers !== undefined) {
-                    var el = document.getElementById('online-counter');
-                    if (el) el.textContent = String(data.onlineUsers);
-                }
-            } catch (e) {}
+            if (xhr.readyState !== 4) return;
+            finish();
+            var n = (xhr.status === 200) ? gwParse(xhr.responseText) : null;
+            if (n === null) { gwMark(false); return; }
+            gwMark(true);
+            gwRender(n); gwStore(n); gwWrite(n);
         };
+        xhr.onerror = function () { finish(); gwMark(false); };
+        xhr.ontimeout = function () { finish(); gwMark(false); };
         xhr.send(JSON.stringify({ deviceId: gwDeviceId }));
-    } catch (e) {}
+    } catch (e) { finish(); gwMark(false); }
 }
-setTimeout(gwPing, 800);
-setInterval(gwPing, 15000);
+var gwOk = null;
+function gwMark(ok) {
+    if (gwOk === ok) return;
+    gwOk = ok;
+    logLine(ok ? 'عداد المستخدمين: متصل بالسيرفر' : 'عداد المستخدمين: تعذّر الاتصال بالسيرفر، سيُعاد المحاولة');
+}
+function gwStart() {
+    gwCached();
+    gwLoadServiceId();
+    setTimeout(gwPing, 800);
+    if (gwTimer) clearInterval(gwTimer);
+    gwTimer = setInterval(gwPing, GW_INTERVAL_MS);
+    setInterval(function () { if (!gwSvcLoaded) gwLoadServiceId(); }, 60000);
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) gwPing();
+    });
+    window.addEventListener('online', gwPing);
+}
+/* (v3.22) أزرار تيليجرام: فتح تطبيق تيليجرام مباشرة عبر جسر root
+   بدلاً من تحميل t.me داخل WebView (كان يظهر صفحة بيضاء ولا يفتح التطبيق). */
+function openTelegramApp(url) {
+    if (!url) return;
+    var m = /^https?:\/\/(?:www\.)?(?:t\.me|telegram\.me|telegram\.dog)\/([^\/?#]+)/i.exec(url);
+    var tgUrl = m ? 'tg://resolve?domain=' + m[1] : url;
+
+    function browserFallback() {
+        try { window.open(url, '_blank'); } catch (e) {
+            try { window.location.href = url; } catch (e2) {}
+        }
+    }
+
+    if (!bridgeAvailable()) { browserFallback(); return; }
+
+    /* am start يعيد 0 حتى عند فشل بدء النشاط، لذلك نفحص نص الخطأ بدلاً من رمز الخروج. */
+    var cmd = "run_tg() { OUT=$(am start -a android.intent.action.VIEW -d \"$1\" ${2:+-p \"$2\"} 2>&1); "
+        + "case \"$OUT\" in *\"Error:\"*|*Exception*|*\"Permission Denial\"*) return 1;; esac; }; "
+        + "run_tg '" + tgUrl + "' 'org.telegram.messenger'"
+        + " || run_tg '" + tgUrl + "'"
+        + " || run_tg '" + url + "' 'org.telegram.messenger'"
+        + " || run_tg '" + url + "'"
+        + "; echo FALCON_TG=$?";
+    sh(cmd, function (ec, out) {
+        if (String(out).indexOf('FALCON_TG=0') === -1) browserFallback();
+    }, 15, true);
+}
+
+(function bindTelegramButtons() {
+    var btns = document.querySelectorAll('.tg-btn');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].onclick = function (e) {
+            if (e && e.preventDefault) e.preventDefault();
+            openTelegramApp(this.getAttribute('href'));
+            return false;
+        };
+    }
+})();
+
+gwStart();
 
 /* ------------------------------ الإقلاع ------------------------------ */
 applyStatic();

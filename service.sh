@@ -600,54 +600,101 @@ chown root:root "$USER_KEYBOX" 2>/dev/null
     [ -f "$MODDIR/icons.sh" ] && sh "$MODDIR/icons.sh" >/dev/null 2>&1
 ) &
 
-# --- 4. حلقة مزامنة العداد السريعة والحديثة مباشرة مع السيرفر ---
-SERVER_URL="https://falcon-counter-server.onrender.com"
+# --- 4. مزامنة عداد المستخدمين النشطين (v3.22.1) ---
+# إصلاح جوهري: BusyBox wget لا يدعم الخيار --timeout=6، وكان الطلب يفشل
+# ويبقى العداد صفراً. نستخدم -T 6 (الخيار المدعوم)، ونستعمل BusyBox المرفق
+# بالوحدة أولاً حتى لا نعتمد على curl/wget النظام.
+SERVER_URL="${FALCON_COUNTER_URL:-https://falcon-counter-server.ahmedsibero199847-0ba.workers.dev}"
 COUNT_CACHE_FILE="/data/adb/falcon_online_count"
 [ -f "$COUNT_CACHE_FILE" ] || printf '%s\n' "0" > "$COUNT_CACHE_FILE"
 
 DEVICE_ID_FILE="/data/adb/falcon_device_id"
-if [ ! -f "$DEVICE_ID_FILE" ]; then
-    cat /proc/sys/kernel/random/uuid > "$DEVICE_ID_FILE" 2>/dev/null || echo "dev_$RANDOM" > "$DEVICE_ID_FILE"
+if [ ! -s "$DEVICE_ID_FILE" ]; then
+    cat /proc/sys/kernel/random/uuid > "$DEVICE_ID_FILE" 2>/dev/null || \
+        echo "dev_$(date +%s)_$RANDOM" > "$DEVICE_ID_FILE"
 fi
-DEVICE_ID=$(cat "$DEVICE_ID_FILE")
+DEVICE_ID=$(head -n 1 "$DEVICE_ID_FILE" 2>/dev/null | tr -d ' \t\r\n')
+[ -n "$DEVICE_ID" ] || DEVICE_ID="dev_$(date +%s)_$RANDOM"
+
+# البحث عن BusyBox: المرفق بالوحدة أولاً ثم مسارات مديري الروت الشائعة
+FALCON_BB=""
+_bb="$MODDIR/busybox"
+if [ -f "$_bb" ]; then
+    [ -x "$_bb" ] || chmod 755 "$_bb" 2>/dev/null
+    "$_bb" true >/dev/null 2>&1 && FALCON_BB="$_bb"
+fi
+if [ -z "$FALCON_BB" ]; then
+    for _bb in /data/adb/ksu/bin/busybox /data/adb/ksud/bin/busybox \
+               /data/adb/magisk/busybox /data/adb/ap/bin/busybox \
+               /data/adb/modules/busybox-ndk/system/*/busybox; do
+        if [ -x "$_bb" ] && "$_bb" true >/dev/null 2>&1; then
+            FALCON_BB="$_bb"
+            break
+        fi
+    done
+fi
+
+# إرسال Ping: curl ← BusyBox wget ← wget النظام (كلها بلا --timeout غير المدعوم)
+falcon_ping() {
+    _url="$1"
+    _json="$2"
+    _out=""
+
+    if command -v curl >/dev/null 2>&1; then
+        _out=$(curl -k -fsS --connect-timeout 3 --max-time 6 \
+            -H "Content-Type: application/json" \
+            -H "Cache-Control: no-cache" \
+            -X POST -d "$_json" "$_url" 2>/dev/null)
+        [ -n "$_out" ] && { printf '%s' "$_out"; return 0; }
+    fi
+
+    if [ -n "$FALCON_BB" ]; then
+        _out=$("$FALCON_BB" wget -q -O - -T 6 --no-check-certificate \
+            --header="Content-Type: application/json" \
+            --post-data="$_json" "$_url" 2>/dev/null)
+        [ -n "$_out" ] && { printf '%s' "$_out"; return 0; }
+    fi
+
+    if command -v wget >/dev/null 2>&1; then
+        _out=$(wget -q -O - -T 6 --no-check-certificate \
+            --header="Content-Type: application/json" \
+            --post-data="$_json" "$_url" 2>/dev/null)
+    fi
+    printf '%s' "$_out"
+}
+
+# استخراج onlineUsers من JSON مهما كانت المسافات أو علامات الاقتباس
+falcon_parse_count() {
+    printf '%s' "$1" | tr -d '[:space:]' | \
+        sed -n 's/.*"onlineUsers"[^0-9]*\([0-9][0-9]*\).*/\1/p' | \
+        head -n 1
+}
 
 (
     # الانتظار حتى اكتمال إقلاع النظام لتوفر الشبكة
-    while [ "$(getprop sys.boot_completed)" != "1" ]; do 
+    while [ "$(getprop sys.boot_completed)" != "1" ]; do
         sleep 2
     done
 
     while true; do
         TS=$(date +%s 2>/dev/null || echo "$RANDOM")
         PING_URL="${SERVER_URL}/ping?t=${TS}"
-        RESPONSE=""
-
-        if command -v curl >/dev/null 2>&1; then
-            RESPONSE=$(curl -s -H "Cache-Control: no-cache" --connect-timeout 4 --max-time 6 -X POST -H "Content-Type: application/json" -d "{\"deviceId\":\"$DEVICE_ID\"}" "$PING_URL" 2>/dev/null)
-        elif command -v wget >/dev/null 2>&1; then
-            RESPONSE=$(wget -qO- --no-cache --timeout=6 --post-data="{\"deviceId\":\"$DEVICE_ID\"}" --header="Content-Type: application/json" "$PING_URL" 2>/dev/null)
-        fi
-
-        FETCHED_COUNT=""
-
-        if [ -n "$RESPONSE" ]; then
-            FETCHED_COUNT=$(
-                printf '%s' "$RESPONSE" |
-                tr -d '[:space:]' |
-                grep -o '"onlineUsers":[0-9]*' |
-                cut -d':' -f2
-            )
-        fi
+        RESPONSE=$(falcon_ping "$PING_URL" "{\"deviceId\":\"$DEVICE_ID\"}")
+        FETCHED_COUNT=$(falcon_parse_count "$RESPONSE")
 
         case "$FETCHED_COUNT" in
             ''|*[!0-9]*)
+                # فشل مؤقت: لا نُصفّر العداد، نُبقي آخر قيمة صحيحة
                 ;;
             *)
-                printf '%s\n' "$FETCHED_COUNT" > "$COUNT_CACHE_FILE"
+                if [ "$FETCHED_COUNT" -ge 0 ] 2>/dev/null && [ "$FETCHED_COUNT" -le 999999 ] 2>/dev/null; then
+                    printf '%s\n' "$FETCHED_COUNT" > "$COUNT_CACHE_FILE"
+                fi
                 ;;
         esac
 
-        sleep 8
+        # 6-8 ثوانٍ مع تذبذب بسيط حتى لا تتزامن كل الأجهزة في اللحظة نفسها
+        sleep $((28 + ($$ % 5)))
     done
 ) &
 
@@ -755,19 +802,10 @@ DEVICE_ID=$(cat "$DEVICE_ID_FILE")
             BL_STATUS="🔴 BL Unspoofed"
         fi
 
-        # (v3.19) مؤشر صحة الكيبوكس — من آخر فحص CRL / مزامنة (kb_sync + kbcheck)
-        KB_TAG=""
-        if [ -s /data/adb/falcon_keysync/kb_state ]; then
-            KB_ST=$(head -n 1 /data/adb/falcon_keysync/kb_state 2>/dev/null | tr -d ' \t\r\n')
-            case "$KB_ST" in
-                OK*) KB_TAG="🔑 KB OK | " ;;
-                REVOKED*) KB_TAG="🔑 KB REVOKED | " ;;
-            esac
-        fi
-
+        # (v3.22.9) مؤشر الكيبوكس 🔑 نقل إلى وصف FALCON TRICKY — وصفنا بلا 🔑
         # قراءة العدد النشط مباشرة من الملف الكاش المحدث
         ONLINE_USERS=$(cat "$COUNT_CACHE_FILE" 2>/dev/null || printf '%s\n' "0")
-        NEW_DESC="$KB_TAG$ZYGISK_STATUS | $BL_STATUS | 👤 Online: $ONLINE_USERS"
+        NEW_DESC="$ZYGISK_STATUS | $BL_STATUS | 👤 Online: $ONLINE_USERS"
 
         MODULE_PROP="$MODDIR/module.prop"
 

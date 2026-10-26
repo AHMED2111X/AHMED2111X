@@ -1,0 +1,17 @@
+name = "falcon-counter-server"
+main = "server.js"
+compatibility_date = "2026-09-01"
+
+# Durable Object واحدة تحمل العدّاد العالمي (global)
+[durable_objects]
+bindings = [
+  { name = "COUNTER", class_name = "Counter" }
+]
+
+# ترحيل أول لإنشاء صنف Counter (SQLite-backed)
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Counter"]
+
+[vars]
+ONLINE_TTL_MS = "45000"

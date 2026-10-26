@@ -1,9 +1,9 @@
 id=playintegrityfix
 name=FALCON INTEGRITY FIX
-version=v3.21
-versionCode=127
+version=v3.22
+versionCode=128
 author=ABUFARID | Telegram:@falcon_kernel
-description=🟢 Zygisk Ready | 🎭 PIF + 🔐 Tricky Store OSS v3.1.0 | 🩺 RKP Auto-Fix | 🗑️ حذف قسري لأي إضافة TrickyStore قديمة | 🖥️ واجهة موحّدة عبر FALCON TRICKY | 🧰 كيبوكس ذكي + RKP + SOTER | 👤 Online: 10
+description=🟢 Zygisk Ready | 🎭 PIF + 🔐 Tricky Store OSS v3.1.0 | 🩺 RKP Auto-Fix | 🗑️ حذف قسري لأي إضافة TrickyStore قديمة | 🖥️ واجهة موحّدة عبر FALCON TRICKY | 🧰 كيبوكس ذكي + RKP + SOTER | 👤 Online: --
 banner=banner.png
 actionIcon=icon.png
 webuiIcon=icon.png

@@ -32,8 +32,8 @@
 #   ④ كل رسالة فشل تُسجَّل أيضاً في falcon_integrity_fix.log لسهولة التتبع.
 # ==============================================================================
 
-set +o standalone 2>/dev/null
-unset ASH_STANDALONE 2>/dev/null
+# (v3.22.4) أُزيل set +o standalone: هو خيار BusyBox، وقد ينهي الصدفة بصمت على أندرويد
+printf '[➜] %s\n' "بدء تحديث بصمة Canary..."
 
 MODDIR="${0%/*}"
 [ -n "$MODDIR" ] && [ -d "$MODDIR" ] || MODDIR="/data/adb/modules/playintegrityfix"
@@ -341,8 +341,17 @@ SPOOF_SIGNATURE=$(get_adv spoofSignature 0)
 SPOOF_VENDING_FINGER=$(get_adv spoofVendingFinger 1)
 SPOOF_VENDING_SDK=$(get_adv spoofVendingSdk 0)
 VERBOSE_LOGS=$(get_adv verboseLogs 0)
-SDK_INT=$(get_adv DEVICE_INITIAL_SDK_INT 32)
-APIL=$(get_adv '*api_level' "$SDK_INT")
+# (v3.22.3) أول مستوى API حسب الجهاز (مطابق لمنطق autopif4 في PIFork)
+case "$DEVICE" in
+    oriole|raven) SDK_INT=31 ;;
+    bluejay) SDK_INT=32 ;;
+    panther|cheetah|lynx|felix|tangorpro) SDK_INT=33 ;;
+    shiba|husky|akita|tokay|caiman|komodo|comet) SDK_INT=34 ;;
+    tegu|stallion) SDK_INT=35 ;;
+    frankel|blazer|mustang|rango) SDK_INT=36 ;;
+    *) SDK_INT=37 ;;
+esac
+APIL="$SDK_INT"
 
 # --- 9) نسخ احتياطية (نحتفظ بآخر 3) ---
 case "$OLD_ID" in ''|*[!A-Za-z0-9._-]*) OLD_ID="prev" ;; esac
