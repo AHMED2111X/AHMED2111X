@@ -293,8 +293,14 @@ chmod 644 "$TS_DIR/classes.dex" "$TS_DIR/libTrickyStoreOSS.so" 2>/dev/null
 
 # --- ضمان وجود ملفات الإعداد قبل إقلاع المحرك (شرط عمله) ---
 mkdir -p /data/adb/tricky_store 2>/dev/null
-if [ ! -s /data/adb/tricky_store/keybox.xml ] && [ -s "$MODDIR/keybox.xml" ]; then
-    cp -f "$MODDIR/keybox.xml" /data/adb/tricky_store/keybox.xml 2>/dev/null
+# (v3.23) تطبيق المنفذ المختار قبل إقلاع المحرك — لا يبدأ المحرك إلا بكيبوكس جاهز.
+if [ -f "$MODDIR/falcon_keybox.sh" ]; then
+    sh "$MODDIR/falcon_keybox.sh" sync --boot >/dev/null 2>&1
+fi
+# احتياطي: لا ننسخ المرفق إلا عند غياب ملف نشط صالح فعلاً.
+if [ ! -s /data/adb/tricky_store/keybox.xml ] || \
+   ! grep -q "<AndroidAttestation" /data/adb/tricky_store/keybox.xml 2>/dev/null; then
+    [ -s "$MODDIR/keybox.xml" ] && cp -f "$MODDIR/keybox.xml" /data/adb/tricky_store/keybox.xml 2>/dev/null
 fi
 if [ ! -s /data/adb/tricky_store/target.txt ] && [ -s "$MODDIR/target.txt" ]; then
     cp -f "$MODDIR/target.txt" /data/adb/tricky_store/target.txt 2>/dev/null
@@ -303,34 +309,7 @@ fi
 chmod 644 /data/adb/tricky_store/keybox.xml /data/adb/tricky_store/target.txt /data/adb/tricky_store/security_patch.txt 2>/dev/null
 chown root:root /data/adb/tricky_store/keybox.xml /data/adb/tricky_store/target.txt /data/adb/tricky_store/security_patch.txt 2>/dev/null
 
-# --- ب. تشغيل المحرك (مع تسجيل المخرجات للتشخيص) ---
-if [ -f "$TS_DIR/service.sh" ] && [ -f "$TS_DIR/daemon" ] && [ -f "$TS_DIR/classes.dex" ]; then
-    chown root:root "$TS_DIR/daemon" 2>/dev/null
-    : > /data/adb/falcon_daemon.log 2>/dev/null
-    # 🛡️ حماية إلزامية من الحقن المزدوج: تشغيل المحرك مرتين يحقن keystore2
-    #    مرتين ⇒ جمود keystore2 وتجمّد الجهاز بالكامل. لا نُشغّله إن كان يعمل.
-    if pidof TrickyStoreOSS >/dev/null 2>&1; then
-        echo "[$(date)] المحرك يعمل مسبقاً — تم تخطي التشغيل المزدوج (حماية keystore2)" >> /data/adb/falcon_daemon.log
-        log -t "FALCON_FIX" "ℹ️ محرك التعتيد يعمل مسبقاً — تخطي التشغيل المزدوج."
-    else
-        sh "$TS_DIR/service.sh" >>/data/adb/falcon_daemon.log 2>&1 &
-        log -t "FALCON_FIX" "🚀 تم تشغيل محرك التعتيد Tricky Store OSS."
-    fi
-    (
-        sleep 12
-        TS_PID=$(pidof TrickyStoreOSS 2>/dev/null)
-        if [ -n "$TS_PID" ]; then
-            echo "[$(date)] محرك Tricky Store OSS يعمل بنجاح (pid=$TS_PID)" >> /data/adb/falcon_daemon.log
-            log -t "FALCON_FIX" "✅ محرك التعتيد يعمل (pid=$TS_PID)"
-        else
-            echo "[$(date)] تحذير: محرك Tricky Store OSS لم يظهر — راجع المخرجات أعلاه" >> /data/adb/falcon_daemon.log
-            log -t "FALCON_FIX" "⚠️ محرك التعتيد لم يظهر بعد الإقلاع"
-        fi
-    ) &
-else
-    log -t "FALCON_FIX" "⚠️ محرك التعتيد غير جاهز: $TS_DIR/daemon أو classes.dex مفقود"
-    echo "[$(date)] محرك Tricky Store OSS مفقود في $TS_DIR" >> /data/adb/falcon_daemon.log 2>/dev/null
-fi
+# (v3.23) تأجيل تشغيل المحرك إلى ما بعد تجهيز الكيبوكس (نهاية القسم 2).
 
 # --- 2. تنظيف وإدارة ملفات Keybox ---
 # حذف النسخ الاحتياطية القديمة فقط — لا نمس target.txt إطلاقاً
@@ -344,13 +323,14 @@ rm -f /data/adb/tricky_store/*.bak 2>/dev/null
 #    فيُدمَّر أي كيبوكس جديد/سليم يثبّته المستخدم من الواجهة ⇒ يعود الفحص إلى
 #    (1 أخضر / 2 أحمر) بعد كل إعادة تشغيل.  الإضافة العاملة لا تفعل ذلك إطلاقاً
 #    (تُنشر إعداداتها مرة واحدة عند التثبيت فقط).
-#    الأولوية الآن:
-#      1) /data/adb/falcon/keybox.xml       ← كيبوكس المستخدم الدائم (لا يُلمس أبداً)
-#      2) /data/adb/tricky_store/keybox.xml ← إن كان مخصّصاً/صالحاً نثبّته دائماً
+#    الأولوية الآن (يديرها falcon_keybox.sh):
+#      1) المنفذ المفضّل: الأساسي ← الثانوي (أو الثانوي ← الأساسي حسب التفضيل)
+#      2) الكيبوكس النشط المخصّص (يُتبنّى كمنفذ أساسي إن لم يكن مرفقاً)
 #      3) الكيبوكس المرفق مع الإضافة        ← الافتراضي فقط عند غياب أي كيبوكس
 # ==============================================================================
 TS_KEYBOX="/data/adb/tricky_store/keybox.xml"
 USER_KEYBOX="/data/adb/falcon/keybox.xml"
+SECONDARY_KEYBOX="/data/adb/falcon/keybox2.xml"
 BUNDLE_COPY="/data/adb/falcon/keybox_bundled.xml"
 mkdir -p /data/adb/falcon 2>/dev/null
 
@@ -365,17 +345,10 @@ elif [ -s "$MODDIR/zygisk/keybox.xml" ]; then
     BUNDLED_SRC="$MODDIR/zygisk/keybox.xml"
 fi
 
-# هل الكيبوكس الحالي في مسار المحرك هو مجرّد نسخة من كيبوكس الإضافة؟
-TS_IS_BUNDLE=0
-if [ -n "$BUNDLED_SRC" ] && cmp -s "$TS_KEYBOX" "$BUNDLED_SRC" 2>/dev/null; then
-    TS_IS_BUNDLE=1
-fi
-cmp -s "$TS_KEYBOX" "$BUNDLE_COPY" 2>/dev/null && TS_IS_BUNDLE=1
-
-# (v3.09) نقل تلقائي مباشر لكيبوكس صالح من إضافة TrickyStore/SafetyNet قديمة.
+# (v3.23) نقل تلقائي مباشر لكيبوكس صالح من إضافة TrickyStore/SafetyNet قديمة.
 # كان المستخدم يضطر لنقله يدوياً (نقل يدوي = يعمل) ⇒ نعمله آلياً قبل حذف الإضافة
 # القديمة، مرة عند التثبيت (customize.sh) ومرة كل إقلاع هنا (يلتقط الإضافات الجديدة).
-if ! keybox_valid "$USER_KEYBOX"; then
+if ! keybox_valid "$USER_KEYBOX" && ! keybox_valid "$SECONDARY_KEYBOX"; then
     FALCON_KB_FROM=""
     falcon_kb_ours() {
         case "$1" in
@@ -384,10 +357,19 @@ if ! keybox_valid "$USER_KEYBOX"; then
         esac
         return 1
     }
+    # (v3.23) تجاهل كيبوكس الإضافة (الحالي أو اللقطة القديمة) عند التبنّي.
+    falcon_kb_bundle() {
+        [ -n "$1" ] || return 1
+        [ -n "$BUNDLED_SRC" ] && cmp -s "$1" "$BUNDLED_SRC" 2>/dev/null && return 0
+        [ -s "$BUNDLE_COPY" ] && cmp -s "$1" "$BUNDLE_COPY" 2>/dev/null && return 0
+        [ -s "$MODDIR/zygisk/keybox.xml" ] && cmp -s "$1" "$MODDIR/zygisk/keybox.xml" 2>/dev/null && return 0
+        return 1
+    }
     falcon_kb_copy() {
         [ -n "$1" ] || return 1
         keybox_valid "$1" || return 1
         falcon_kb_ours "$1" && return 1
+        falcon_kb_bundle "$1" && return 1
         cp -f "$1" "$USER_KEYBOX" 2>/dev/null || return 1
         return 0
     }
@@ -420,19 +402,22 @@ if ! keybox_valid "$USER_KEYBOX"; then
     fi
 fi
 
-if keybox_valid "$USER_KEYBOX"; then
-    # 1) كيبوكس المستخدم المحفوظ — الأعلى أولوية ولا يُستبدل أبداً
-    cp -f "$USER_KEYBOX" "$TS_KEYBOX" 2>/dev/null
-    log -t "FALCON_FIX" "🔑 كيبوكس المستخدم المحفوظ مطبّق (لن يُستبدل بالمرفق)."
-elif keybox_valid "$TS_KEYBOX" && [ "$TS_IS_BUNDLE" -eq 0 ]; then
-    # 2) كيبوكس مخصّص وضعه المستخدم ⇒ نثبّته دائماً في مسار المستخدم
-    cp -f "$TS_KEYBOX" "$USER_KEYBOX" 2>/dev/null
-    log -t "FALCON_FIX" "🔑 وُجد كيبوكس مخصّص — تم تثبيته ككيبوكس مستخدم دائم."
-elif [ -n "$BUNDLED_SRC" ]; then
-    # 3) لا يوجد كيبوكس مستخدم (أو الموجود نسخة قديمة من كيبوكس الإضافة)
-    cp -f "$BUNDLED_SRC" "$TS_KEYBOX" 2>/dev/null
-    cp -f "$BUNDLED_SRC" "$BUNDLE_COPY" 2>/dev/null
-    log -t "FALCON_FIX" "🔑 تم نشر كيبوكس الإضافة الافتراضي (لا يوجد كيبوكس مستخدم)."
+# --- (v3.23) إدارة المنفذين: أساسي + ثانوي عبر falcon_keybox.sh ---
+# السكربت يختار المنفذ الصالح ويطبّقه ذرياً، ويحفظ الأساسي دائماً.
+if [ -f "$MODDIR/falcon_keybox.sh" ]; then
+    sh "$MODDIR/falcon_keybox.sh" sync --boot >/dev/null 2>&1
+fi
+
+# احتياطي إلزامي: إن لم ينتج السكربت ملفاً نشطاً صالحاً نستخدم المنطق القديم.
+if ! keybox_valid "$TS_KEYBOX"; then
+    if keybox_valid "$USER_KEYBOX"; then
+        cp -f "$USER_KEYBOX" "$TS_KEYBOX" 2>/dev/null
+        log -t "FALCON_FIX" "🔑 [احتياطي] كيبوكس المستخدم مطبّق."
+    elif [ -n "$BUNDLED_SRC" ]; then
+        cp -f "$BUNDLED_SRC" "$TS_KEYBOX" 2>/dev/null
+        cp -f "$BUNDLED_SRC" "$BUNDLE_COPY" 2>/dev/null
+        log -t "FALCON_FIX" "🔑 [احتياطي] كيبوكس الإضافة مطبّق."
+    fi
 fi
 
 chmod 644 "$TS_KEYBOX" 2>/dev/null
@@ -440,6 +425,35 @@ chown root:root "$TS_KEYBOX" 2>/dev/null
 chcon u:object_r:system_file:s0 "$TS_KEYBOX" 2>/dev/null
 chmod 600 "$USER_KEYBOX" 2>/dev/null
 chown root:root "$USER_KEYBOX" 2>/dev/null
+
+# --- ب. (v3.23) تشغيل المحرك بعد تجهيز الكيبوكس (مع تسجيل المخرجات للتشخيص) ---
+if [ -f "$TS_DIR/service.sh" ] && [ -f "$TS_DIR/daemon" ] && [ -f "$TS_DIR/classes.dex" ]; then
+    chown root:root "$TS_DIR/daemon" 2>/dev/null
+    : > /data/adb/falcon_daemon.log 2>/dev/null
+    # 🛡️ حماية إلزامية من الحقن المزدوج: تشغيل المحرك مرتين يحقن keystore2
+    #    مرتين ⇒ جمود keystore2 وتجمّد الجهاز بالكامل. لا نُشغّله إن كان يعمل.
+    if pidof TrickyStoreOSS >/dev/null 2>&1; then
+        echo "[$(date)] المحرك يعمل مسبقاً — تم تخطي التشغيل المزدوج (حماية keystore2)" >> /data/adb/falcon_daemon.log
+        log -t "FALCON_FIX" "ℹ️ محرك التعتيد يعمل مسبقاً — تخطي التشغيل المزدوج."
+    else
+        sh "$TS_DIR/service.sh" >>/data/adb/falcon_daemon.log 2>&1 &
+        log -t "FALCON_FIX" "🚀 تم تشغيل محرك التعتيد Tricky Store OSS."
+    fi
+    (
+        sleep 12
+        TS_PID=$(pidof TrickyStoreOSS 2>/dev/null)
+        if [ -n "$TS_PID" ]; then
+            echo "[$(date)] محرك Tricky Store OSS يعمل بنجاح (pid=$TS_PID)" >> /data/adb/falcon_daemon.log
+            log -t "FALCON_FIX" "✅ محرك التعتيد يعمل (pid=$TS_PID)"
+        else
+            echo "[$(date)] تحذير: محرك Tricky Store OSS لم يظهر — راجع المخرجات أعلاه" >> /data/adb/falcon_daemon.log
+            log -t "FALCON_FIX" "⚠️ محرك التعتيد لم يظهر بعد الإقلاع"
+        fi
+    ) &
+else
+    log -t "FALCON_FIX" "⚠️ محرك التعتيد غير جاهز: $TS_DIR/daemon أو classes.dex مفقود"
+    echo "[$(date)] محرك Tricky Store OSS مفقود في $TS_DIR" >> /data/adb/falcon_daemon.log 2>/dev/null
+fi
 
 # --- 2.5 (أُزيل) حقن هوية الكيرنل في KernelSU Manager ---
 # كان هذا الإجراء يعتمد على ثنائيات محرك cleverestricky المدفوع

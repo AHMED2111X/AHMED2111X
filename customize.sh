@@ -41,6 +41,56 @@ if [ "$API" -lt 25 ]; then
 fi
 # ------------------------------------------------
 
+# --- (v3.23) بوابات التثبيت — من مرجع PIF 19.7.7-r2 بأسلوب آمن ---
+# ⛔ مبدأنا: لا نُجهض التثبيت إلا إذا كان الفشل مضموناً. أي حالة غير مؤكدة
+#    تُعرض كتحذير فقط حتى لا يتعطّل التثبيت على أي جهاز.
+if [ "$BOOTMODE" = "false" ]; then
+    abort " 🚫 يجب التثبيت من مدير الروت (Magisk / KernelSU / APatch) وليس من الاسترجاع (Recovery)."
+fi
+
+# المعمارية المدعومة (المكتبات متوفّرة arm64/arm/x86/x86_64)
+case "$ARCH" in
+    arm64|arm|x64|x86) : ;;
+    '') : ;;   # غير معروفة ⇒ لا نمنع التثبيت
+    *) abort " 🚫 معمارية الجهاز ($ARCH) غير مدعومة." ;;
+esac
+
+# KernelSU قديم ⇒ تحذير فقط (لا نمنع التثبيت)
+if [ "$KSU" = "true" ]; then
+    case "$KSU_VER_CODE" in
+        ''|*[!0-9]*) : ;;
+        *) [ "$KSU_VER_CODE" -lt 10670 ] && \
+               ui_print "- ⚠️ إصدار KernelSU قديم ($KSU_VER_CODE) — يُنصح بالترقية إلى 10670 أو أحدث." ; delay ;;
+    esac
+fi
+
+# --- (v3.23) التحقق من سلامة الحزمة عبر payload.sha256 (تحذير فقط — لا يمنع التثبيت) ---
+# قائمة البصمات تُولَّد وقت البناء من ملفات الحزمة الفعلية.
+# الغرض: كشف الحزمة الناقصة/المُفسَّدة مبكراً — وليس منع التثبيت أبداً.
+FALCON_MANIFEST="$MODPATH/payload.sha256"
+if [ -f "$FALCON_MANIFEST" ]; then
+    if command -v sha256sum >/dev/null 2>&1; then
+        FALCON_VLOG="/data/adb/falcon/.payload_verify.log"
+        mkdir -p /data/adb/falcon 2>/dev/null
+        ( cd "$MODPATH" && sha256sum -c payload.sha256 ) >"$FALCON_VLOG" 2>&1 || true
+        FALCON_BAD=$(grep -v ': OK$' "$FALCON_VLOG" 2>/dev/null | grep -c .)
+        case "$FALCON_BAD" in ''|*[!0-9]*) FALCON_BAD=0 ;; esac
+        if [ "$FALCON_BAD" -gt 0 ]; then
+            ui_print "- ⚠️ تحذير: $FALCON_BAD ملفاً في الحزمة لا يطابق بصمة SHA-256:" ; delay
+            grep -v ': OK$' "$FALCON_VLOG" 2>/dev/null | head -n 8 | while IFS= read -r FL; do
+                ui_print "      $FL"
+            done
+            ui_print "- ℹ️ متابعة التثبيت رغم ذلك (الملفات موجودة وقد تكون بصمتها قديمة)." ; delay
+        else
+            ui_print "- ✅ تم التحقق من سلامة جميع ملفات الحزمة (SHA-256)." ; delay
+        fi
+        rm -f "$FALCON_VLOG" 2>/dev/null
+    else
+        ui_print "- ℹ️ أداة sha256sum غير متاحة — تم تجاوز فحص سلامة الحزمة." ; delay
+    fi
+fi
+# ------------------------------------------------
+
 # --- (v3.19g) التحقق من بيئة Zygisk ودعم كل المحركات المعروفة ---
 # ZygiskNext (بالمعرّفين: الجديد zygisk_next والقديم zygisksu) ، NeoZygisk ،
 # ReZygisk ، BreZygisk ، أو Zygisk المدمج في Magisk — كلها مدعومة.
@@ -138,15 +188,24 @@ falcon_kb_ours() {
     esac
     return 1
 }
+# (v3.23) لا نتبنّى نسخة من كيبوكس الإضافة (الحالي أو القديم) ككيبوكس مستخدم.
+falcon_kb_bundle() {
+    [ -n "$1" ] || return 1
+    [ -s "$MODPATH/keybox.xml" ] && cmp -s "$1" "$MODPATH/keybox.xml" 2>/dev/null && return 0
+    [ -s "$MODPATH/zygisk/keybox.xml" ] && cmp -s "$1" "$MODPATH/zygisk/keybox.xml" 2>/dev/null && return 0
+    [ -s "$FALCON_KB_DIR/keybox_bundled.xml" ] && cmp -s "$1" "$FALCON_KB_DIR/keybox_bundled.xml" 2>/dev/null && return 0
+    return 1
+}
 falcon_kb_copy() {
     [ -n "$1" ] || return 1
     falcon_kb_ok "$1" || return 1
     falcon_kb_ours "$1" && return 1
+    falcon_kb_bundle "$1" && return 1
     cp -f "$1" "$FALCON_KB_USER" 2>/dev/null || return 1
     return 0
 }
 
-if ! falcon_kb_ok "$FALCON_KB_USER"; then
+if ! falcon_kb_ok "$FALCON_KB_USER" && ! falcon_kb_ok "$FALCON_KB_DIR/keybox2.xml"; then
     FALCON_KB_FROM=""
     if falcon_kb_copy /data/adb/tricky_store/keybox.xml; then
         FALCON_KB_FROM="/data/adb/tricky_store/keybox.xml"
@@ -185,24 +244,19 @@ if ! falcon_kb_ok "$FALCON_KB_USER"; then
     fi
 fi
 
-# --- نسخ مباشر للكيبوكس إلى مسار TrickyStore (يعمل فوراً دون انتظار الإقلاع) ---
+# --- (v3.23) تطبيق المنفذ المختار بدل الطمس الأعمى للكيبوكس النشط ---
 # المسار المحدد: /data/adb/tricky_store/keybox.xml
+# مدير المنفذين يحترم التفضيل (أساسي/ثانوي) ولا يمس الأساسي إطلاقاً.
 mkdir -p /data/adb/tricky_store 2>/dev/null
-KB_SOURCE=""
-if [ -s "$FALCON_KB_USER" ]; then
-    KB_SOURCE="$FALCON_KB_USER"
-elif [ -s "$MODPATH/keybox.xml" ]; then
-    KB_SOURCE="$MODPATH/keybox.xml"
+if [ -f "$MODPATH/falcon_keybox.sh" ]; then
+    sh "$MODPATH/falcon_keybox.sh" sync --force >/dev/null 2>&1
 fi
-if [ -n "$KB_SOURCE" ]; then
-    cp -f "$KB_SOURCE" /data/adb/tricky_store/keybox.xml 2>/dev/null
-    chmod 644 /data/adb/tricky_store/keybox.xml 2>/dev/null
-    chown root:root /data/adb/tricky_store/keybox.xml 2>/dev/null
-    ui_print "- 🔑 تم نقل الكيبوكس إلى:" ; delay
+if [ -s /data/adb/tricky_store/keybox.xml ] && \
+   grep -q "<AndroidAttestation" /data/adb/tricky_store/keybox.xml 2>/dev/null; then
+    ui_print "- 🔑 الكيبوكس النشط جاهز:" ; delay
     ui_print "     /data/adb/tricky_store/keybox.xml" ; delay
-    ui_print "     المصدر: $KB_SOURCE" ; delay
 else
-    ui_print "- ⚠️ لم يُعثر على أي كيبوكس للنقل." ; delay
+    ui_print "- ⚠️ لم يُعثر على أي كيبوكس صالح للنشر." ; delay
 fi
 
 # --- (v3.10) تعبئة target.txt بكل التطبيقات المثبتة على الجهاز عند التثبيت ---
@@ -537,11 +591,19 @@ if valid_bpif "$BUILTIN_PIF"; then
     ui_print "- 🎭 تم نشر ملف البصمة في مسار المحرك (playintegrityfix)" ; delay
 fi
 
-# نشر ملف keybox.xml سواءً كان في مجلد zygisk أو في الجذر
-if [ -f "$MODPATH/zygisk/keybox.xml" ]; then
-    cp -f "$MODPATH/zygisk/keybox.xml" /data/adb/tricky_store/keybox.xml 2>/dev/null
-elif [ -f "$MODPATH/keybox.xml" ]; then
-    cp -f "$MODPATH/keybox.xml" /data/adb/tricky_store/keybox.xml 2>/dev/null
+# (v3.23) لا نطمس كيبوكساً نشطاً صالحاً عند التحديث.
+# مدير المنفذين يختار الأساسي/الثانوي/المرفق ويطبّق ذرياً.
+if [ -f "$MODPATH/falcon_keybox.sh" ]; then
+    sh "$MODPATH/falcon_keybox.sh" sync --force >/dev/null 2>&1
+fi
+# احتياطي: لا ننسخ المرفق إلا عند غياب ملف نشط صالح فعلاً.
+if ! [ -s /data/adb/tricky_store/keybox.xml ] || \
+   ! grep -q "<AndroidAttestation" /data/adb/tricky_store/keybox.xml 2>/dev/null; then
+    if [ -f "$MODPATH/zygisk/keybox.xml" ]; then
+        cp -f "$MODPATH/zygisk/keybox.xml" /data/adb/tricky_store/keybox.xml 2>/dev/null
+    elif [ -f "$MODPATH/keybox.xml" ]; then
+        cp -f "$MODPATH/keybox.xml" /data/adb/tricky_store/keybox.xml 2>/dev/null
+    fi
 fi
 
 # --- الحفاظ على الخيارات السابقة في target.txt ودمجها بآمان بدون تكرار ---

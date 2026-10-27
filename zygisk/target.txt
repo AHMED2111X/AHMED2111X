@@ -1,0 +1,3 @@
+com.google.android.gms
+com.google.android.gms.unstable
+com.android.vending

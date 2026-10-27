@@ -258,15 +258,18 @@ if [ ! -d "$TARGET_DIR" ]; then
     chown root:root "$TARGET_DIR"
 fi
 
-# --- 3.1 ضمان وجود الكيبوكس في مسار TrickyStore دائماً (طلب المستخدم الصريح) ---
-# المسار المحدد: /data/adb/tricky_store/keybox.xml
-# نملأه من كيبوكس المستخدم الدائم إن وجد، وإلا من كيبوكس الوحدة المرفق.
-# إن كان موجوداً وصالحاً لا نمسه إطلاقاً.
-if [ -s /data/adb/falcon/keybox.xml ] && grep -q "<AndroidAttestation" /data/adb/falcon/keybox.xml 2>/dev/null; then
-    cp -f /data/adb/falcon/keybox.xml "$TARGET_FILE" 2>/dev/null
-elif [ ! -s "$TARGET_FILE" ] || ! grep -q "<AndroidAttestation" "$TARGET_FILE" 2>/dev/null; then
-    if [ -s "$MODPATH/keybox.xml" ]; then
-        cp -f "$MODPATH/keybox.xml" "$TARGET_FILE" 2>/dev/null
+# --- 3.1 (v3.23) تطبيق المنفذ المختار (أساسي/ثانوي/مرفق) قبل Zygote ---
+# مدير المنفذين يختار الأساسي الصالح، ثم الثانوي، ثم المرفق. لا يمس الأساسي.
+if [ -f "$MODPATH/falcon_keybox.sh" ]; then
+    sh "$MODPATH/falcon_keybox.sh" sync --early >/dev/null 2>&1
+else
+    # احتياطي: السلوك القديم إن غاب السكربت.
+    if [ -s /data/adb/falcon/keybox.xml ] && grep -q "<AndroidAttestation" /data/adb/falcon/keybox.xml 2>/dev/null; then
+        cp -f /data/adb/falcon/keybox.xml "$TARGET_FILE" 2>/dev/null
+    elif [ ! -s "$TARGET_FILE" ] || ! grep -q "<AndroidAttestation" "$TARGET_FILE" 2>/dev/null; then
+        if [ -s "$MODPATH/keybox.xml" ]; then
+            cp -f "$MODPATH/keybox.xml" "$TARGET_FILE" 2>/dev/null
+        fi
     fi
 fi
 if [ -s "$TARGET_FILE" ]; then

@@ -14,7 +14,15 @@ fi
 LIST=$MODPATH/example.app_replace.list
 [ -f "$MODPATH/custom.app_replace.list" ] && LIST=$MODPATH/custom.app_replace.list
 
-for APP in $(grep -v '^#' $LIST); do
+# (v3.23) Magisk 28102+ يستخدم Whiteout بدل .replace لإخفاء تطبيقات حقن الرومات.
+MAGISK_WHITEOUT=false
+if [ -f /data/adb/magisk/util_functions.sh ]; then
+    MAGISK_VER_CODE=$(grep MAGISK_VER_CODE /data/adb/magisk/util_functions.sh 2>/dev/null | cut -d= -f2)
+    case "$MAGISK_VER_CODE" in ''|*[!0-9]*) MAGISK_VER_CODE=0 ;; esac
+    [ "$MAGISK_VER_CODE" -ge 28102 ] && MAGISK_WHITEOUT=true
+fi
+
+for APP in $(grep -v '^#' "$LIST"); do
     if [ -e "$APP" ]; then
         case $APP in
             /system/*) ;;
@@ -22,18 +30,21 @@ for APP in $(grep -v '^#' $LIST); do
         esac
         HIDEPATH=$MODPATH$PREFIX$APP
         if [ -d "$APP" ]; then
-            mkdir -p $HIDEPATH
-            if [ "$KSU" = "true" -o "$APATCH" = "true" ]; then
-                setfattr -n trusted.overlay.opaque -v y $HIDEPATH
+            $MAGISK_WHITEOUT || mkdir -p "$HIDEPATH"
+            if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ]; then
+                setfattr -n trusted.overlay.opaque -v y "$HIDEPATH"
+            elif $MAGISK_WHITEOUT; then
+                mkdir -p "$(dirname "$HIDEPATH")"
+                mknod "$HIDEPATH" c 0 0 2>/dev/null || touch "$HIDEPATH"
             else
-                touch $HIDEPATH/.replace
+                touch "$HIDEPATH/.replace"
             fi
         else
-            mkdir -p $(dirname $HIDEPATH)
-            if [ "$KSU" = "true" -o "$APATCH" = "true" ]; then
-                mknod $HIDEPATH c 0 0
+            mkdir -p "$(dirname "$HIDEPATH")"
+            if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ] || $MAGISK_WHITEOUT; then
+                mknod "$HIDEPATH" c 0 0 2>/dev/null || touch "$HIDEPATH"
             else
-                touch $HIDEPATH
+                touch "$HIDEPATH"
             fi
         fi
         case $APP in
@@ -66,21 +77,26 @@ for APP in $(grep -v '^#' $LIST); do
     fi
 done
 
-# حل تعارضات خطافات التمويه (PropImitationHooks) بالرومات المخصصة في حال عدم وجود الخصائص الدائمة
-if [ -n "$(resetprop ro.aospa.version)" -o -n "$(resetprop net.pixelos.version)" -o -n "$(resetprop ro.afterlife.version)" -o -f /data/system/gms_certified_props.json ]; then
-    for PROP in persist.sys.pihooks.first_api_level persist.sys.pihooks.security_patch; do
-        resetprop | grep -q "\[$PROP\]" || persistprop "$PROP" ""
-    done
-fi
+# (v3.23) مفتاح skippersistprop يعطّل هذه المعالجة عند طلب المستخدم.
+if [ "$SKIPPERSISTPROP" != "true" ]; then
+    # حل تعارضات خطافات التمويه (PropImitationHooks) بالرومات المخصصة في حال عدم وجود الخصائص الدائمة
+    if [ -n "$(resetprop ro.aospa.version)" -o -n "$(resetprop net.pixelos.version)" -o -n "$(resetprop ro.afterlife.version)" -o -f /data/system/gms_certified_props.json ]; then
+        for PROP in persist.sys.pihooks.first_api_level persist.sys.pihooks.security_patch; do
+            resetprop | grep -q "\[$PROP\]" || persistprop "$PROP" ""
+        done
+    fi
 
-# تعطيل محركات التمويه المدمجة بالرومات المخصصة لمنع التضارب مع تمويه الموديول
-if resetprop | grep -qE "persist.sys.pihooks|persist.sys.entryhooks|persist.sys.spoof|persist.sys.pixelprops" || [ -f /data/system/gms_certified_props.json ]; then
-    persistprop persist.sys.pihooks.disable.gms_props true
-    persistprop persist.sys.pihooks.disable.gms_key_attestation_block true
-    persistprop persist.sys.entryhooks_enabled false
-    persistprop persist.sys.spoof.gms false
-    persistprop persist.sys.pixelprops.gms false
-    persistprop persist.sys.pixelprops.gapps false
-    persistprop persist.sys.pixelprops.google false
-    persistprop persist.sys.pixelprops.pi false
+    # تعطيل محركات التمويه المدمجة بالرومات المخصصة لمنع التضارب مع تمويه الموديول
+    if resetprop | grep -qE "persist.sys.pihooks|persist.sys.entryhooks|persist.sys.spoof|persist.sys.pixelprops|persist.sys.pp" || [ -f /data/system/gms_certified_props.json ]; then
+        persistprop persist.sys.pihooks.disable.gms_props true
+        persistprop persist.sys.pihooks.disable.gms_key_attestation_block true
+        persistprop persist.sys.entryhooks_enabled false
+        persistprop persist.sys.spoof.gms false
+        persistprop persist.sys.pixelprops.gms false
+        persistprop persist.sys.pixelprops.gapps false
+        persistprop persist.sys.pixelprops.google false
+        persistprop persist.sys.pixelprops.pi false
+        persistprop persist.sys.pp.gms false
+        persistprop persist.sys.pp.finsky false
+    fi
 fi

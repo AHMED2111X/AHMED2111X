@@ -148,6 +148,7 @@ chown root:root "$TARGET_DIR" 2>/dev/null
 
 TS_KEYBOX="$TARGET_DIR/keybox.xml"
 USER_KEYBOX="/data/adb/falcon/keybox.xml"
+SECONDARY_KEYBOX="/data/adb/falcon/keybox2.xml"
 
 kb_valid() { [ -s "$1" ] && grep -q "<AndroidAttestation" "$1" 2>/dev/null; }
 
@@ -159,15 +160,20 @@ elif [ -s "$MODDIR/zygisk/keybox.xml" ]; then
 fi
 
 KB_CHOSEN=""
-if kb_valid "$USER_KEYBOX"; then
-    KB_CHOSEN="$USER_KEYBOX"
-    step_info "سيُستخدم كيبوكس المستخدم المحفوظ (لن يُستبدل بكيبوكس الإضافة)."
-elif kb_valid "$TS_KEYBOX"; then
-    KB_CHOSEN="$TS_KEYBOX"
-    step_info "وُجد كيبوكس صالح على الجهاز — تم الحفاظ عليه."
-elif [ -n "$BUNDLED_KEYBOX" ]; then
-    KB_CHOSEN="$BUNDLED_KEYBOX"
-    step_info "لا يوجد كيبوكس مستخدم — سيُثبّت الكيبوكس المرفق مع الإضافة."
+# (v3.23) لا نستبدل ملفاً نشطاً صالحاً قبل فحص CRL؛ إن كان تالفاً نختار بديلاً.
+if ! kb_valid "$TS_KEYBOX"; then
+    if kb_valid "$USER_KEYBOX"; then
+        KB_CHOSEN="$USER_KEYBOX"
+        step_info "سيُستخدم كيبوكس المستخدم المحفوظ (لن يُستبدل بكيبوكس الإضافة)."
+    elif kb_valid "$SECONDARY_KEYBOX"; then
+        KB_CHOSEN="$SECONDARY_KEYBOX"
+        step_info "سيُستخدم المنفذ الثانوي الصالح."
+    elif [ -n "$BUNDLED_KEYBOX" ]; then
+        KB_CHOSEN="$BUNDLED_KEYBOX"
+        step_info "لا يوجد كيبوكس مستخدم — سيُثبّت الكيبوكس المرفق مع الإضافة."
+    fi
+else
+    step_info "الكيبوكس النشط صالح — لن يُستبدل قبل فحص CRL."
 fi
 
 # حذف النسخ الاحتياطية/المؤقتة فقط — لا نحذف أي كيبوكس صالح
@@ -180,11 +186,14 @@ if [ -n "$KB_CHOSEN" ]; then
     chmod 644 "$TS_KEYBOX"
     chown root:root "$TS_KEYBOX"
     chcon u:object_r:system_file:s0 "$TS_KEYBOX" 2>/dev/null
-    cp -f "$KB_CHOSEN" "$USER_KEYBOX" 2>/dev/null
-    chmod 600 "$USER_KEYBOX" 2>/dev/null
-    chown root:root "$USER_KEYBOX" 2>/dev/null
+    # لا ننسخ المنفذ الثانوي فوق الأساسي أبداً.
+    if [ "$KB_CHOSEN" != "$SECONDARY_KEYBOX" ]; then
+        cp -f "$KB_CHOSEN" "$USER_KEYBOX" 2>/dev/null
+        chmod 600 "$USER_KEYBOX" 2>/dev/null
+        chown root:root "$USER_KEYBOX" 2>/dev/null
+    fi
     step_success "تم تثبيت Keybox بشكل دائم (يبقى بعد إعادة التشغيل)"
-else
+elif ! kb_valid "$TS_KEYBOX"; then
     step_info "تنبيه: لم يتم العثور على أي ملف keybox.xml صالح."
 fi
 
@@ -201,6 +210,11 @@ if [ -f "$MODDIR/kb_sync.sh" ]; then
   esac
 else
   step_info "سكربت المزامنة الذكية غير موجود — تخطّي."
+fi
+
+# --- 1.6 (v3.23) تطبيق تفضيل المنفذ (أساسي/ثانوي) بعد أي جلب جديد ---
+if [ -f "$MODDIR/falcon_keybox.sh" ]; then
+  sh "$MODDIR/falcon_keybox.sh" sync --force --quiet 2>/dev/null
 fi
 
 # --- 2. قراءة بصمة التمويه (PIF) من custom.pif.prop ---

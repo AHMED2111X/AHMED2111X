@@ -9,6 +9,10 @@
 SKIPDELPROP=false
 [ -f "$MODPATH/skipdelprop" ] && SKIPDELPROP=true
 
+# (v3.23) مفتاح تعطيل خصائص التعارض مع رومات PropImitationHooks عند الطلب
+SKIPPERSISTPROP=false
+[ -f "$MODPATH/skippersistprop" ] && SKIPPERSISTPROP=true
+
 # تحديد أمر التعديل المناسب بناءً على إصدار Magisk
 RESETPROP="resetprop -n"
 if [ -f /data/adb/magisk/util_functions.sh ]; then
@@ -18,9 +22,16 @@ if [ -f /data/adb/magisk/util_functions.sh ]; then
 fi
 
 # دالة حذف الخاصية إذا كانت موجودة في النظام
+# (v3.23 — من مرجع PIF 19.7.7-r2) مسح ذاكرة التخزين المؤقت للخاصية بعد الحذف
+# حتى لا يبقى نسخة قديمة محفوظة في ذاكرة الخصائص بعد resetprop --delete
 delprop_if_exist() {
     local NAME="$1"
-    [ -n "$(resetprop "$NAME")" ] && resetprop --delete "$NAME"
+    local ZONE=""
+    ZONE="$(resetprop -Z "$NAME" 2>/dev/null)"
+    if [ -n "$(resetprop "$NAME")" ]; then
+        resetprop --delete "$NAME" 2>/dev/null
+        [ -n "$ZONE" ] && resetprop -c "$ZONE" >/dev/null 2>&1 || true
+    fi
 }
 
 # دالة تعيين الخصائص الدائمة وتوثيق أمر إلغائها في ملف uninstall.sh

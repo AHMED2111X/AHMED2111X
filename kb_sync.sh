@@ -341,7 +341,7 @@ check_keybox_file() {
 
 # --- تثبيت الكيبوكس الجديد ---
 install_kb() {
-    local d=""
+    local d="" PREF="" SLOT=""
     if [ -s "$TARGET" ]; then
         d="$BACKUP_DIR/keybox-$(date '+%Y%m%d-%H%M%S' 2>/dev/null).xml"
         cp -f "$TARGET" "$d" 2>/dev/null
@@ -350,16 +350,29 @@ install_kb() {
         cp -f "/data/adb/falcon/keybox.xml" "$BACKUP_DIR/keybox-user-$(date '+%Y%m%d-%H%M%S' 2>/dev/null).xml" 2>/dev/null
     fi
     ls -t "$BACKUP_DIR"/keybox-*.xml 2>/dev/null | tail -n +4 | while read -r x; do rm -f "$x" 2>/dev/null; done
-    mkdir -p "/data/adb/tricky_store" "/data/adb/falcon" 2>/dev/null
+    mkdir -p "/data/adb/tricky_store" "/data/adb/falcon" "/data/adb/falcon/keybox_slots/backups" 2>/dev/null
+    [ -L "$TARGET" ] && rm -f "$TARGET" 2>/dev/null
     cp -f "$1" "$TARGET" 2>/dev/null || return 1
     chmod 644 "$TARGET" 2>/dev/null
     chown root:root "$TARGET" 2>/dev/null
     chcon u:object_r:system_file:s0 "$TARGET" 2>/dev/null
-    # مزامنة ملف المستخدم الدائم حتى لا يُرجع الإقلاع التالي الكيبوكس القديم المُبطَل
-    cp -f "$1" "/data/adb/falcon/keybox.xml" 2>/dev/null
-    chmod 600 "/data/adb/falcon/keybox.xml" 2>/dev/null
-    chown root:root "/data/adb/falcon/keybox.xml" 2>/dev/null
+    # (v3.23) احترام تفضيل المنفذ: الثانوي إن كان مفعّلاً، وإلا الأساسي.
+    PREF="$(cat "/data/adb/falcon/keybox_slots/preferred" 2>/dev/null | tr -d ' \t\r\n')"
+    case "$PREF" in
+        secondary) SLOT="/data/adb/falcon/keybox2.xml" ;;
+        *)         SLOT="/data/adb/falcon/keybox.xml" ;;
+    esac
+    [ -L "$SLOT" ] && rm -f "$SLOT" 2>/dev/null
+    if [ -s "$SLOT" ]; then
+        cp -f "$SLOT" "/data/adb/falcon/keybox_slots/backups/slot-$(date '+%Y%m%d-%H%M%S' 2>/dev/null).xml" 2>/dev/null
+        ls -t "/data/adb/falcon/keybox_slots/backups/slot-"*.xml 2>/dev/null | tail -n +4 | while read -r x; do rm -f "$x" 2>/dev/null; done
+    fi
+    cp -f "$1" "$SLOT" 2>/dev/null
+    chmod 600 "$SLOT" 2>/dev/null
+    chown root:root "$SLOT" 2>/dev/null
+    say "تم تثبيت الكيبوكس في المنفذ: $SLOT"
     if [ -d "/data/adb/teesim" ]; then
+        [ -L "$TARGET2" ] && rm -f "$TARGET2" 2>/dev/null
         cp -f "$1" "$TARGET2" 2>/dev/null
         chmod 644 "$TARGET2" 2>/dev/null
         chown root:root "$TARGET2" 2>/dev/null
