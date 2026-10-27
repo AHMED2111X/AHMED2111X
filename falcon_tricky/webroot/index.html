@@ -102,6 +102,61 @@
     }
     .langbar button.on { color: #04070a; background: var(--neon); font-weight: 700; border-color: var(--neon); }
 
+    /* (v3.24) زر اللغة الموحّد + نافذة اختيار جميع لغات العالم */
+    #btnLang {
+        flex: 1 1 100%; display: flex; align-items: center; gap: 10px;
+        padding: 10px 12px; font-size: 0.8rem; font-weight: 700;
+        background: linear-gradient(180deg, rgba(43,255,136,0.10), rgba(0,0,0,0.30));
+        border: 1px solid var(--line); color: var(--text); cursor: pointer;
+        text-align: start;
+    }
+    #btnLang .lang-globe { color: var(--neon); font-size: 1rem; flex: 0 0 auto; }
+    #btnLang .lang-current { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #btnLang .lang-arrow { color: var(--muted); font-size: 0.7rem; flex: 0 0 auto; }
+    #langOverlay {
+        position: fixed; inset: 0; z-index: 140; display: none;
+        background: rgba(2,6,5,0.88); padding: 12px;
+        align-items: flex-end; justify-content: center;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+    #langOverlay.on { display: flex; }
+    .lang-sheet {
+        width: 100%; max-width: 560px; max-height: 88vh; display: flex; flex-direction: column;
+        background: #06110d; border: 1px solid var(--line); border-radius: 14px;
+        box-shadow: 0 18px 60px rgba(0,0,0,0.7), 0 0 24px rgba(43,255,136,0.12);
+        overflow: hidden;
+    }
+    .lang-head {
+        display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+        border-bottom: 1px solid var(--line); background: rgba(43,255,136,0.04);
+    }
+    .lang-head h3 { margin: 0; flex: 1 1 auto; color: var(--neon); font-size: 0.86rem; letter-spacing: 0.5px; }
+    .lang-head button { padding: 6px 10px; font-size: 0.7rem; }
+    .lang-search-wrap { padding: 10px 14px 6px; }
+    #langSearch {
+        width: 100%; padding: 9px 11px; font-size: 0.8rem; font-family: var(--font);
+        background: rgba(0,0,0,0.45); color: var(--text); border: 1px solid var(--line);
+        border-radius: 8px; outline: none;
+    }
+    #langSearch:focus { border-color: var(--neon); box-shadow: 0 0 0 2px rgba(43,255,136,0.12); }
+    .lang-hint { padding: 0 14px 8px; color: var(--muted); font-size: 0.64rem; line-height: 1.5; }
+    .lang-list { flex: 1 1 auto; overflow: auto; -webkit-overflow-scrolling: touch; padding: 2px 8px 10px; }
+    .lang-item {
+        width: 100%; display: flex; align-items: center; gap: 10px;
+        padding: 9px 10px; margin: 2px 0; border: 1px solid transparent; border-radius: 9px;
+        background: transparent; color: var(--text); cursor: pointer; text-align: start;
+        font-family: var(--font);
+    }
+    .lang-item:hover, .lang-item.on { background: rgba(43,255,136,0.08); border-color: rgba(43,255,136,0.28); }
+    .lang-item .l-texts { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .lang-item .l-native { font-size: 0.82rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lang-item .l-en { font-size: 0.64rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lang-item .l-code { font-size: 0.58rem; color: var(--muted); direction: ltr; unicode-bidi: isolate; flex: 0 0 auto; }
+    .lang-item .l-check { color: var(--neon); font-size: 0.8rem; flex: 0 0 auto; visibility: hidden; }
+    .lang-item.on .l-check { visibility: visible; }
+    .lang-item.lang-device { border-bottom: 1px dashed rgba(43,255,136,0.22); border-radius: 0; margin-bottom: 4px; }
+    .lang-empty { color: var(--muted); text-align: center; padding: 20px 10px; font-size: 0.75rem; }
+
     .panel {
         border: 1px solid var(--line); background: var(--panel);
         padding: 12px; margin-bottom: 12px;
@@ -343,10 +398,11 @@
 </header>
 
 <div class="langbar" id="langbar">
-    <button data-lang="ar">العربية</button>
-    <button data-lang="en">English</button>
-    <button data-lang="tr">Türkçe</button>
-    <button data-lang="ru">Русский</button>
+    <button id="btnLang" type="button" aria-haspopup="dialog" aria-controls="langOverlay">
+        <span class="lang-globe">🌐</span>
+        <span class="lang-current" id="langCurrent">العربية</span>
+        <span class="lang-arrow">▾</span>
+    </button>
 </div>
 
 <div class="online-badge">
@@ -601,6 +657,20 @@
     <div class="maint-bottom-space"></div>
 </div>
 
+<div id="langOverlay" role="dialog" aria-modal="true" aria-labelledby="langTitleText">
+    <div class="lang-sheet">
+        <div class="lang-head">
+            <h3 id="langTitleText" data-i18n="langTitle"></h3>
+            <button id="langClose" class="ghost" type="button" data-i18n="langClose"></button>
+        </div>
+        <div class="lang-search-wrap">
+            <input id="langSearch" type="text" autocomplete="off" spellcheck="false" data-i18n-ph="langSearch">
+        </div>
+        <div class="lang-hint" id="langHint"></div>
+        <div class="lang-list" id="langList"></div>
+    </div>
+</div>
+
 <div id="logOverlay">
     <h3 data-i18n="copyLogTitle"></h3>
     <textarea id="logArea" readonly></textarea>
@@ -794,7 +864,7 @@ var I18N = {
         btnIntegrityDiag: '🩺 تشخيص السلامة',
         btnIntegrityFix: '🔧 إعادة تطبيق آمنة',
         mdIntegrityDiag: '• تشخيص السلامة: يفحص استيراد المفتاح إلى TEE، وحقن المكتبة داخل keystore2، وحالة الإبطال (CRL)، وتغطية قوائم الحمايات، وحالة RKP. قراءة فقط — لا يغيّر أي شيء.',
-        confirmIntegrityFix: '🔧 إعادة تطبيق آمنة:\n\n• تُعاد بناء قائمة الحمايات من كل التطبيقات المثبتة.\n• يُعاد تطبيق طبقة توافق الرومات.\n• يُعاد تطبيق الكيبوكس النشط.\n• تُعاد تشغيل خدمات Google Play.\n\nلا يحذف أي ملف ولا يمسّ الكيبوكس الأساسي.\n\nمتابعة؟'
+        confirmIntegrityFix: '🔧 إعادة تطبيق آمنة:\n\n• تُعاد بناء قائمة الحمايات من كل التطبيقات المثبتة.\n• يُعاد تطبيق طبقة توافق الرومات.\n• يُعاد تطبيق الكيبوكس النشط.\n• تُعاد تشغيل خدمات Google Play.\n\nلا يحذف أي ملف ولا يمسّ الكيبوكس الأساسي.\n\nمتابعة؟',
         mdKbSlots: '• منفذ الكيبوكس: يعرض حالة المنفذ الأساسي والثانوي ويبدّل التفضيل بينهما. المنفذ الأساسي (/data/adb/falcon/keybox.xml) محميٌّ دائماً ولا يُمحى أبداً. ترقية الثانوي إلى الأساسي تتطلب موافقة صريحة.',
         confirmKbSlotsPromote: '⬆️ ترقية المنفذ الثانوي إلى الأساسي:\n\n• سيصبح محتوى /data/adb/falcon/keybox2.xml هو المنفذ الأساسي.\n• يُحفظ الأساسي الحالي كنسخة احتياطية قبل الاستبدال.\n• لن يُحذف أي ملف — العملية قابلة للتراجع.\n\nمتابعة؟',
         confirmKbSlotsClear: '🧹 مسح المنفذ الثانوي:\n\n• سيُحذف /data/adb/falcon/keybox2.xml.\n• المنفذ الأساسي لا يُمَس.\n\nمتابعة؟',
@@ -909,7 +979,15 @@ var I18N = {
         logKbNetFail: '✖ فشل التنزيل أو أن الملف غير صالح — راجع السجل.',
         logKbNoNet: '🛜 لا يوجد اتصال بالإنترنت — تأكد من الشبكة ثم أعد المحاولة.',
         logPifCheckHead: '🔎 جاري فحص ملفات البصمة...',
-        logBridgeLost: '⚠️ انقطع الاتصال بالجسر أثناء التتبع — أعد فتح الواجهة.'
+        logBridgeLost: '⚠️ انقطع الاتصال بالجسر أثناء التتبع — أعد فتح الواجهة.',
+        langTitle: 'اختر لغة الواجهة',
+        langSearch: 'ابحث باسم اللغة أو رمزها…',
+        langCount: '{a} لغة متاحة',
+        langDevice: '🌐 لغة الجهاز',
+        langLoadFail: 'تعذّر تحميل ترجمة {a} — ستُعرض الواجهة بالإنجليزية',
+        langLoading: 'جارٍ تحميل {a}…',
+        langClose: 'إغلاق',
+        langHint: 'تُحفظ لغتك تلقائياً وتُطبَّق فوراً.'
     },
     en: {
         subtitle: 'Stealth Radar — who sees a clean device right now?',
@@ -1048,7 +1126,7 @@ var I18N = {
         btnIntegrityDiag: '🩺 Integrity diagnosis',
         btnIntegrityFix: '🔧 Safe re-apply',
         mdIntegrityDiag: '• Integrity diagnosis: checks the TEE key import, the library injection inside keystore2, the revocation status (CRL), the protection-list coverage and the RKP state. Read-only — it changes nothing.',
-        confirmIntegrityFix: '🔧 Safe re-apply:\n\n• The protection list is rebuilt from every installed app.\n• The custom-ROM compatibility layer is re-applied.\n• The active keybox is re-applied.\n• Google Play services are restarted.\n\nNothing is deleted and the primary keybox is never touched.\n\nContinue?'
+        confirmIntegrityFix: '🔧 Safe re-apply:\n\n• The protection list is rebuilt from every installed app.\n• The custom-ROM compatibility layer is re-applied.\n• The active keybox is re-applied.\n• Google Play services are restarted.\n\nNothing is deleted and the primary keybox is never touched.\n\nContinue?',
         mdKbSlots: '• Keybox slots: shows the state of the primary and secondary slots and switches the preference between them. The primary (/data/adb/falcon/keybox.xml) is always protected and never wiped. Promoting the secondary to primary requires explicit confirmation.',
         confirmKbSlotsPromote: '⬆️ Promote the secondary slot to primary:\n\n• /data/adb/falcon/keybox2.xml becomes the primary slot content.\n• The current primary is saved as a backup before replacement.\n• Nothing is deleted — the operation is reversible.\n\nContinue?',
         confirmKbSlotsClear: '🧹 Clear the secondary slot:\n\n• /data/adb/falcon/keybox2.xml will be removed.\n• The primary slot is not touched.\n\nContinue?',
@@ -1163,7 +1241,15 @@ var I18N = {
         logKbNetFail: '✖ Download failed or the file is invalid — check the log.',
         logKbNoNet: '🛜 No internet connection — check your network and try again.',
         logPifCheckHead: '🔎 Checking fingerprint files...',
-        logBridgeLost: '⚠️ Bridge connection lost while tracking — reopen the WebUI.'
+        logBridgeLost: '⚠️ Bridge connection lost while tracking — reopen the WebUI.',
+        langTitle: 'Choose interface language',
+        langSearch: 'Search by language name or code…',
+        langCount: '{a} languages available',
+        langDevice: '🌐 Device language',
+        langLoadFail: 'Could not load the {a} translation — showing English',
+        langLoading: 'Loading {a}…',
+        langClose: 'Close',
+        langHint: 'Your language is saved automatically and applied instantly.'
     },
     tr: {
         subtitle: 'Gizlilik Radarı — cihazı şu anda kim temiz görüyor?',
@@ -1302,7 +1388,7 @@ var I18N = {
         btnIntegrityDiag: '🩺 Bütünlük teşhisi',
         btnIntegrityFix: '🔧 Güvenli yeniden uygula',
         mdIntegrityDiag: '• Bütünlük teşhisi: TEE anahtar içe aktarımını, keystore2 içine kütüphane enjeksiyonunu, iptal durumunu (CRL), koruma listesi kapsamasını ve RKP durumunu denetler. Yalnızca okuma — hiçbir şeyi değiştirmez.',
-        confirmIntegrityFix: '🔧 Güvenli yeniden uygulama:\n\n• Koruma listesi kurulu tüm uygulamalardan yeniden oluşturulur.\n• Özel ROM uyumluluk katmanı yeniden uygulanır.\n• Etkin keybox yeniden uygulanır.\n• Google Play servisleri yeniden başlatılır.\n\nHiçbir şey silinmez ve birincil keybox değiştirilmez.\n\nDevam?'
+        confirmIntegrityFix: '🔧 Güvenli yeniden uygulama:\n\n• Koruma listesi kurulu tüm uygulamalardan yeniden oluşturulur.\n• Özel ROM uyumluluk katmanı yeniden uygulanır.\n• Etkin keybox yeniden uygulanır.\n• Google Play servisleri yeniden başlatılır.\n\nHiçbir şey silinmez ve birincil keybox değiştirilmez.\n\nDevam?',
         mdKbSlots: '• Keybox yuvaları: birincil ve ikincil yuva durumunu gösterir ve aralarındaki tercihi değiştirir. Birincil (/data/adb/falcon/keybox.xml) her zaman korunur ve asla silinmez. İkinciliyi birincile yükseltmek açık onay gerektirir.',
         confirmKbSlotsPromote: '⬆️ İkincil yuvayı birincile yükselt:\n\n• /data/adb/falcon/keybox2.xml içeriği birincil yuva olur.\n• Mevcut birincil, değiştirmeden önce yedek olarak kaydedilir.\n• Hiçbir şey silinmez — işlem geri alınabilir.\n\nDevam?',
         confirmKbSlotsClear: '🧹 İkincil yuvayı temizle:\n\n• /data/adb/falcon/keybox2.xml silinecek.\n• Birincil yuvaya dokunulmaz.\n\nDevam?',
@@ -1417,7 +1503,15 @@ var I18N = {
         logKbNetFail: '✖ İndirme başarısız veya dosya geçersiz — kayda bakın.',
         logKbNoNet: '🛜 İnternet bağlantısı yok — ağınızı kontrol edip tekrar deneyin.',
         logPifCheckHead: '🔎 Parmak izi dosyaları denetleniyor...',
-        logBridgeLost: '⚠️ İzleme sırasında köprü bağlantısı koptu — arayüzü yeniden açın.'
+        logBridgeLost: '⚠️ İzleme sırasında köprü bağlantısı koptu — arayüzü yeniden açın.',
+        langTitle: 'Arayüz dilini seçin',
+        langSearch: 'Dil adı veya koduyla arayın…',
+        langCount: '{a} dil mevcut',
+        langDevice: '🌐 Cihaz dili',
+        langLoadFail: '{a} çevirisi yüklenemedi — İngilizce gösteriliyor',
+        langLoading: '{a} yükleniyor…',
+        langClose: 'Kapat',
+        langHint: 'Diliniz otomatik kaydedilir ve hemen uygulanır.'
     },
     ru: {
         subtitle: 'Радар скрытности — кто сейчас видит чистое устройство?',
@@ -1556,7 +1650,7 @@ var I18N = {
         btnIntegrityDiag: '🩺 Диагностика целостности',
         btnIntegrityFix: '🔧 Безопасное применение',
         mdIntegrityDiag: '• Диагностика целостности: проверяет импорт ключа в TEE, внедрение библиотеки в keystore2, статус отзыва (CRL), покрытие списка защиты и состояние RKP. Только чтение — ничего не изменяет.',
-        confirmIntegrityFix: '🔧 Безопасное применение:\n\n• Список защиты пересобирается из всех установленных приложений.\n• Слой совместимости с кастомными ROM применяется заново.\n• Активный keybox применяется заново.\n• Службы Google Play перезапускаются.\n\nНичего не удаляется, основной keybox не затрагивается.\n\nПродолжить?'
+        confirmIntegrityFix: '🔧 Безопасное применение:\n\n• Список защиты пересобирается из всех установленных приложений.\n• Слой совместимости с кастомными ROM применяется заново.\n• Активный keybox применяется заново.\n• Службы Google Play перезапускаются.\n\nНичего не удаляется, основной keybox не затрагивается.\n\nПродолжить?',
         mdKbSlots: '• Слоты keybox: показывает состояние основного и резервного слотов и переключает предпочтение между ними. Основной (/data/adb/falcon/keybox.xml) всегда защищён и никогда не удаляется. Для повышения резервного до основного требуется явное подтверждение.',
         confirmKbSlotsPromote: '⬆️ Повысить резервный слот до основного:\n\n• Содержимое /data/adb/falcon/keybox2.xml станет основным слотом.\n• Текущий основной сохраняется в резервную копию перед заменой.\n• Ничего не удаляется — операцию можно отменить.\n\nПродолжить?',
         confirmKbSlotsClear: '🧹 Очистить резервный слот:\n\n• Будет удалён /data/adb/falcon/keybox2.xml.\n• Основной слот не затрагивается.\n\nПродолжить?',
@@ -1671,7 +1765,15 @@ var I18N = {
         logKbNetFail: '✖ Загрузка не удалась или файл недействителен — см. журнал.',
         logKbNoNet: '🛜 Нет подключения к интернету — проверьте сеть и повторите попытку.',
         logPifCheckHead: '🔎 Проверка файлов отпечатка...',
-        logBridgeLost: '⚠️ Связь с мостом потеряна при отслеживании — откройте WebUI заново.'
+        logBridgeLost: '⚠️ Связь с мостом потеряна при отслеживании — откройте WebUI заново.',
+        langTitle: 'Выберите язык интерфейса',
+        langSearch: 'Поиск по названию или коду языка…',
+        langCount: 'Доступно языков: {a}',
+        langDevice: '🌐 Язык устройства',
+        langLoadFail: 'Не удалось загрузить перевод для {a} — показан английский',
+        langLoading: 'Загрузка {a}…',
+        langClose: 'Закрыть',
+        langHint: 'Ваш язык сохраняется автоматически и применяется сразу.'
     }
 };
 
@@ -1870,7 +1972,272 @@ var LANG_NAMES = {
     }
 };
 
-var LANG_LABELS = { ar: 'العربية', en: 'English', tr: 'Türkçe', ru: 'Русский' };
+/* (v3.24) قائمة جميع اللغات المدعومة — تُولَّد تلقائياً (248 لغة) */
+var LANG_LIST = [
+    ["ar", "Arabic", "العربية", 1],
+    ["en", "English", "English", 0],
+    ["tr", "Turkish", "Türkçe", 0],
+    ["ru", "Russian", "Русский", 0],
+    ["ab", "Abkhaz", "Аҧсуа", 0],
+    ["ace", "Acehnese", "Bahasa Aceh", 0],
+    ["ach", "Acholi", "Acholi", 0],
+    ["aa", "Afar", "Qafar", 0],
+    ["af", "Afrikaans", "Afrikaans", 0],
+    ["sq", "Albanian", "Shqip", 0],
+    ["alz", "Alur", "Dhu'alur", 0],
+    ["am", "Amharic", "አማርኛ", 0],
+    ["hy", "Armenian", "Հայերեն", 0],
+    ["as", "Assamese", "অসমীয়া", 0],
+    ["av", "Avar", "авар мацӏ", 0],
+    ["awa", "Awadhi", "अवधी", 0],
+    ["ay", "Aymara", "Aymara", 0],
+    ["az", "Azerbaijani", "Azərbaycan dili", 0],
+    ["ban", "Balinese", "Basa Bali", 0],
+    ["bal", "Baluchi", "بلوچی", 1],
+    ["bm", "Bambara", "Bamanankan", 0],
+    ["bci", "Baoulé", "Wawle", 0],
+    ["ba", "Bashkir", "Башҡорт", 0],
+    ["eu", "Basque", "Euskara", 0],
+    ["btx", "Batak Karo", "Batak Karo", 0],
+    ["bts", "Batak Simalungun", "Bahasa Simalungun", 0],
+    ["bbc", "Batak Toba", "Batak Toba", 0],
+    ["be", "Belarusian", "беларускі", 0],
+    ["bem", "Bemba", "Ichibemba", 0],
+    ["bn", "Bengali", "বাংলা", 0],
+    ["bew", "Betawi", "Betawi", 0],
+    ["bho", "Bhojpuri", "भोजपुरी", 0],
+    ["bik", "Bikol", "Bikol", 0],
+    ["bs", "Bosnian", "Bosanski", 0],
+    ["br", "Breton", "brezhoneg", 0],
+    ["bg", "Bulgarian", "български", 0],
+    ["bua", "Buryat", "Буряад", 0],
+    ["yue", "Cantonese", "廣東話", 0],
+    ["ca", "Catalan", "Català", 0],
+    ["ceb", "Cebuano", "Cebuano", 0],
+    ["ch", "Chamorro", "Chamorro", 0],
+    ["ce", "Chechen", "Нохчийн", 0],
+    ["ny", "Chichewa", "Chichewa", 0],
+    ["zh-CN", "Chinese", "中文（简体）", 0],
+    ["chk", "Chuukese", "Trukese", 0],
+    ["cv", "Chuvash", "Чӑваш", 0],
+    ["co", "Corsican", "Corsu", 0],
+    ["crh", "Crimean Tatar (Cyrillic)", "Qırımtatarca", 0],
+    ["crh-Latn", "Crimean Tatar (Latin)", "Qırımtatarca", 0],
+    ["hr", "Croatian", "Hrvatski", 0],
+    ["cs", "Czech", "Čeština", 0],
+    ["da", "Danish", "Dansk", 0],
+    ["fa-AF", "Dari", "دری", 1],
+    ["dv", "Dhivehi", "ދިވެހި", 1],
+    ["din", "Dinka", "Dinka", 0],
+    ["doi", "Dogri", "डोगरी", 0],
+    ["dov", "Dombe", "ChiDombe", 0],
+    ["nl", "Dutch", "Nederlands", 0],
+    ["dyu", "Dyula", "Dioula", 0],
+    ["dz", "Dzongkha", "རྫོང་ཁ", 0],
+    ["eo", "Esperanto", "Esperanto", 0],
+    ["et", "Estonian", "Eesti", 0],
+    ["ee", "Ewe", "Eʋegbe", 0],
+    ["fo", "Faroese", "Føroysk", 0],
+    ["fj", "Fijian", "Na Vosa Vakaviti", 0],
+    ["tl", "Filipino", "Filipino", 0],
+    ["fi", "Finnish", "Suomi", 0],
+    ["fon", "Fon", "fongbē", 0],
+    ["fr", "French", "Français", 0],
+    ["fr-CA", "French (Canada)", "Français (Canada)", 0],
+    ["fy", "Frisian", "Frysk", 0],
+    ["fur", "Friulian", "Furlan", 0],
+    ["ff", "Fulani", "Fulfulde", 0],
+    ["gaa", "Ga", "Gã", 0],
+    ["gl", "Galician", "Galego", 0],
+    ["ka", "Georgian", "ქართული", 0],
+    ["de", "German", "Deutsch", 0],
+    ["el", "Greek", "Ελληνικά", 0],
+    ["gn", "Guarani", "Guarani", 0],
+    ["gu", "Gujarati", "ગુજરાતી", 0],
+    ["ht", "Haitian Creole", "Kreyòl ayisyen", 0],
+    ["cnh", "Hakha Chin", "Lai holh", 0],
+    ["ha", "Hausa", "Hausa", 0],
+    ["haw", "Hawaiian", "ʻŌlelo Hawaiʻi", 0],
+    ["iw", "Hebrew", "עברית", 1],
+    ["hil", "Hiligaynon", "Hiligaynon", 0],
+    ["hi", "Hindi", "हिन्दी", 0],
+    ["hmn", "Hmong", "Hmoob", 0],
+    ["hu", "Hungarian", "Magyar", 0],
+    ["hrx", "Hunsrik", "Hunsrik", 0],
+    ["iba", "Iban", "Iban", 0],
+    ["is", "Icelandic", "Íslenska", 0],
+    ["ig", "Igbo", "Igbo", 0],
+    ["ilo", "Ilocano", "Ilocano", 0],
+    ["id", "Indonesian", "Bahasa Indonesia", 0],
+    ["iu-Latn", "Inuktut (Latin)", "Inuktut", 0],
+    ["iu", "Inuktut (Syllabics)", "ᐃᓄᒃᑎᑐᑦ", 0],
+    ["ga", "Irish", "Gaeilge", 0],
+    ["it", "Italian", "Italiano", 0],
+    ["jam", "Jamaican Patois", "Jamaican Patois", 0],
+    ["ja", "Japanese", "日本語", 0],
+    ["jw", "Javanese", "Basa Jawa", 0],
+    ["kac", "Jingpo", "Jingpo", 0],
+    ["kl", "Kalaallisut", "Kalaallisut", 0],
+    ["kn", "Kannada", "ಕನ್ನಡ", 0],
+    ["kr", "Kanuri", "Tǝlam ​​Kanuri", 0],
+    ["pam", "Kapampangan", "Kapampangan", 0],
+    ["kk", "Kazakh", "Қазақ тілі", 0],
+    ["kha", "Khasi", "Khasi", 0],
+    ["km", "Khmer", "ខ្មែរ", 0],
+    ["cgg", "Kiga", "Kiga", 0],
+    ["kg", "Kikongo", "Kikongo", 0],
+    ["rw", "Kinyarwanda", "Kinyarwanda", 0],
+    ["ktu", "Kituba", "Kituba", 0],
+    ["trp", "Kokborok", "Kok Borok", 0],
+    ["kv", "Komi", "Коми", 0],
+    ["gom", "Konkani", "कोंकणी", 0],
+    ["ko", "Korean", "한국어", 0],
+    ["kri", "Krio", "Krio", 0],
+    ["ku", "Kurdish (Kurmanji)", "Kurdî (Kurmancî)", 0],
+    ["ckb", "Kurdish (Sorani)", "کوردیی ناوەڕاست", 1],
+    ["ky", "Kyrgyz", "Кыргызча", 0],
+    ["lo", "Lao", "ພາສາລາວ", 0],
+    ["ltg", "Latgalian", "latgalīšu", 0],
+    ["la", "Latin", "Lingua Latina", 0],
+    ["lv", "Latvian", "Latviešu", 0],
+    ["lij", "Ligurian", "Ligure", 0],
+    ["li", "Limburgish", "Limburgisch", 0],
+    ["ln", "Lingala", "Lingala", 0],
+    ["lt", "Lithuanian", "Lietuvių", 0],
+    ["lmo", "Lombard", "Lombard", 0],
+    ["lg", "Luganda", "Oluganda", 0],
+    ["luo", "Luo", "Luo", 0],
+    ["lb", "Luxembourgish", "lëtzebuergesch", 0],
+    ["mk", "Macedonian", "македонски", 0],
+    ["mad", "Madurese", "Madurâ", 0],
+    ["mai", "Maithili", "मैथिली", 0],
+    ["mak", "Makassar", "Makassar", 0],
+    ["mg", "Malagasy", "Malagasy", 0],
+    ["ms", "Malay", "Bahasa Melayu", 0],
+    ["ms-Arab", "Malay (Jawi)", "ملايو (جاوي)", 1],
+    ["ml", "Malayalam", "മലയാളം", 0],
+    ["mt", "Maltese", "Malti", 0],
+    ["mam", "Mam", "toj qyol", 0],
+    ["gv", "Manx", "Gaelg", 0],
+    ["mi", "Maori", "Te Reo Māori", 0],
+    ["mr", "Marathi", "मराठी", 0],
+    ["mh", "Marshallese", "Majol", 0],
+    ["mwr", "Marwadi", "मारवाड़ी", 0],
+    ["mfe", "Mauritian Creole", "Kreol Morisien", 0],
+    ["chm", "Meadow Mari", "Мари шалбаасы", 0],
+    ["mni-Mtei", "Meiteilon (Manipuri)", "ꯃꯤꯇꯩꯂꯣꯟ", 0],
+    ["min", "Minang", "Minang", 0],
+    ["lus", "Mizo", "Mizo tawng", 0],
+    ["mn", "Mongolian", "Монгол", 0],
+    ["my", "Myanmar (Burmese)", "မြန်မာ", 0],
+    ["nhe", "Nahuatl (Eastern Huasteca)", "Nahuatl (Huasteca Oriental)", 0],
+    ["ndc-ZW", "Ndau", "Chindawu", 0],
+    ["nr", "Ndebele (South)", "IsiNdebele (Sewula)", 0],
+    ["new", "Nepalbhasa (Newari)", "नेपालभाषा (नेवारी) ३.", 0],
+    ["ne", "Nepali", "नेपाली", 0],
+    ["bm-Nkoo", "NKo", "ߒߞߏ", 1],
+    ["no", "Norwegian", "Norsk", 0],
+    ["nus", "Nuer", "Thok Nath", 0],
+    ["oc", "Occitan", "Occitan", 0],
+    ["or", "Odia (Oriya)", "ଓଡ଼ିଆ", 0],
+    ["om", "Oromo", "Afaan Oromoo", 0],
+    ["os", "Ossetian", "Ирон", 0],
+    ["pag", "Pangasinan", "Pangasinan", 0],
+    ["pap", "Papiamento", "Papiamentu", 0],
+    ["ps", "Pashto", "پښتو", 1],
+    ["fa", "Persian", "فارسی", 1],
+    ["pl", "Polish", "Polski", 0],
+    ["pt", "Portuguese (Brazil)", "Português", 0],
+    ["pt-PT", "Portuguese (Portugal)", "Português (Portugal)", 0],
+    ["pa", "Punjabi (Gurmukhi)", "ਪੰਜਾਬੀ", 0],
+    ["pa-Arab", "Punjabi (Shahmukhi)", "پنجابی (شاہ مکھی)", 1],
+    ["kek", "Qʼeqchiʼ", "Qʼeqchiʼ", 0],
+    ["qu", "Quechua", "Runasimi", 0],
+    ["rom", "Romani", "Rromani ćhib", 0],
+    ["ro", "Romanian", "Română", 0],
+    ["rn", "Rundi", "Ikirundi", 0],
+    ["se", "Sami (North)", "Sámi (Nuorta)", 0],
+    ["sm", "Samoan", "Gagana Samoa", 0],
+    ["sg", "Sango", "Sango", 0],
+    ["sa", "Sanskrit", "संस्कृत", 0],
+    ["sat-Latn", "Santali (Latin)", "Santali (laṭin)", 0],
+    ["sat", "Santali (Ol Chiki)", "ᱥᱟᱱᱛᱟᱲᱤ", 0],
+    ["gd", "Scots Gaelic", "Gàidhlig", 0],
+    ["nso", "Sepedi", "Sepedi", 0],
+    ["sr", "Serbian", "Српски", 0],
+    ["st", "Sesotho", "Sesotho", 0],
+    ["crs", "Seychellois Creole", "Kreol Seselwa", 0],
+    ["shn", "Shan", "တႆး", 0],
+    ["sn", "Shona", "ChiShona", 0],
+    ["scn", "Sicilian", "Sicilianu", 0],
+    ["szl", "Silesian", "Ślōnski", 0],
+    ["sd", "Sindhi", "سنڌي", 1],
+    ["si", "Sinhala", "සිංහල", 0],
+    ["sk", "Slovak", "Slovenčina", 0],
+    ["sl", "Slovenian", "Slovenščina", 0],
+    ["so", "Somali", "Soomaali", 0],
+    ["es", "Spanish", "Español", 0],
+    ["su", "Sundanese", "Basa Sunda", 0],
+    ["sus", "Susu", "Sosokhui", 0],
+    ["sw", "Swahili", "Kiswahili", 0],
+    ["ss", "Swati", "Siswati", 0],
+    ["sv", "Swedish", "Svenska", 0],
+    ["ty", "Tahitian", "Reo Tahiti", 0],
+    ["tg", "Tajik", "Тоҷикӣ", 0],
+    ["ber-Latn", "Tamazight", "Tamaziɣt", 0],
+    ["ber", "Tamazight (Tifinagh)", "ⵜⴰⵎⴰⵣⵉⵖⵜ", 0],
+    ["ta", "Tamil", "தமிழ்", 0],
+    ["tt", "Tatar", "Татар", 0],
+    ["te", "Telugu", "తెలుగు", 0],
+    ["tet", "Tetum", "Tetun", 0],
+    ["th", "Thai", "ไทย", 0],
+    ["bo", "Tibetan", "བོད་ཡིག", 0],
+    ["ti", "Tigrinya", "ግዕዝ", 0],
+    ["tiv", "Tiv", "Tiv", 0],
+    ["tpi", "Tok Pisin", "Tok Pisin", 0],
+    ["to", "Tongan", "Tonga", 0],
+    ["lua", "Tshiluba", "Tshiluba", 0],
+    ["ts", "Tsonga", "Tsonga", 0],
+    ["tn", "Tswana", "Setswana", 0],
+    ["tcy", "Tulu", "ತುಳು", 0],
+    ["tum", "Tumbuka", "Tumbuka", 0],
+    ["tk", "Turkmen", "Türkmenler", 0],
+    ["tyv", "Tuvan", "тыва", 0],
+    ["ak", "Twi", "Twi", 0],
+    ["udm", "Udmurt", "Удмурт кыл", 0],
+    ["uk", "Ukrainian", "Українська", 0],
+    ["ur", "Urdu", "اردو", 1],
+    ["ug", "Uyghur", "ئۇيغۇرچە", 1],
+    ["uz", "Uzbek", "Oʻzbekcha", 0],
+    ["ve", "Venda", "Tshivenḓa", 0],
+    ["vec", "Venetian", "Veneto", 0],
+    ["vi", "Vietnamese", "Tiếng Việt", 0],
+    ["war", "Waray", "Waray", 0],
+    ["cy", "Welsh", "Cymraeg", 0],
+    ["wo", "Wolof", "Wolof", 0],
+    ["xh", "Xhosa", "isiXhosa", 0],
+    ["sah", "Yakut", "Саха", 0],
+    ["yi", "Yiddish", "יידיש", 1],
+    ["yo", "Yoruba", "Yorùbá", 0],
+    ["yua", "Yucatec Maya", "maaya yucatec", 0],
+    ["zap", "Zapotec", "Diidxazá", 0],
+    ["zu", "Zulu", "isiZulu", 0]
+];
+var LANG_META = {};
+var LANG_LABELS = {};
+for (var _li = 0; _li < LANG_LIST.length; _li++) {
+    var _le = LANG_LIST[_li];
+    LANG_META[_le[0]] = { en: _le[1], native: _le[2] || _le[1], rtl: !!_le[3] };
+    LANG_LABELS[_le[0]] = _le[2] || _le[1] || _le[0];
+}
+var RTL_CODES = {
+    ar: 1, fa: 1, 'fa-AF': 1, ur: 1, ps: 1, sd: 1, ug: 1, yi: 1, iw: 1, he: 1,
+    dv: 1, ckb: 1, bal: 1, 'pa-Arab': 1, 'ms-Arab': 1, 'bm-Nkoo': 1
+};
+function isRTL(code) { return !!RTL_CODES[code]; }
+function langEnglishName(code) { return (LANG_META[code] && LANG_META[code].en) || code; }
+function langNativeName(code) { return (LANG_META[code] && LANG_META[code].native) || LANG_LABELS[code] || code; }
+
 var BANK_WORDS = ['bank', 'paypal', 'wallet', 'payment', 'visa', 'mastercard', 'stcpay',
                   'mada', 'alrajhi', 'alinma', 'riyad', 'ahli', 'snb', 'sabb', 'qnb'];
 
@@ -1878,13 +2245,14 @@ var lang = 'ar';
 var hadStoredLang = false;
 try {
     var _sv = localStorage.getItem(LANG_KEY);
-    if (_sv && I18N[_sv]) { lang = _sv; hadStoredLang = true; }
+    if (_sv && (I18N[_sv] || LANG_META[_sv])) { lang = _sv; hadStoredLang = true; }
 } catch (e) {}
 
 function t(key) {
-    var d = I18N[lang] || I18N.ar;
-    if (d[key] !== undefined) return d[key];
+    var d = I18N[lang];
+    if (d && d[key] !== undefined) return d[key];
     if (I18N.en[key] !== undefined) return I18N.en[key];
+    if (I18N.ar[key] !== undefined) return I18N.ar[key];
     return key;
 }
 
@@ -1899,22 +2267,24 @@ function tf(key, map) {
 }
 
 function nameOf(pkg) {
-    var per = LANG_NAMES[lang] || LANG_NAMES.ar;
+    var per = LANG_NAMES[lang] || LANG_NAMES.en || LANG_NAMES.ar;
+    if (!per) per = LANG_NAMES.ar;
     if (per[pkg]) return per[pkg];
     if (INTL_NAMES[pkg]) return INTL_NAMES[pkg];
+    if (LANG_NAMES.en && LANG_NAMES.en[pkg]) return LANG_NAMES.en[pkg];
     if (LANG_NAMES.ar[pkg]) return LANG_NAMES.ar[pkg];
 
     var low = String(pkg).toLowerCase();
     for (var i = 0; i < BANK_WORDS.length; i++) {
-        if (low.indexOf(BANK_WORDS[i]) !== -1) return per.catBank;
+        if (low.indexOf(BANK_WORDS[i]) !== -1) return per.catBank || (LANG_NAMES.en && LANG_NAMES.en.catBank) || '';
     }
-    if (low.indexOf('nubia') !== -1) return per.catNubia;
-    if (low.indexOf('com.zte') === 0) return per.catZte;
-    if (low.indexOf('oneplus') !== -1 || low.indexOf('oplus') !== -1) return per.catOneplus;
-    if (low.indexOf('com.google.') === 0) return per.catGoogle;
-    if (low.indexOf('com.samsung') === 0) return per.catSamsung;
-    if (low.indexOf('com.xiaomi') === 0 || low.indexOf('com.miui') === 0) return per.catXiaomi;
-    if (low.indexOf('com.android.') === 0) return per.catAndroid;
+    if (low.indexOf('nubia') !== -1) return per.catNubia || (LANG_NAMES.en && LANG_NAMES.en.catNubia) || '';
+    if (low.indexOf('com.zte') === 0) return per.catZte || (LANG_NAMES.en && LANG_NAMES.en.catZte) || '';
+    if (low.indexOf('oneplus') !== -1 || low.indexOf('oplus') !== -1) return per.catOneplus || (LANG_NAMES.en && LANG_NAMES.en.catOneplus) || '';
+    if (low.indexOf('com.google.') === 0) return per.catGoogle || (LANG_NAMES.en && LANG_NAMES.en.catGoogle) || '';
+    if (low.indexOf('com.samsung') === 0) return per.catSamsung || (LANG_NAMES.en && LANG_NAMES.en.catSamsung) || '';
+    if (low.indexOf('com.xiaomi') === 0 || low.indexOf('com.miui') === 0) return per.catXiaomi || (LANG_NAMES.en && LANG_NAMES.en.catXiaomi) || '';
+    if (low.indexOf('com.android.') === 0) return per.catAndroid || (LANG_NAMES.en && LANG_NAMES.en.catAndroid) || '';
     return '';
 }
 
@@ -1943,7 +2313,7 @@ function tok(s) { return '<span class="tok">' + esc(s) + '</span>'; }
 
 function applyStatic() {
     document.documentElement.setAttribute('lang', lang);
-    document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    document.documentElement.setAttribute('dir', isRTL(lang) ? 'rtl' : 'ltr');
     document.title = 'FALCON TRICKY · ' + t('subtitle').split('—')[0].trim();
 
     var nodes = document.querySelectorAll('[data-i18n]');
@@ -1954,11 +2324,162 @@ function applyStatic() {
     for (var j = 0; j < phs.length; j++) {
         phs[j].setAttribute('placeholder', t(phs[j].getAttribute('data-i18n-ph')));
     }
-    var lbs = document.querySelectorAll('#langbar button');
-    for (var k = 0; k < lbs.length; k++) {
-        lbs[k].className = (lbs[k].getAttribute('data-lang') === lang) ? 'on' : '';
+    var cur = $('langCurrent');
+    if (cur) cur.textContent = langNativeName(lang);
+    var lb = $('btnLang');
+    if (lb) lb.setAttribute('title', t('langTitle'));
+    var ov = $('langOverlay');
+    if (ov && ov.className.indexOf('on') !== -1) renderLangList($('langSearch') ? $('langSearch').value : '');
+}
+
+/* ---------------------- (v3.24) اختيار اللغة ---------------------- */
+var LANG_LOADING = {};
+
+function detectDeviceLang() {
+    var cands = [];
+    try { if (navigator.languages) cands = cands.concat(navigator.languages); } catch (e) {}
+    try { if (navigator.language) cands.push(navigator.language); } catch (e) {}
+    for (var i = 0; i < cands.length; i++) {
+        var c = String(cands[i] || '').replace('_', '-');
+        if (!c) continue;
+        if (LANG_META[c]) return c;
+        var base = c.split('-')[0];
+        if (LANG_META[base]) return base;
+        for (var k in LANG_META) {
+            if (Object.prototype.hasOwnProperty.call(LANG_META, k) && k.toLowerCase() === c.toLowerCase()) return k;
+        }
+        for (var k2 in LANG_META) {
+            if (Object.prototype.hasOwnProperty.call(LANG_META, k2) && k2.toLowerCase().indexOf(base.toLowerCase()) === 0) return k2;
+        }
+    }
+    return 'en';
+}
+
+function langItemHtml(code, isDevice) {
+    var meta = LANG_META[code] || {};
+    var native = meta.native || LANG_LABELS[code] || code;
+    var en = meta.en || code;
+    var on = (code === lang) ? ' on' : '';
+    var dev = isDevice ? ' lang-device' : '';
+    return '<button class="lang-item' + on + dev + '" type="button" data-lang="' + esc(code) + '" aria-pressed="' + (code === lang ? 'true' : 'false') + '">'
+        + '<span class="l-texts"><span class="l-native">' + esc(isDevice ? t('langDevice') : native) + '</span>'
+        + '<span class="l-en">' + esc(isDevice ? (native + ' · ' + en) : en) + '</span></span>'
+        + '<span class="l-code">' + esc(code) + '</span>'
+        + '<span class="l-check">✓</span></button>';
+}
+
+function renderLangList(filter) {
+    var box = $('langList');
+    if (!box) return;
+    var q = String(filter || '').toLowerCase().trim();
+    var shown = 0;
+    var html = '';
+    var dev = detectDeviceLang();
+    if (!q) html += langItemHtml(dev, true);
+    for (var i = 0; i < LANG_LIST.length; i++) {
+        var code = LANG_LIST[i][0];
+        var en = LANG_LIST[i][1];
+        var native = LANG_LIST[i][2] || en;
+        if (q && (code + ' ' + en + ' ' + native).toLowerCase().indexOf(q) === -1) continue;
+        shown++;
+        html += langItemHtml(code, false);
+    }
+    if (!shown) html = '<div class="lang-empty">' + esc(t('noResults')) + '</div>';
+    box.innerHTML = html;
+    var hint = $('langHint');
+    if (hint) hint.textContent = tf('langCount', { a: shown }) + ' · ' + t('langHint');
+}
+
+function openLangPicker() {
+    var ov = $('langOverlay');
+    if (!ov) return;
+    var s = $('langSearch');
+    if (s) s.value = '';
+    renderLangList('');
+    ov.className = 'on';
+    if (s) setTimeout(function () { try { s.focus(); } catch (e) {} }, 80);
+}
+
+function closeLangPicker() {
+    var ov = $('langOverlay');
+    if (ov) ov.className = '';
+}
+
+function applyLang(code, persist) {
+    if (!code || !I18N[code]) return;
+    lang = code;
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    hadStoredLang = true;
+    applyStatic();
+    render();
+    if (persist && bridgeAvailable()) {
+        sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; mkdir -p /data/adb/falcon; echo ' + lang + ' > ' + LANG_FILE + '; echo LANG_OK', function () {}, 15);
+    }
+    logLine(tf('logLang', { a: langNativeName(lang) }));
+    closeLangPicker();
+}
+
+function loadLangPack(code, persist, done) {
+    if (!code) { if (done) done(false); return; }
+    if (I18N[code]) { applyLang(code, persist); if (done) done(true); return; }
+    if (LANG_LOADING[code]) return;
+    var meta = LANG_META[code] || {};
+    LANG_LOADING[code] = true;
+    toast(tf('langLoading', { a: meta.native || code }));
+
+    var xhr = new XMLHttpRequest();
+    var finished = false;
+    function finish(ok, data) {
+        if (finished) return;
+        finished = true;
+        delete LANG_LOADING[code];
+        if (ok && data) {
+            var strings = data.strings || data;
+            if (strings && typeof strings === 'object') {
+                I18N[code] = strings;
+                if (data.native) {
+                    meta.native = data.native;
+                    LANG_META[code] = meta;
+                    LANG_LABELS[code] = data.native;
+                }
+                if (typeof data.rtl === 'boolean') {
+                    meta.rtl = data.rtl;
+                    LANG_META[code] = meta;
+                    if (data.rtl) RTL_CODES[code] = 1;
+                }
+                applyLang(code, persist);
+                if (done) done(true);
+                return;
+            }
+        }
+        toast(tf('langLoadFail', { a: meta.native || code }));
+        if (done) done(false);
+    }
+
+    try {
+        xhr.open('GET', 'langs/' + encodeURIComponent(code) + '.json', true);
+        xhr.timeout = 20000;
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) return;
+            if (xhr.status === 200) {
+                try { finish(true, JSON.parse(xhr.responseText)); } catch (e) { finish(false); }
+            } else {
+                finish(false);
+            }
+        };
+        xhr.onerror = function () { finish(false); };
+        xhr.ontimeout = function () { finish(false); };
+        xhr.send();
+    } catch (e) {
+        finish(false);
     }
 }
+
+function setLang(code, persist) {
+    if (I18N[code]) applyLang(code, persist);
+    else loadLangPack(code, persist);
+}
+
 
 function logLine(html) {
     var box = $('log');
@@ -2158,19 +2679,6 @@ var state = {
     loaded: false
 };
 
-function setLang(code, persist) {
-    if (!I18N[code]) return;
-    lang = code;
-    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
-    hadStoredLang = true;
-    applyStatic();
-    render();
-    if (persist && bridgeAvailable()) {
-        sh('export PATH=/system/bin:/system/xbin:/vendor/bin:$PATH; mkdir -p /data/adb/falcon; echo ' + lang + ' > ' + LANG_FILE + '; echo LANG_OK', function () {}, 15);
-    }
-    logLine(tf('logLang', { a: LANG_LABELS[lang] }));
-}
-
 function loadDemo() {
     state.target = ['com.google.android.gms', 'com.google.android.gms.unstable', 'com.android.vending',
         'com.netflix.mediaclient', 'com.whatsapp', 'com.discord', 'com.roblox.client',
@@ -2253,9 +2761,15 @@ function readCore(cb) {
         state.ver = (s.V || []).join('').replace('version=', '').trim();
 
         var fileLang = (s.L || []).join('').trim();
-        if (!hadStoredLang && I18N[fileLang] && fileLang !== lang) {
-            lang = fileLang;
-            applyStatic();
+        if (!hadStoredLang && fileLang && fileLang !== lang) {
+            if (I18N[fileLang]) {
+                lang = fileLang;
+                applyStatic();
+                render();
+            } else if (LANG_META[fileLang]) {
+                // (v3.24) اللغة محفوظة في ملف لكن حزمتها خارجية ⇒ تُحمَّل ثم تُطبَّق
+                loadLangPack(fileLang, false, function (ok) { if (ok) render(); });
+            }
         }
 
         state.loaded = true;
@@ -3592,10 +4106,7 @@ for (var si = 0; si < segs.length; si++) {
     };
 }
 
-var langBtns = document.querySelectorAll('#langbar button');
-for (var li = 0; li < langBtns.length; li++) {
-    langBtns[li].onclick = function () { setLang(this.getAttribute('data-lang'), true); };
-}
+/* (v3.24) زر اللغة الموحّد مربوط في bindLanguagePicker أسفل الملف */
 
 /* (v3.18) أكورديون شرح أزرار الصيانة — زر واحد مفتوح في كل مرة */
 var maintBtns = document.querySelectorAll('.maint-btn');
@@ -3740,10 +4251,53 @@ function openTelegramApp(url) {
     }
 })();
 
+(function bindLanguagePicker() {
+    var btn = $('btnLang');
+    if (btn) btn.onclick = function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        openLangPicker();
+        return false;
+    };
+    var close = $('langClose');
+    if (close) close.onclick = function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        closeLangPicker();
+        return false;
+    };
+    var ov = $('langOverlay');
+    if (ov) ov.onclick = function (e) {
+        if (e && e.target === ov) closeLangPicker();
+    };
+    var search = $('langSearch');
+    if (search) {
+        search.oninput = function () { renderLangList(this.value); };
+        search.onkeydown = function (e) {
+            if (e.keyCode === 13) {
+                var first = $('langList') ? $('langList').querySelector('.lang-item') : null;
+                if (first) first.click();
+                if (e.preventDefault) e.preventDefault();
+                return false;
+            }
+        };
+    }
+    var list = $('langList');
+    if (list) list.onclick = function (e) {
+        var el = e.target;
+        while (el && el !== list && !(el.getAttribute && el.getAttribute('data-lang'))) el = el.parentNode;
+        if (!el || el === list) return;
+        var code = el.getAttribute('data-lang');
+        if (code) setLang(code, true);
+    };
+    document.addEventListener('keydown', function (e) {
+        if (e.keyCode === 27) closeLangPicker();
+    });
+})();
+
 gwStart();
 
 /* ------------------------------ الإقلاع ------------------------------ */
 applyStatic();
+if (!I18N[lang]) loadLangPack(lang, false);
 updateBridgeTag();
 logLine(t('logReady'));
 logLine(t('logNoStart'));

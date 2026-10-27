@@ -623,6 +623,36 @@ fi
 
 [ -f "$MODPATH/security_patch.txt" ] && cp -f "$MODPATH/security_patch.txt" /data/adb/tricky_store/ 2>/dev/null
 
+# ==============================================================================
+# 🎯 (v3.24) إخفاء كل التطبيقات المثبتة عند التثبيت مباشرة
+#   المطلوب: عند التثبيت يُختار كل التطبيقات ويُخفى، ثم يستمر الإخفاء
+#   التلقائي للتطبيقات الجديدة بعد التثبيت (السلوك المعتاد دون تغيير).
+#   نكتب القائمة في target.txt فوراً، ونحفظها كأساس (falcon_known_packages.txt)
+#   حتى لا تُعتبر أي حزمة موجودة «جديدة» عند أول إقلاع.
+#   إن لم يعمل pm هنا (بيئة تثبيت محدودة) يتكفّل service.sh بذلك عند أول إقلاع.
+# ==============================================================================
+if command -v pm >/dev/null 2>&1; then
+    FALCON_ALL_PKGS=$(pm list packages 2>/dev/null | cut -d':' -f2 | sort -u)
+    if [ -n "$FALCON_ALL_PKGS" ]; then
+        mkdir -p /data/adb/tricky_store 2>/dev/null
+        [ -f /data/adb/tricky_store/target.txt ] || touch /data/adb/tricky_store/target.txt 2>/dev/null
+        printf '%s\n' "$FALCON_ALL_PKGS" >> /data/adb/tricky_store/target.txt 2>/dev/null
+        sort -u /data/adb/tricky_store/target.txt > /data/adb/tricky_store/target.tmp 2>/dev/null
+        if [ -s /data/adb/tricky_store/target.tmp ]; then
+            mv -f /data/adb/tricky_store/target.tmp /data/adb/tricky_store/target.txt 2>/dev/null
+        else
+            rm -f /data/adb/tricky_store/target.tmp 2>/dev/null
+        fi
+        chmod 644 /data/adb/tricky_store/target.txt 2>/dev/null
+        # الأساس: كل ما هو مثبَّت الآن — أي تطبيق جديد لاحقاً يُضاف تلقائياً
+        mkdir -p /data/adb/falcon 2>/dev/null
+        printf '%s\n' "$FALCON_ALL_PKGS" > /data/adb/falcon_known_packages.txt 2>/dev/null
+        FALCON_HIDE_N=$(printf '%s\n' "$FALCON_ALL_PKGS" | grep -c . 2>/dev/null)
+        case "$FALCON_HIDE_N" in ''|*[!0-9]*) FALCON_HIDE_N=0 ;; esac
+        ui_print "- 🎯 تم إخفاء جميع التطبيقات المثبتة ($FALCON_HIDE_N)" ; delay
+    fi
+fi
+
 # --- (v3.23) طبقة توافق الرومات المعدّلة: تطبيق فوري عند التثبيت ---
 # makes the device look consistent on custom ROMs (tags/type/fingerprints/patch)
 # so the integrity check does not see the ROM's own build identity.
@@ -690,4 +720,64 @@ ui_print "- ℹ للإيقاف: touch /data/adb/falcon_keysync/disable_auto" ; d
 ui_print " " ; delay
 ui_print "- تم التثبيت بنجاح! 🦅🔥" ; delay
 ui_print "- المطور: ABUFARID" ; delay
+ui_print " " ; delay
+
+# ==============================================================================
+# 📢 (v3.24) بعد اكتمال التفليش بالكامل — فتح قناة التليجرام قبل زر إعادة التشغيل
+#   التسلسل المطلوب:
+#     1) يبدأ التفليش وينتهي من كتابة كل الأكواد بالكامل (هنا أعلى السطر).
+#     2) تُفتح قناة التليجرام تلقائياً: https://t.me/FALCON_KERNEL_PRO
+#     3) المستخدم يعود يدوياً إلى مدير الروت بالضغط على الأزرار، ثم يضغط
+#        «إعادة التشغيل» بنفسه — نحن لا نعيد التشغيل تلقائياً أبداً.
+#   ⛔ لا نفتح القناة إلا بعد نجاح كل الخطوات أعلاه (وصلنا هنا يعني نجاح).
+#   إن فتح الرابط فشل لأي سبب يبقى التثبيت سليماً ولا نُفشل العملية.
+# ==============================================================================
+FALCON_TG_URL="https://t.me/FALCON_KERNEL_PRO"
+# رابط عميق يفتح «تطبيق تليجرام الرسمي» مباشرة (وليس متصفحاً)
+FALCON_TG_DEEP="tg://resolve?domain=FALCON_KERNEL_PRO"
+# بيئة التفليش قد يكون فيها PATH محدوداً، لذا نجرب المسارات الصريحة أولاً
+# ونحتفظ بالمسار الكامل لأن العملية تُنفَّذ في مهمة منفصلة بعد خروج السكربت.
+FALCON_AM=""
+if command -v am >/dev/null 2>&1; then
+    FALCON_AM=$(command -v am)
+elif [ -x /system/bin/am ]; then
+    FALCON_AM="/system/bin/am"
+elif [ -x /system/xbin/am ]; then
+    FALCON_AM="/system/xbin/am"
+fi
+if [ -n "$FALCON_AM" ]; then
+    ui_print "- 📢 سيفتح رابط قناة التليجرام بعد اكتمال التفليش..." ; delay
+
+    # (v3.24.1) لا نفتح القناة أثناء التفليش — كان ذلك يُغلق مدير الروت:
+    #   نُخرج الفتح إلى عملية منفصلة تنتظر حتى يخرج السكربت تماماً، فيكتمل
+    #   التفليش والزر «إعادة التشغيل» يظهر والمدير في المقدمة، ثم تُفتح القناة
+    #   فوقه — فيبقى مدير الروت مفتوحاً في الخلفية، ويعود المستخدم إليه من
+    #   زر الرجوع ويضغط Reboot بنفسه (بدون أي إعادة تشغيل تلقائية).
+    #   setsid تُنفصل بجلسة جديدة فلا يُقتلها إنهاء السكربت.
+    # (v3.24.2) فتح «تطبيق تليجرام» كمهمة مستقلة:
+    #   -f 0x10000000 = FLAG_ACTIVITY_NEW_TASK ← تليجرام في مهمة منفصلة،
+    #   فيبقى مدير الروت مفتوحاً ويتّضح التطبيقان في قائمة التطبيقات الأخيرة،
+    #   فيعود المستخدم إلى الروت ويضغط «إعادة التشغيل» بنفسه.
+    # (v3.24.3) نافذة منفصلة عن نافذة الروت:
+    #   نجرّب أولاً فتح تليجرام في «نافذة عائمة» (windowingMode 3 = freeform)
+    #   حتى تبقى نافذة الروت ظاهرة ولا تُغلق أبداً — فتظهر النافذتان معاً.
+    #   إن لم يدعم الجهاز النافذة العائمة نسقط إلى فتح عادي في مهمة مستقلة.
+    #   ثم نجرّب الرابط العميق (تطبيق تليجرام الرسمي) ثم الرابط العادي.
+    FALCON_TG_LAUNCH="sleep 5; \"$FALCON_AM\" start --windowingMode 3 -f 0x10000000 -a android.intent.action.VIEW -d \"$FALCON_TG_DEEP\" >/dev/null 2>&1 || \"$FALCON_AM\" start -f 0x10000000 -a android.intent.action.VIEW -d \"$FALCON_TG_DEEP\" >/dev/null 2>&1 || \"$FALCON_AM\" start -f 0x10000000 -a android.intent.action.VIEW -d \"$FALCON_TG_URL\" >/dev/null 2>&1"
+    # نتأكد أن busybox المرفق ينفّذ فعلاً (قد يكون الجهاز 32-بت والملف 64-بت)
+    FALCON_SETSID=""
+    if command -v setsid >/dev/null 2>&1; then
+        FALCON_SETSID="setsid"
+    elif [ -x "$MODPATH/busybox" ] && "$MODPATH/busybox" true >/dev/null 2>&1; then
+        FALCON_SETSID="$MODPATH/busybox setsid"
+    fi
+    if [ -n "$FALCON_SETSID" ]; then
+        $FALCON_SETSID sh -c "$FALCON_TG_LAUNCH" >/dev/null 2>&1 &
+    else
+        ( sleep 5; "$FALCON_AM" start --windowingMode 3 -f 0x10000000 -a android.intent.action.VIEW -d "$FALCON_TG_DEEP" >/dev/null 2>&1 || "$FALCON_AM" start -f 0x10000000 -a android.intent.action.VIEW -d "$FALCON_TG_DEEP" >/dev/null 2>&1 || "$FALCON_AM" start -f 0x10000000 -a android.intent.action.VIEW -d "$FALCON_TG_URL" >/dev/null 2>&1 ) >/dev/null 2>&1 &
+    fi
+
+    ui_print "- ℹ ارجع إلى مدير الروت ثم اضغط «إعادة التشغيل» 🔁" ; delay
+fi
+
 true

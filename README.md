@@ -6,7 +6,7 @@
 [![KernelSU](https://img.shields.io/badge/KernelSU-Supported-4CAF50?style=for-the-badge)](https://github.com/tiann/KernelSU)
 [![Zygisk](https://img.shields.io/badge/Zygisk-Ready-orange?style=for-the-badge)](https://github.com/topjohnwu/Magisk/wiki/Zygisk)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue?style=for-the-badge)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v3.23-red?style=for-the-badge)](https://github.com/AHMED2111X/AHMED2111X/releases)
+[![Version](https://img.shields.io/badge/Version-v3.24-red?style=for-the-badge)](https://github.com/AHMED2111X/AHMED2111X/releases)
 
 **Play Integrity Fix • Tricky Store OSS • Advanced TEE/RKP Fixes**
 
@@ -16,6 +16,23 @@
 
 ---
 
+## 🆕 What's New in v3.24
+
+### العربية
+
+- **🌐 واجهة بلغات العالم — 248 لغة** — زر 🌐 واحد يفتح قائمة كل لغات العالم مع بحث فوري بالاسم الأصلي أو الإنجليزي أو الرمز، وتبديل RTL/LTR فوراً، وزر «🌐 لغة الجهاز» في الأعلى، مع حفظ تلقائي للغة.
+- **🎯 إخفاء كل التطبيقات عند التثبيت** — عند التثبيت يُختار كل التطبيقات المثبتة ويُخفى فوراً، ويستمر الإخفاء التلقائي لأي تطبيق جديد يُثبَّت لاحقاً (زر الإخفاء التلقائي يوقفه).
+- **🔗 حذف الوحدتين معاً (مُختبَر فعلياً)** — حذف أي وحدة منهما يحذف الأخرى فوراً من كل من `modules` و`modules_update`، مع حراسات إقلاع في الوحدتين تمنع بقاء أي وحدة يتيمة، ودون المساس بكيبوكس المستخدم.
+- **📢 فتح قناة تليجرام بعد اكتمال التفليش** — بعد 5 ثوانٍ من انتهاء التفليش يُفتح تطبيق تليجرام الرسمي في **نافذة منفصلة**، ويبقى مدير الروت مفتوحاً لتعود إليه وتضغط «إعادة التشغيل» بنفسك — **بدون أي إعادة تشغيل تلقائية**.
+
+### English
+
+- **🌐 World-language UI — 248 languages** — one 🌐 button opens every world language with instant search (native name, English name, language code), instant RTL/LTR switching, a "🌐 device language" shortcut, and automatic language persistence.
+- **🎯 Hide every app at install** — all installed apps are selected and hidden immediately at install, and auto-hide keeps applying to newly installed apps afterwards (the auto-hide toggle turns it off).
+- **🔗 Uninstall symmetry (actually tested)** — removing either module instantly removes the other from both `modules` and `modules_update`, with boot guards in both modules against orphaned modules, and without touching the user's keybox.
+- **📢 Telegram channel opens after flashing** — 5 seconds after flashing completes, the official Telegram app opens in a **separate window** while the root manager stays open so you return to it and press Reboot yourself — **never an automatic reboot**.
+
+---
 ## 🆕 What's New in v3.23
 
 ### العربية
@@ -131,7 +148,7 @@ sh /data/adb/modules/playintegrityfix/falcon_rom_compat.sh enable   # تفعيل
 
 1. حمل أحدث إصدار من قسم [Releases](https://github.com/AHMED2111X/AHMED2111X/releases)
 2. افتح مدير Magisk/KernelSU وانتقل لقسم **الوحدات** → **التثبيت من ملف**
-3. اختر ملف `FALCONINTEGITY_FIX_V3.23.zip` وابدأ التثبيت
+3. اختر ملف `FALCONINTEGITY_FIX_V3.24.zip` وابدأ التثبيت
 4. أعد تشغيل الجهاز
 5. افتح **FALCON TRICKY** من قائمة الوحدات للوصول للواجهة
 
@@ -257,7 +274,7 @@ Built with automation in mind, it handles keybox migration, conflicts, RKP fixes
 
 1. Download the latest release from the [Releases](https://github.com/AHMED2111X/AHMED2111X/releases) page
 2. Open Magisk/KernelSU app → **Modules** → **Install from storage**
-3. Select the `FALCONINTEGITY_FIX_V3.23.zip` file
+3. Select the `FALCONINTEGITY_FIX_V3.24.zip` file
 4. Reboot your device
 5. Access the UI via the **FALCON TRICKY** module in your root manager
 

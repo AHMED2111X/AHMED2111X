@@ -538,7 +538,19 @@ fi
     #      • بعد ذلك: تُضاف الحزم المُثبَّتة حديثاً فقط، ويمكن للمستخدم إلغاء ذلك
     #        من واجهة FALCON TRICKY (زر الإخفاء التلقائي).
     if [ ! -f "$KNOWN_PACKAGES_FILE" ]; then
+        # (v3.24) أول إقلاع بعد التثبيت: نُخفي كل التطبيقات المثبتة فعلياً —
+        # المطلوب: عند التثبيت يُختار كل التطبيقات ويُخفى، ثم يستمر الإخفاء
+        # التلقائي للتطبيقات الجديدة بعد التثبيت (السلوك المعتاد دون تغيير).
+        # نُنشئ القائمة أولاً حتى لا تُعتبر أي حزمة «جديدة» لاحقاً.
         pm list packages 2>/dev/null | cut -d':' -f2 | sort -u > "$KNOWN_PACKAGES_FILE" 2>/dev/null
+        if [ -s "$KNOWN_PACKAGES_FILE" ]; then
+            while read -r P; do
+                [ -z "$P" ] && continue
+                if ! grep -qx "$P" "$TARGET_FILE" 2>/dev/null; then
+                    echo "$P" >> "$TARGET_FILE"
+                fi
+            done < "$KNOWN_PACKAGES_FILE"
+        fi
     else
         pm list packages 2>/dev/null | cut -d':' -f2 | sort -u > "$CURRENT_PACKAGES_FILE" 2>/dev/null
         if [ -s "$CURRENT_PACKAGES_FILE" ]; then
